@@ -3952,20 +3952,6 @@ targets:
       - bin/**
       - .ci.yaml
 
-  - name: Mac_arm64_ios run_debug_test_macos
-    recipe: devicelab/devicelab_drone
-    bringup: true
-    timeout: 60
-    properties:
-      tags: >
-        ["devicelab", "ios", "mac", "arm64"]
-      task_name: run_debug_test_macos
-    runIf:
-      - dev/**
-      - packages/flutter_tools/**
-      - bin/**
-      - .ci.yaml
-
   - name: Mac run_release_test_macos
     recipe: devicelab/devicelab_drone
     presubmit: false
