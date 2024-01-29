@@ -8,6 +8,7 @@ import 'dart:ui' show AccessibilityFeatures, AppExitResponse, AppLifecycleState,
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -471,6 +472,16 @@ mixin WidgetsBinding on BindingBase, ServicesBinding, SchedulerBinding, GestureB
         name: WidgetsServiceExtensions.debugDumpFocusTree.name,
         callback: (Map<String, String> parameters) async {
           final String data = focusManager.toStringDeep();
+          return <String, Object>{
+            'data': data,
+          };
+        },
+      );
+
+      registerServiceExtension(
+        name: WidgetsServiceExtensions.debugDumpRfwText.name,
+        callback: (Map<String, String> parameters) async {
+          final String data = _dumpRfw();
           return <String, Object>{
             'data': data,
           };
@@ -1220,12 +1231,194 @@ String _debugDumpAppString() {
   final StringBuffer buffer = StringBuffer();
   buffer.writeln('${WidgetsBinding.instance.runtimeType} - $mode');
   if (WidgetsBinding.instance.rootElement != null) {
+    buffer.writeln('hello world!!!');
     buffer.writeln(WidgetsBinding.instance.rootElement!.toStringDeep());
   } else {
     buffer.writeln('<no tree currently mounted>');
   }
   return buffer.toString();
 }
+
+String _dumpRfw() {
+  final out = StringBuffer();
+  final rootNode = WidgetsBinding.instance.rootElement?.toDiagnosticsNode();
+
+  if (rootNode != null) {
+    final rootWidget = _buildRemoteWidget(rootNode);
+    if (rootWidget != null) {
+      _writeRemoteWidgetRoot(out, rootWidget);
+    }
+  }
+
+  return out.toString();
+}
+
+class RemoteWidget {
+  RemoteWidget({
+    required this.name,
+    required this.properties,
+    required this.children,
+  });
+
+  final String name;
+  final Map<String, String> properties;
+  final List<RemoteWidget> children;
+
+}
+
+RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
+  final propertyNodes = node.getProperties();
+  final childrenNodes = node.getChildren();
+
+  final widget = propertyNodes
+    .where((p) => p.name == 'widget')
+    .map((p) => p.value?.runtimeType.toString())
+    .firstOrNull
+    ?? 'Unknown';
+
+  const skipList = <String>{
+    'RootWidget',
+    'View',
+
+    'ScrollConfiguration',
+    'MaterialScrollBehavior',
+    'HeroControllerScope',
+    'Focus',
+    'Semantics',
+    'WidgetsApp',
+    'RootRestorationScope',
+    'UnmanagedRestorationScope',
+    'RestorationScope',
+    'SharedAppData',
+    'DefaultTextEditingShortcuts',
+    'FocusTraversalGroup',
+    'Actions',
+    'Shortcuts',
+    'NotificationListener<NavigationNotification>',
+    'TapRegionSurface'
+    'ShortcutRegistrar',
+    'Localizations',
+    'Directionality',
+    'ValueListenableBuilder<bool>',
+    'Builder',
+    'MediaQuery',
+  };
+  if ((skipList.contains(widget) || widget.startsWith('_')) && childrenNodes.length == 1) {
+    return _buildRemoteWidget(childrenNodes[0]);
+  }
+
+  final properties = <String, String>{};
+  for (final propertyNode in propertyNodes) {
+    final name = propertyNode.name;
+    var value = propertyNode.value;
+
+    if (name == null || value == null) continue;
+
+    if (name == 'dependencies') continue;
+    if (name == 'depth') continue;
+    if (name == 'dirty') continue;
+    if (name == 'renderObject') continue;
+    if (name == 'state') continue;
+    if (name == 'widget') continue;
+
+    // TODO
+    if (name == 'state') continue;
+
+    if (widget == 'Center') {
+      if (name == 'alignment' && value == Alignment.center) continue;
+    }
+
+    if (widget == 'Container') {
+      if (name == 'clipBehavior' && value == Clip.none) continue;
+      if (name == 'bg') continue;
+    }
+
+    if (widget == 'RichText') {
+      if (name == 'textAlign' && value == TextAlign.start) continue;
+      if (name == 'softWrap' && value == true) continue;
+      if (name == 'overflow' && value == TextOverflow.clip) continue;
+      if (name == 'textScaler' && value == TextScaler.noScaling) continue;
+      if (name == 'textWidthBasis' && value == TextWidthBasis.parent) continue;
+    }
+
+    if (widget == 'Text') {
+      if (name == 'data') continue;
+      if (name == 'textDirection') continue;
+    }
+
+    if (value is String) {
+      value = '"$value"';
+    }
+
+    if (value is MaterialColor) {
+      value = '0x${value.value.toRadixString(16).toUpperCase()}';
+    }
+
+    properties[name] = value.toString();
+  }
+
+  final children = <RemoteWidget>[];
+  for (final childNode in childrenNodes) {
+    final child = _buildRemoteWidget(childNode);
+    if (child != null) {
+      children.add(child);
+    }
+  }
+
+  return RemoteWidget(
+    name: widget,
+    properties: properties,
+    children: children,
+  );
+}
+
+void _writeRemoteWidgetRoot(StringBuffer out, RemoteWidget widget) {
+  out.write('widget root = ');
+  _writeRemoteWidget(out, widget, 0);
+  out.writeln(';');
+}
+
+void _writeRemoteWidget(StringBuffer out, RemoteWidget widget, int depth) {
+  if (depth > 50) return;
+
+  out.write(widget.name);
+
+  if (widget.properties.isEmpty && widget.children.isEmpty) {
+    out.writeln('()');
+    return;
+  }
+
+  out.writeln('(');
+
+  for (final property in widget.properties.entries) {
+    out.write('  ' * (depth + 1));
+    out.write(property.key);
+    out.write(': ');
+    out.write(property.value);
+    out.writeln(',');
+  }
+
+  if (widget.children.length == 1) {
+    out.write('  ' * (depth + 1));
+    out.write('child: ');
+    _writeRemoteWidget(out, widget.children[0], depth + 2);
+    out.writeln(',');
+  } else if (widget.children.isNotEmpty) {
+    out.write('  ' * (depth + 1));
+    out.write('children: [');
+    for (final child in widget.children) {
+      out.write('  ' * (depth + 2));
+      _writeRemoteWidget(out, child, depth + 3);
+      out.writeln(',');
+    }
+    out.write('  ' * (depth + 1));
+    out.write('],');
+  }
+
+  out.write('  ' * depth);
+  out.write(')');
+}
+
 
 /// Print a string representation of the currently running app.
 void debugDumpApp() {

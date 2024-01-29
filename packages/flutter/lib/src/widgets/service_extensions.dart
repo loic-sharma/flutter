@@ -29,6 +29,8 @@ enum WidgetsServiceExtensions {
   ///   registered.
   debugDumpFocusTree,
 
+  debugDumpRfwText,
+
   /// Name of service extension that, when called, will overlay a performance
   /// graph on top of this app.
   ///

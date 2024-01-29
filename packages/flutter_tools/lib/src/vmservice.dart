@@ -649,6 +649,16 @@ class FlutterVmService {
     return response?['data']?.toString() ?? '';
   }
 
+  Future<String> flutterDebugDumpRfwText({
+    required String isolateId,
+  }) async {
+    final Map<String, Object?>? response = await invokeFlutterExtensionRpcRaw(
+      'ext.flutter.debugDumpRfwText',
+      isolateId: isolateId,
+    );
+    return response?['data']?.toString() ?? '';
+  }
+
   Future<String> flutterDebugDumpSemanticsTreeInTraversalOrder({
     required String isolateId,
   }) async {

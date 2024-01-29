@@ -776,6 +776,22 @@ abstract class ResidentHandlers {
     return true;
   }
 
+  Future<bool> debugDumpRfwText() async {
+    if (!supportsServiceProtocol || !isRunningDebug) {
+      return false;
+    }
+    for (final FlutterDevice? device in flutterDevices) {
+      final List<FlutterView> views = await device!.vmService!.getFlutterViews();
+      for (final FlutterView view in views) {
+        final String data = await device.vmService!.flutterDebugDumpRfwText(
+          isolateId: view.uiIsolate!.id!,
+        );
+        logger.printStatus(data);
+      }
+    }
+    return true;
+  }
+
   /// Dump the application's current semantics tree to the terminal.
   ///
   /// If semantics are not enabled, nothing is returned.
@@ -1814,6 +1830,8 @@ class TerminalHandler {
       case 'w':
       case 'W':
         return residentRunner.debugDumpApp();
+      case 'z':
+        return residentRunner.debugDumpRfwText();
     }
     return false;
   }
