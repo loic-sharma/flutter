@@ -1231,7 +1231,6 @@ String _debugDumpAppString() {
   final StringBuffer buffer = StringBuffer();
   buffer.writeln('${WidgetsBinding.instance.runtimeType} - $mode');
   if (WidgetsBinding.instance.rootElement != null) {
-    buffer.writeln('hello world!!!');
     buffer.writeln(WidgetsBinding.instance.rootElement!.toStringDeep());
   } else {
     buffer.writeln('<no tree currently mounted>');
