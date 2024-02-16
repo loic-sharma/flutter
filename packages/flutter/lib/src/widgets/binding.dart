@@ -1252,8 +1252,8 @@ String _dumpRfw() {
   return out.toString();
 }
 
-class RemoteWidget {
-  RemoteWidget({
+class _RemoteWidget {
+  _RemoteWidget({
     required this.name,
     required this.properties,
     required this.children,
@@ -1261,11 +1261,11 @@ class RemoteWidget {
 
   final String name;
   final Map<String, String> properties;
-  final List<RemoteWidget> children;
+  final List<_RemoteWidget> children;
 
 }
 
-RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
+_RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
   final propertyNodes = node.getProperties();
   final childrenNodes = node.getChildren();
 
@@ -1274,6 +1274,13 @@ RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
     .map((p) => p.value?.runtimeType.toString())
     .firstOrNull
     ?? 'Unknown';
+
+  var locallyCreated = true;
+  final element = node.value as Element?;
+  if (element != null) {
+    final locationCandidate = element.debugIsDefunct ? element.widget : element;
+    locallyCreated = debugIsLocalCreationLocation(locationCandidate);
+  }
 
   const skipList = <String>{
     'RootWidget',
@@ -1302,7 +1309,7 @@ RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
     'Builder',
     'MediaQuery',
   };
-  if ((skipList.contains(widget) || widget.startsWith('_')) && childrenNodes.length == 1) {
+  if (!locallyCreated && childrenNodes.length == 1) {
     return _buildRemoteWidget(childrenNodes[0]);
   }
 
@@ -1356,7 +1363,7 @@ RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
     properties[name] = value.toString();
   }
 
-  final children = <RemoteWidget>[];
+  final children = <_RemoteWidget>[];
   for (final childNode in childrenNodes) {
     final child = _buildRemoteWidget(childNode);
     if (child != null) {
@@ -1364,26 +1371,26 @@ RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
     }
   }
 
-  return RemoteWidget(
+  return _RemoteWidget(
     name: widget,
     properties: properties,
     children: children,
   );
 }
 
-void _writeRemoteWidgetRoot(StringBuffer out, RemoteWidget widget) {
+void _writeRemoteWidgetRoot(StringBuffer out, _RemoteWidget widget) {
   out.write('widget root = ');
   _writeRemoteWidget(out, widget, 0);
   out.writeln(';');
 }
 
-void _writeRemoteWidget(StringBuffer out, RemoteWidget widget, int depth) {
+void _writeRemoteWidget(StringBuffer out, _RemoteWidget widget, int depth) {
   if (depth > 50) return;
 
   out.write(widget.name);
 
   if (widget.properties.isEmpty && widget.children.isEmpty) {
-    out.writeln('()');
+    out.write('()');
     return;
   }
 
@@ -1400,18 +1407,18 @@ void _writeRemoteWidget(StringBuffer out, RemoteWidget widget, int depth) {
   if (widget.children.length == 1) {
     out.write('  ' * (depth + 1));
     out.write('child: ');
-    _writeRemoteWidget(out, widget.children[0], depth + 2);
+    _writeRemoteWidget(out, widget.children[0], depth + 1);
     out.writeln(',');
   } else if (widget.children.isNotEmpty) {
     out.write('  ' * (depth + 1));
-    out.write('children: [');
+    out.writeln('children: [');
     for (final child in widget.children) {
       out.write('  ' * (depth + 2));
-      _writeRemoteWidget(out, child, depth + 3);
+      _writeRemoteWidget(out, child, depth + 2);
       out.writeln(',');
     }
     out.write('  ' * (depth + 1));
-    out.write('],');
+    out.writeln('],');
   }
 
   out.write('  ' * depth);
