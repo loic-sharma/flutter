@@ -1238,6 +1238,10 @@ String _debugDumpAppString() {
   return buffer.toString();
 }
 
+void debugDumpRfw() {
+  debugPrint(_dumpRfw());
+}
+
 String _dumpRfw() {
   final out = StringBuffer();
   final rootNode = WidgetsBinding.instance.rootElement?.toDiagnosticsNode();
@@ -1275,13 +1279,6 @@ _RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
     .firstOrNull
     ?? 'Unknown';
 
-  var locallyCreated = true;
-  final element = node.value as Element?;
-  if (element != null) {
-    final locationCandidate = element.debugIsDefunct ? element.widget : element;
-    locallyCreated = debugIsLocalCreationLocation(locationCandidate);
-  }
-
   const skipList = <String>{
     'RootWidget',
     'View',
@@ -1309,8 +1306,19 @@ _RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
     'Builder',
     'MediaQuery',
   };
-  if (!locallyCreated && childrenNodes.length == 1) {
-    return _buildRemoteWidget(childrenNodes[0]);
+  if (!debugIsLocalCreationLocation(node)) {
+    final childrenRemoteWidgets = childrenNodes
+      .map(_buildRemoteWidget)
+      .where((remoteWidget) => remoteWidget != null)
+      .toList();
+
+    if (childrenRemoteWidgets.isEmpty) {
+      return null;
+    }
+
+    if (childrenRemoteWidgets.length == 1) {
+      return childrenRemoteWidgets[0];
+    }
   }
 
   final properties = <String, String>{};

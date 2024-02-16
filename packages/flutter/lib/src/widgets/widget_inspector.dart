@@ -3636,6 +3636,10 @@ _Location? _getObjectCreationLocation(Object object) {
 ///
 /// Currently creation locations are only available for [Widget] and [Element].
 _Location? _getCreationLocation(Object? object) {
+  if (object is DiagnosticsNode) {
+    return _getCreationLocation(object.value);
+  }
+
   final Object? candidate = object is Element && !object.debugIsDefunct ? object.widget : object;
   return candidate == null ? null : _getObjectCreationLocation(candidate);
 }
