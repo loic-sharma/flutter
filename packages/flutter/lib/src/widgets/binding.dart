@@ -1259,14 +1259,37 @@ String _dumpRfw() {
 class _RemoteWidget {
   _RemoteWidget({
     required this.name,
-    required this.properties,
+    required this.positionalArgs,
+    required this.namedArgs,
     required this.children,
   });
 
   final String name;
-  final Map<String, String> properties;
+  final List<String> positionalArgs;
+  final Map<String, String> namedArgs;
   final List<_RemoteWidget> children;
+}
 
+bool _isRemoteWidget(DiagnosticsNode node, String widget) {
+  // Skip widgets that are created by the framework instead of the user's code.
+  if (!debugIsLocalCreationLocation(node)) {
+    return false;
+  }
+
+  final known = <String>{
+    // Core
+    'Center',
+    'Column',
+    'Image',
+    'Row',
+    'SizedBox',
+    'Text',
+
+    // Material
+    'ElevatedButton',
+  };
+
+  return known.contains(widget);
 }
 
 _RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
@@ -1279,37 +1302,10 @@ _RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
     .firstOrNull
     ?? 'Unknown';
 
-  const skipList = <String>{
-    'RootWidget',
-    'View',
-
-    'ScrollConfiguration',
-    'MaterialScrollBehavior',
-    'HeroControllerScope',
-    'Focus',
-    'Semantics',
-    'WidgetsApp',
-    'RootRestorationScope',
-    'UnmanagedRestorationScope',
-    'RestorationScope',
-    'SharedAppData',
-    'DefaultTextEditingShortcuts',
-    'FocusTraversalGroup',
-    'Actions',
-    'Shortcuts',
-    'NotificationListener<NavigationNotification>',
-    'TapRegionSurface'
-    'ShortcutRegistrar',
-    'Localizations',
-    'Directionality',
-    'ValueListenableBuilder<bool>',
-    'Builder',
-    'MediaQuery',
-  };
-  if (!debugIsLocalCreationLocation(node)) {
+  if (!_isRemoteWidget(node, widget)) {
     final childrenRemoteWidgets = childrenNodes
       .map(_buildRemoteWidget)
-      .where((remoteWidget) => remoteWidget != null)
+      .where((_RemoteWidget? remoteWidget) => remoteWidget != null)
       .toList();
 
     if (childrenRemoteWidgets.isEmpty) {
@@ -1319,9 +1315,12 @@ _RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
     if (childrenRemoteWidgets.length == 1) {
       return childrenRemoteWidgets[0];
     }
+
+    throw 'TODO: Support widget $widget';
   }
 
-  final properties = <String, String>{};
+  final positionalArgs = <String>[];
+  final namedArgs = <String, String>{};
   for (final propertyNode in propertyNodes) {
     final name = propertyNode.name;
     var value = propertyNode.value;
@@ -1342,9 +1341,25 @@ _RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
       if (name == 'alignment' && value == Alignment.center) continue;
     }
 
+    if (widget == 'Column') {
+      if (name == 'direction' && value == Axis.vertical) continue;
+      if (name == 'mainAxisAlignment' && value == MainAxisAlignment.start) continue;
+      if (name == 'mainAxisSize' && value == MainAxisSize.max) continue;
+      if (name == 'crossAxisAlignment' && value == CrossAxisAlignment.center) continue;
+      if (name == 'verticalDirection' && value == VerticalDirection.down) continue;
+    }
+
     if (widget == 'Container') {
       if (name == 'clipBehavior' && value == Clip.none) continue;
       if (name == 'bg') continue;
+    }
+
+    if (widget == 'Image') {
+      if (name == 'alignment' && value == Alignment.center) continue;
+      if (name == 'repeat' && value == ImageRepeat.noRepeat) continue;
+      if (name == 'matchTextDirection' && value == false) continue;
+      if (name == 'this.excludeFromSemantics' && value == false) continue;
+      if (name == 'filterQuality' && value == FilterQuality.low) continue;
     }
 
     if (widget == 'RichText') {
@@ -1355,9 +1370,23 @@ _RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
       if (name == 'textWidthBasis' && value == TextWidthBasis.parent) continue;
     }
 
+    if (widget == 'Row') {
+      if (name == 'direction' && value == Axis.horizontal) continue;
+      if (name == 'mainAxisAlignment' && value == MainAxisAlignment.center) continue;
+      if (name == 'mainAxisSize' && value == MainAxisSize.max) continue;
+      if (name == 'crossAxisAlignment' && value == CrossAxisAlignment.center) continue;
+      if (name == 'verticalDirection' && value == VerticalDirection.down) continue;
+    }
+
     if (widget == 'Text') {
-      if (name == 'data') continue;
-      if (name == 'textDirection') continue;
+      if (name == 'inherit') continue;
+
+      if (name == 'data') {
+        positionalArgs.add('["$value"]');
+        continue;
+      }
+
+      // if (name == 'textDirection') continue;
     }
 
     if (value is String) {
@@ -1368,7 +1397,7 @@ _RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
       value = '0x${value.value.toRadixString(16).toUpperCase()}';
     }
 
-    properties[name] = value.toString();
+    namedArgs[name] = value.toString();
   }
 
   final children = <_RemoteWidget>[];
@@ -1381,7 +1410,8 @@ _RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
 
   return _RemoteWidget(
     name: widget,
-    properties: properties,
+    positionalArgs: positionalArgs,
+    namedArgs: namedArgs,
     children: children,
   );
 }
@@ -1397,18 +1427,24 @@ void _writeRemoteWidget(StringBuffer out, _RemoteWidget widget, int depth) {
 
   out.write(widget.name);
 
-  if (widget.properties.isEmpty && widget.children.isEmpty) {
+  if (widget.positionalArgs.isEmpty && widget.namedArgs.isEmpty && widget.children.isEmpty) {
     out.write('()');
     return;
   }
 
   out.writeln('(');
 
-  for (final property in widget.properties.entries) {
+  for (final arg in widget.positionalArgs) {
     out.write('  ' * (depth + 1));
-    out.write(property.key);
+    out.write(arg);
+    out.writeln(',');
+  }
+
+  for (final arg in widget.namedArgs.entries) {
+    out.write('  ' * (depth + 1));
+    out.write(arg.key);
     out.write(': ');
-    out.write(property.value);
+    out.write(arg.value);
     out.writeln(',');
   }
 
