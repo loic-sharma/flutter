@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:ui' show AccessibilityFeatures, AppExitResponse, AppLifecycleState, FrameTiming, Locale, PlatformDispatcher, TimingsCallback;
 
@@ -1265,9 +1266,19 @@ class _RemoteWidget {
   });
 
   final String name;
-  final List<String> positionalArgs;
-  final Map<String, String> namedArgs;
+  final List<Object?> positionalArgs;
+  final Map<String, Object?> namedArgs;
   final List<_RemoteWidget> children;
+}
+
+class _RemoteEvent {
+  const _RemoteEvent({
+    required this.name,
+    required this.args,
+  });
+
+  final String name;
+  final Map<String, Object?> args;
 }
 
 bool _isRemoteWidget(DiagnosticsNode node, String widget) {
@@ -1296,13 +1307,23 @@ _RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
   final propertyNodes = node.getProperties();
   final childrenNodes = node.getChildren();
 
-  final widget = propertyNodes
+  final widgetName = propertyNodes
     .where((p) => p.name == 'widget')
     .map((p) => p.value?.runtimeType.toString())
     .firstOrNull
     ?? 'Unknown';
 
-  if (!_isRemoteWidget(node, widget)) {
+  Widget? widget;
+  Element? element = node.value as Element?;
+  if (element != null && !element.debugIsDefunct) {
+    widget = element.widget;
+  }
+
+  if (widget == null) {
+    throw 'TODO: Unexpected null widget $widgetName';
+  }
+
+  if (!_isRemoteWidget(node, widgetName)) {
     final childrenRemoteWidgets = childrenNodes
       .map(_buildRemoteWidget)
       .where((_RemoteWidget? remoteWidget) => remoteWidget != null)
@@ -1316,88 +1337,94 @@ _RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
       return childrenRemoteWidgets[0];
     }
 
-    throw 'TODO: Support widget $widget';
+    throw 'TODO: Support widget $widgetName';
   }
 
-  final positionalArgs = <String>[];
-  final namedArgs = <String, String>{};
-  for (final propertyNode in propertyNodes) {
-    final name = propertyNode.name;
-    var value = propertyNode.value;
+  final positionalArgs = <Object?>[];
+  final namedArgs = <String, Object?>{};
 
-    if (name == null || value == null) continue;
-
-    if (name == 'dependencies') continue;
-    if (name == 'depth') continue;
-    if (name == 'dirty') continue;
-    if (name == 'renderObject') continue;
-    if (name == 'state') continue;
-    if (name == 'widget') continue;
-
-    // TODO
-    if (name == 'state') continue;
-
-    if (widget == 'Center') {
-      if (name == 'alignment' && value == Alignment.center) continue;
+  void _addNamedArg(String name, Object? value, { Object? ignoreValue }) {
+    if (value != ignoreValue) {
+      namedArgs[name] = value;
     }
+  }
 
-    if (widget == 'Column') {
-      if (name == 'direction' && value == Axis.vertical) continue;
-      if (name == 'mainAxisAlignment' && value == MainAxisAlignment.start) continue;
-      if (name == 'mainAxisSize' && value == MainAxisSize.max) continue;
-      if (name == 'crossAxisAlignment' && value == CrossAxisAlignment.center) continue;
-      if (name == 'verticalDirection' && value == VerticalDirection.down) continue;
-    }
+  switch (widgetName) {
+    // Core widgets
+    case 'Center':
+      final center = widget as Center;
+      // TODO: Capture args
 
-    if (widget == 'Container') {
-      if (name == 'clipBehavior' && value == Clip.none) continue;
-      if (name == 'bg') continue;
-    }
+    case 'Column':
+      final column = widget as Column;
+      // TODO: Capture args
+      break;
+    case 'Container':
+      final container = widget as Container;
+      // TODO: Capture args
 
-    if (widget == 'Image') {
-      if (name == 'alignment' && value == Alignment.center) continue;
-      if (name == 'repeat' && value == ImageRepeat.noRepeat) continue;
-      if (name == 'matchTextDirection' && value == false) continue;
-      if (name == 'this.excludeFromSemantics' && value == false) continue;
-      if (name == 'filterQuality' && value == FilterQuality.low) continue;
-    }
+    case 'Image':
+      final image = widget as Image;
+      _addNamedArg('width', image.width);
+      _addNamedArg('height', image.height);
 
-    if (widget == 'RichText') {
-      if (name == 'textAlign' && value == TextAlign.start) continue;
-      if (name == 'softWrap' && value == true) continue;
-      if (name == 'overflow' && value == TextOverflow.clip) continue;
-      if (name == 'textScaler' && value == TextScaler.noScaling) continue;
-      if (name == 'textWidthBasis' && value == TextWidthBasis.parent) continue;
-    }
+      final networkImage = image.image as NetworkImage?;
+      if (networkImage != null) {
+        namedArgs['source'] = networkImage.url;
+      }
+      // TODO: Capture args
 
-    if (widget == 'Row') {
-      if (name == 'direction' && value == Axis.horizontal) continue;
-      if (name == 'mainAxisAlignment' && value == MainAxisAlignment.center) continue;
-      if (name == 'mainAxisSize' && value == MainAxisSize.max) continue;
-      if (name == 'crossAxisAlignment' && value == CrossAxisAlignment.center) continue;
-      if (name == 'verticalDirection' && value == VerticalDirection.down) continue;
-    }
+    case 'Row':
+      final row = widget as Row;
+      if (row.mainAxisAlignment != MainAxisAlignment.start) {
+        namedArgs['mainAxisAlignment'] = row.mainAxisAlignment.name;
+      }
+      // TODO: Capture args
 
-    if (widget == 'Text') {
-      if (name == 'inherit') continue;
+    case 'SizedBox':
+      final sizedBox = widget as SizedBox;
+      _addNamedArg('width', sizedBox.width);
+      _addNamedArg('height', sizedBox.height);
 
-      if (name == 'data') {
-        positionalArgs.add('["$value"]');
-        continue;
+    case 'Text':
+      final text = widget as Text;
+
+      if (text.data != null) {
+        namedArgs['text'] = <String>[text.data!];
       }
 
-      // if (name == 'textDirection') continue;
-    }
+      final style = text.style;
+      if (style != null) {
+        final styleArgs = <String, Object?>{};
+        namedArgs['style'] = styleArgs;
 
-    if (value is String) {
-      value = '"$value"';
-    }
+        if (style.fontSize != null) {
+          styleArgs['fontSize'] = style.fontSize;
+        }
 
-    if (value is MaterialColor) {
-      value = '0x${value.value.toRadixString(16).toUpperCase()}';
-    }
+        if (style.fontWeight != null) {
+          if (style.fontWeight == FontWeight.bold) {
+            styleArgs['fontWeight'] = 'bold';
+          } else {
+            styleArgs['fontWeight'] = style.fontWeight.toString();
+          }
+        }
+      }
 
-    namedArgs[name] = value.toString();
+    // Material widgets
+    case 'ElevatedButton':
+      final elevatedButton = widget as ElevatedButton;
+      if (widget.onPressed != null) {
+        // TODO:
+        namedArgs['onPressed'] = const _RemoteEvent(
+          name: 'hello_world',
+          args: <String, Object?>{
+            'foo': 'bar',
+          },
+        );
+      }
+
+    default: throw 'TODO: Support widget $widgetName';
   }
 
   final children = <_RemoteWidget>[];
@@ -1409,7 +1436,7 @@ _RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
   }
 
   return _RemoteWidget(
-    name: widget,
+    name: widgetName,
     positionalArgs: positionalArgs,
     namedArgs: namedArgs,
     children: children,
@@ -1436,7 +1463,7 @@ void _writeRemoteWidget(StringBuffer out, _RemoteWidget widget, int depth) {
 
   for (final arg in widget.positionalArgs) {
     out.write('  ' * (depth + 1));
-    out.write(arg);
+    _writeRemoteValue(out, arg, depth + 1);
     out.writeln(',');
   }
 
@@ -1444,7 +1471,7 @@ void _writeRemoteWidget(StringBuffer out, _RemoteWidget widget, int depth) {
     out.write('  ' * (depth + 1));
     out.write(arg.key);
     out.write(': ');
-    out.write(arg.value);
+    _writeRemoteValue(out, arg.value, depth + 1);
     out.writeln(',');
   }
 
@@ -1469,6 +1496,56 @@ void _writeRemoteWidget(StringBuffer out, _RemoteWidget widget, int depth) {
   out.write(')');
 }
 
+void _writeRemoteValue(StringBuffer out, Object? value, int depth) {
+  if (value == null) {
+    out.write('null');
+  } else if (value is num || value is bool) {
+    out.write(value);
+  } else if (value is String) {
+    out.write('"$value"');
+  } else if (value is List) {
+    if (value.isEmpty) {
+      out.write('[]');
+    } else {
+      out.writeln('[');
+      for (final item in value) {
+        out.write('  ' * (depth + 1));
+        _writeRemoteValue(out, item, depth + 1);
+        out.writeln(',');
+      }
+      out.write('  ' * depth);
+      out.write(']');
+    }
+  } else if (value is Map) {
+    if (value.isEmpty) {
+      out.write('{}');
+    } else {
+      out.writeln('{');
+      for (final entry in value.entries) {
+        out.write('  ' * (depth + 1));
+        out.write('${entry.key}: ');
+        _writeRemoteValue(out, entry.value, depth + 1);
+        out.writeln(',');
+      }
+      out.write('  ' * depth);
+      out.write('}');
+    }
+  } else if (value is _RemoteWidget) {
+    _writeRemoteWidget(out, value, depth);
+  } else if (value is _RemoteEvent) {
+    out.writeln('event "${value.name}" {');
+    for (final entry in value.args.entries) {
+      out.write('  ' * (depth + 1));
+      out.write('${entry.key}: ');
+      _writeRemoteValue(out, entry.value, depth + 1);
+      out.writeln(',');
+    }
+    out.write('  ' * depth);
+    out.write('}');
+  } else {
+    throw 'Unsupported remote value $value';
+  }
+}
 
 /// Print a string representation of the currently running app.
 void debugDumpApp() {
