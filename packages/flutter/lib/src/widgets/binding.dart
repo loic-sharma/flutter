@@ -1444,6 +1444,10 @@ _RemoteWidget? _buildRemoteWidget(DiagnosticsNode node) {
 }
 
 void _writeRemoteWidgetRoot(StringBuffer out, _RemoteWidget widget) {
+  out.writeln('import core.widgets;');
+  out.writeln('import material.widgets;');
+  out.writeln();
+
   out.write('widget root = ');
   _writeRemoteWidget(out, widget, 0);
   out.writeln(';');
