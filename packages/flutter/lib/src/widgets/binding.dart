@@ -482,7 +482,7 @@ mixin WidgetsBinding on BindingBase, ServicesBinding, SchedulerBinding, GestureB
       registerServiceExtension(
         name: WidgetsServiceExtensions.debugDumpRfwText.name,
         callback: (Map<String, String> parameters) async {
-          final String data = _dumpRfw();
+          final String data = debugDumpRfwString();
           return <String, Object>{
             'data': data,
           };
@@ -1240,10 +1240,10 @@ String _debugDumpAppString() {
 }
 
 void debugDumpRfw() {
-  debugPrint(_dumpRfw());
+  debugPrint(debugDumpRfwString());
 }
 
-String _dumpRfw() {
+String debugDumpRfwString() {
   final out = StringBuffer();
   final rootNode = WidgetsBinding.instance.rootElement?.toDiagnosticsNode();
 
