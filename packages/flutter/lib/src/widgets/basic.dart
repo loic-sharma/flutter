@@ -7848,3 +7848,680 @@ class _RenderColoredBox extends RenderProxyBoxWithHitTestBehavior {
     }
   }
 }
+
+extension BasicDecorators on Widget {
+  AbsorbPointer absorbPointer({
+    Key? key,
+    bool absorbing = true,
+    @Deprecated('Use ExcludeSemantics or create a custom absorb pointer widget instead. ' 'This feature was deprecated after v3.8.0-12.0.pre.')
+    bool? ignoringSemantics,
+  }) {
+    return AbsorbPointer(
+      key: key,
+      absorbing: absorbing,
+      ignoringSemantics: ignoringSemantics,
+      child: this,
+    );
+  }
+
+  Align align({
+    Key? key,
+    AlignmentGeometry alignment = Alignment.center,
+    double? widthFactor,
+    double? heightFactor,
+  }) {
+    return Align(
+      key: key,
+      alignment: alignment,
+      widthFactor: widthFactor,
+      heightFactor: heightFactor,
+      child: this,
+    );
+  }
+
+  AspectRatio aspectRatio({
+    Key? key,
+    required double aspectRatio,
+  }) {
+    return AspectRatio(
+      key: key,
+      aspectRatio: aspectRatio,
+      child: this,
+    );
+  }
+
+  BackdropFilter backdropFilter({
+    Key? key,
+    required ui.ImageFilter filter,
+    BlendMode blendMode = BlendMode.srcOver,
+  }) {
+    return BackdropFilter(
+      key: key,
+      filter: filter,
+      blendMode: blendMode,
+      child: this,
+    );
+  }
+
+  Baseline baseline({
+    Key? key,
+    required double baseline,
+    required TextBaseline baselineType,
+  }) {
+    return Baseline(
+      key: key,
+      baseline: baseline,
+      baselineType: baselineType,
+      child: this,
+    );
+  }
+
+  BlockSemantics blockSemantics({
+    Key? key,
+    bool blocking = true,
+  }) {
+    return BlockSemantics(
+      key: key,
+      blocking: blocking,
+      child: this,
+    );
+  }
+
+  Center center({
+    Key? key,
+    double? widthFactor,
+    double? heightFactor,
+  }) {
+    return Center(
+      key: key,
+      widthFactor: widthFactor,
+      heightFactor: heightFactor,
+      child: this,
+    );
+  }
+
+  ClipOval clipOval({
+    Key? key,
+    CustomClipper<Rect>? clipper,
+    Clip clipBehavior = Clip.antiAlias,
+  }) {
+    return ClipOval(
+      key: key,
+      clipper: clipper,
+      clipBehavior: clipBehavior,
+      child: this,
+    );
+  }
+
+  ClipPath clipPath({
+    Key? key,
+    CustomClipper<Path>? clipper,
+    Clip clipBehavior = Clip.antiAlias,
+  }) {
+    return ClipPath(
+      key: key,
+      clipper: clipper,
+      clipBehavior: clipBehavior,
+      child: this,
+    );
+  }
+
+  ClipRect clipRect({
+    Key? key,
+    CustomClipper<Rect>? clipper,
+    Clip clipBehavior = Clip.antiAlias,
+  }) {
+    return ClipRect(
+      key: key,
+      clipper: clipper,
+      clipBehavior: clipBehavior,
+      child: this,
+    );
+  }
+
+  ClipRRect clipRRect({
+    Key? key,
+    BorderRadiusGeometry borderRadius = BorderRadius.zero,
+    Clip clipBehavior = Clip.antiAlias,
+  }) {
+    return ClipRRect(
+      key: key,
+      borderRadius: borderRadius,
+      clipBehavior: clipBehavior,
+      child: this,
+    );
+  }
+
+  ColoredBox coloredBox({Key? key, required Color color}) {
+    return ColoredBox(
+      key: key,
+      color: color,
+      child: this,
+    );
+  }
+
+  ConstrainedBox constrainedBox({
+    Key? key,
+    required BoxConstraints constraints
+  }) {
+    return ConstrainedBox(
+      key: key,
+      constraints: constraints,
+      child: this,
+    );
+  }
+
+  Directionality directionality({
+    Key? key,
+    required TextDirection textDirection,
+  }) {
+    return Directionality(
+      key: key,
+      textDirection: textDirection,
+      child: this,
+    );
+  }
+
+  ExcludeSemantics excludeSemantics({Key? key, bool excluding = true}) {
+    return ExcludeSemantics(
+      key: key,
+      excluding: excluding,
+      child: this,
+    );
+  }
+
+  Expanded expanded({Key? key, int flex = 1}) {
+    return Expanded(
+      key: key,
+      flex: flex,
+      child: this,
+    );
+  }
+
+  FittedBox fittedBox({
+    Key? key,
+    BoxFit fit = BoxFit.contain,
+    AlignmentGeometry alignment = Alignment.center,
+    Clip clipBehavior = Clip.none,
+  }) {
+    return FittedBox(
+      key: key,
+      fit: fit,
+      alignment: alignment,
+      clipBehavior: clipBehavior,
+      child: this,
+    );
+  }
+
+  FractionalTranslation fractionalTranslation({
+    Key? key,
+    required Offset translation,
+    bool transformHitTests = true,
+  }) {
+    return FractionalTranslation(
+      key: key,
+      translation: translation,
+      transformHitTests: transformHitTests,
+      child: this,
+    );
+  }
+
+  FractionallySizedBox fractionallySizedBox({
+    Key? key,
+    AlignmentGeometry alignment = Alignment.center,
+    double? widthFactor,
+    double? heightFactor,
+  }) {
+    return FractionallySizedBox(
+      key: key,
+      alignment: alignment,
+      widthFactor: widthFactor,
+      heightFactor: heightFactor,
+      child: this,
+    );
+  }
+
+  IgnorePointer ignorePointer({
+    Key? key,
+    bool ignoring = true,
+    @Deprecated('Use ExcludeSemantics or create a custom ignore pointer widget instead. ' 'This feature was deprecated after v3.8.0-12.0.pre.')
+    bool? ignoringSemantics,
+  }) {
+    return IgnorePointer(
+      key: key,
+      ignoring: ignoring,
+      ignoringSemantics: ignoringSemantics,
+      child: this,
+    );
+  }
+
+  IntrinsicHeight intrinsicHeight({Key? key}) {
+    return IntrinsicHeight(
+      key: key,
+      child: this,
+    );
+  }
+
+  IntrinsicWidth intrinsicWidth({Key? key}) {
+    return IntrinsicWidth(
+      key: key,
+      child: this,
+    );
+  }
+
+  LimitedBox limitedBox({
+    Key? key,
+    double maxWidth = double.infinity,
+    double maxHeight = double.infinity,
+  }) {
+    return LimitedBox(
+      key: key,
+      maxWidth: maxWidth,
+      maxHeight: maxHeight,
+      child: this,
+    );
+  }
+
+  MergeSemantics mergeSemantics({Key? key}) {
+    return MergeSemantics(
+      key: key,
+      child: this,
+    );
+  }
+
+  MouseRegion mouseRegion({
+    Key? key,
+    PointerEnterEventListener? onEnter,
+    PointerExitEventListener? onExit,
+    PointerHoverEventListener? onHover,
+    MouseCursor cursor = MouseCursor.defer,
+    bool opaque = true,
+    HitTestBehavior? hitTestBehavior,
+  }) {
+    return MouseRegion(
+      key: key,
+      onEnter: onEnter,
+      onExit: onExit,
+      onHover: onHover,
+      cursor: cursor,
+      opaque: opaque,
+      hitTestBehavior: hitTestBehavior,
+      child: this,
+    );
+  }
+
+  Opacity opacity({
+    Key? key,
+    required double opacity,
+    bool alwaysIncludeSemantics = false,
+  }) {
+    return Opacity(
+      key: key,
+      opacity: opacity,
+      alwaysIncludeSemantics: alwaysIncludeSemantics,
+      child: this,
+    );
+  }
+
+  OverflowBox overflowBox({
+    Key? key,
+    AlignmentGeometry alignment = Alignment.center,
+    double? minWidth,
+    double? maxWidth,
+    double? minHeight,
+    double? maxHeight,
+    OverflowBoxFit fit = OverflowBoxFit.max,
+  }) {
+    return OverflowBox(
+      key: key,
+      alignment: alignment,
+      minWidth: minWidth,
+      maxWidth: maxWidth,
+      minHeight: minHeight,
+      maxHeight: maxHeight,
+      fit: fit,
+      child: this,
+    );
+  }
+
+  Padding padding({
+    Key? key,
+    required EdgeInsetsGeometry padding,
+  }) {
+    return Padding(
+      key: key,
+      padding: padding,
+      child: this,
+    );
+  }
+
+  RotatedBox rotatedBox({
+    Key? key,
+    required int quarterTurns,
+  }) {
+    return RotatedBox(
+      key: key,
+      quarterTurns: quarterTurns,
+      child: this,
+    );
+  }
+
+  Semantics semantics({
+    Key? key,
+    bool container = false,
+    bool explicitChildNodes = false,
+    bool excludeSemantics = false,
+    bool blockUserActions = false,
+    bool? enabled,
+    bool? checked,
+    bool? mixed,
+    bool? selected,
+    bool? toggled,
+    bool? button,
+    bool? slider,
+    bool? keyboardKey,
+    bool? link,
+    bool? header,
+    int? headingLevel,
+    bool? textField,
+    bool? readOnly,
+    bool? focusable,
+    bool? focused,
+    bool? inMutuallyExclusiveGroup,
+    bool? obscured,
+    bool? multiline,
+    bool? scopesRoute,
+    bool? namesRoute,
+    bool? hidden,
+    bool? image,
+    bool? liveRegion,
+    bool? expanded,
+    int? maxValueLength,
+    int? currentValueLength,
+    String? identifier,
+    String? label,
+    AttributedString? attributedLabel,
+    String? value,
+    AttributedString? attributedValue,
+    String? increasedValue,
+    AttributedString? attributedIncreasedValue,
+    String? decreasedValue,
+    AttributedString? attributedDecreasedValue,
+    String? hint,
+    AttributedString? attributedHint,
+    String? tooltip,
+    String? onTapHint,
+    String? onLongPressHint,
+    TextDirection? textDirection,
+    SemanticsSortKey? sortKey,
+    SemanticsTag? tagForChildren,
+    VoidCallback? onTap,
+    VoidCallback? onLongPress,
+    VoidCallback? onScrollLeft,
+    VoidCallback? onScrollRight,
+    VoidCallback? onScrollUp,
+    VoidCallback? onScrollDown,
+    VoidCallback? onIncrease,
+    VoidCallback? onDecrease,
+    VoidCallback? onCopy,
+    VoidCallback? onCut,
+    VoidCallback? onPaste,
+    VoidCallback? onDismiss,
+    MoveCursorHandler? onMoveCursorForwardByCharacter,
+    MoveCursorHandler? onMoveCursorBackwardByCharacter,
+    SetSelectionHandler? onSetSelection,
+    SetTextHandler? onSetText,
+    VoidCallback? onDidGainAccessibilityFocus,
+    VoidCallback? onDidLoseAccessibilityFocus,
+    VoidCallback? onFocus,
+    Map<CustomSemanticsAction,
+    VoidCallback>? customSemanticsActions,
+  }) {
+    return Semantics(
+      key: key,
+      container: container,
+      explicitChildNodes: explicitChildNodes,
+      excludeSemantics: excludeSemantics,
+      blockUserActions: blockUserActions,
+      enabled: enabled,
+      checked: checked,
+      mixed: mixed,
+      selected: selected,
+      toggled: toggled,
+      button: button,
+      slider: slider,
+      keyboardKey: keyboardKey,
+      link: link,
+      header: header,
+      headingLevel: headingLevel,
+      textField: textField,
+      readOnly: readOnly,
+      focusable: focusable,
+      focused: focused,
+      inMutuallyExclusiveGroup: inMutuallyExclusiveGroup,
+      obscured: obscured,
+      multiline: multiline,
+      scopesRoute: scopesRoute,
+      namesRoute: namesRoute,
+      hidden: hidden,
+      image: image,
+      liveRegion: liveRegion,
+      expanded: expanded,
+      maxValueLength: maxValueLength,
+      currentValueLength: currentValueLength,
+      identifier: identifier,
+      label: label,
+      attributedLabel: attributedLabel,
+      value: value,
+      attributedValue: attributedValue,
+      increasedValue: increasedValue,
+      attributedIncreasedValue: attributedIncreasedValue,
+      decreasedValue: decreasedValue,
+      attributedDecreasedValue: attributedDecreasedValue,
+      hint: hint,
+      attributedHint: attributedHint,
+      tooltip: tooltip,
+      onTapHint: onTapHint,
+      onLongPressHint: onLongPressHint,
+      textDirection: textDirection,
+      sortKey: sortKey,
+      tagForChildren: tagForChildren,
+      onTap: onTap,
+      onLongPress: onLongPress,
+      onScrollLeft: onScrollLeft,
+      onScrollRight: onScrollRight,
+      onScrollUp: onScrollUp,
+      onScrollDown: onScrollDown,
+      onIncrease: onIncrease,
+      onDecrease: onDecrease,
+      onCopy: onCopy,
+      onCut: onCut,
+      onPaste: onPaste,
+      onDismiss: onDismiss,
+      onMoveCursorForwardByCharacter: onMoveCursorForwardByCharacter,
+      onMoveCursorBackwardByCharacter: onMoveCursorBackwardByCharacter,
+      onSetSelection: onSetSelection,
+      onSetText: onSetText,
+      onDidGainAccessibilityFocus: onDidGainAccessibilityFocus,
+      onDidLoseAccessibilityFocus: onDidLoseAccessibilityFocus,
+      onFocus: onFocus,
+      customSemanticsActions: customSemanticsActions,
+      child: this,
+    );
+  }
+
+  SizedBox sizedBox({
+    Key? key,
+    double? width,
+    double? height,
+  }) {
+    return SizedBox(
+      key: key,
+      width: width,
+      height: height,
+      child: this,
+    );
+  }
+
+  // TODO: Name?
+  // TODO: Alternative: create a SizedBoxDecorator object that is also callable.
+  // This would allow foo.sizedBox.expand() or foo.sizedBox(width: 5, height: 5)
+  SizedBox sizedBoxExpand({Key? key}) {
+    return SizedBox.expand(
+      key: key,
+      child: this,
+    );
+  }
+
+  // TODO: Name?
+  SizedBox sizedBoxfromSize({Key? key, Size? size}) {
+    return SizedBox.fromSize(
+      key: key,
+      size: size,
+      child: this,
+    );
+  }
+
+  SizedBox sizedBoxShrink({Key? key}) {
+    return SizedBox.shrink(
+      key: key,
+      child: this,
+    );
+  }
+
+  SizedBox sizedBoxSquare({
+    Key? key,
+    double? dimension,
+  }) {
+    return SizedBox.square(
+      key: key,
+      dimension: dimension,
+      child: this,
+    );
+  }
+
+  SizedOverflowBox sizedOverflowBox({
+    Key? key,
+    required Size size,
+    AlignmentGeometry alignment = Alignment.center,
+  }) {
+    return SizedOverflowBox(
+      key: key,
+      size: size,
+      alignment: alignment,
+      child: this,
+    );
+  }
+
+  Transform transform({
+    Key? key,
+    required Matrix4 transform,
+    Offset? origin,
+    AlignmentGeometry? alignment,
+    bool transformHitTests = true,
+    FilterQuality? filterQuality,
+  }) {
+    return Transform(
+      key: key,
+      transform: transform,
+      origin: origin,
+      alignment: alignment,
+      transformHitTests: transformHitTests,
+      filterQuality: filterQuality,
+      child: this,
+    );
+  }
+
+  // TODO: Name?
+  Transform transformFlip({
+    Key? key,
+    bool flipX = false,
+    bool flipY = false,
+    Offset? origin,
+    bool transformHitTests = true,
+    FilterQuality? filterQuality,
+  }) {
+    return Transform.flip(
+      key: key,
+      flipX: flipX,
+      flipY: flipY,
+      origin: origin,
+      transformHitTests: transformHitTests,
+      filterQuality: filterQuality,
+      child: this,
+    );
+  }
+
+  // TODO: Name?
+  Transform transformRotate({
+    Key? key,
+    required double angle,
+    Offset? origin,
+    AlignmentGeometry? alignment = Alignment.center,
+    bool transformHitTests = true,
+    FilterQuality? filterQuality,
+  }) {
+    return Transform.rotate(
+      key: key,
+      angle: angle,
+      origin: origin,
+      alignment: alignment,
+      transformHitTests: transformHitTests,
+      filterQuality: filterQuality,
+      child: this,
+    );
+  }
+
+  Transform transformScale({
+    Key? key,
+    double? scale,
+    double? scaleX,
+    double? scaleY,
+    Offset? origin,
+    AlignmentGeometry? alignment = Alignment.center,
+    bool transformHitTests = true,
+    FilterQuality? filterQuality,
+  }) {
+    return Transform.scale(
+      key: key,
+      scaleX: scaleX,
+      scaleY: scaleY,
+      origin: origin,
+      transformHitTests: transformHitTests,
+      filterQuality: filterQuality,
+      child: this,
+    );
+  }
+
+  // TODO: Name?
+  Transform transformTranslate({
+    Key? key,
+    required Offset offset,
+    bool transformHitTests = true,
+    FilterQuality? filterQuality,
+  }) {
+    return Transform.translate(
+      key: key,
+      offset: offset,
+      transformHitTests: transformHitTests,
+      filterQuality: filterQuality,
+      child: this,
+    );
+  }
+
+  UnconstrainedBox unconstrainedBox({
+    Key? key,
+    TextDirection? textDirection,
+    AlignmentGeometry alignment = Alignment.center,
+    Axis? constrainedAxis,
+    Clip clipBehavior = Clip.none,
+  }) {
+    return UnconstrainedBox(
+      key: key,
+      textDirection: textDirection,
+      alignment: alignment,
+      constrainedAxis: constrainedAxis,
+      clipBehavior: clipBehavior,
+    );
+  }
+}
