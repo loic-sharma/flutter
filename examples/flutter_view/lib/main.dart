@@ -68,15 +68,16 @@ class _MyHomePageState extends State<MyHomePage> {
             'Platform button tapped $_counter time${ _counter == 1 ? '' : 's' }.',
             style: const TextStyle(fontSize: 17.0),
           )
-            .center()
-            .expanded(),
+          .center()
+          .expanded(),
+
           Row(
             children: <Widget>[
               Image.asset('assets/flutter-mark-square-64.png', scale: 1.5),
               const Text('Flutter', style: TextStyle(fontSize: 30.0)),
             ],
           )
-            .padding(padding: const EdgeInsets.only(bottom: 15.0, left: 5.0)),
+          .padding(padding: const EdgeInsets.only(bottom: 15.0, left: 5.0)),
         ],
       ),
       floatingActionButton: FloatingActionButton(

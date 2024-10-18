@@ -5,6 +5,9 @@
 import 'package:flutter/widgets.dart';
 
 void main() => runApp(
-  const Text('برنامج أهلا بالعالم', textDirection: TextDirection.rtl)
-    .center()
+  const Text(
+    'برنامج أهلا بالعالم',
+    textDirection: TextDirection.rtl,
+  )
+  .center()
 );

@@ -10,5 +10,5 @@ void main() =>
       key: Key('title'),
       textDirection: TextDirection.ltr,
     )
-      .center()
+    .center()
   );

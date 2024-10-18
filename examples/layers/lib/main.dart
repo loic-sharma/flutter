@@ -10,6 +10,6 @@ void main() {
       'Instead run:\nflutter run xxx/yyy.dart',
       textDirection: TextDirection.ltr,
     )
-      .center(),
+    .center(),
   );
 }

@@ -67,8 +67,8 @@ void attachWidgetTreeToRenderTree(RenderProxyBox container) {
         const Rectangle(Color(0xFFFFFF00)),
       ],
     )
-      .sizedBox(height: 300)
-      .directionality(textDirection: TextDirection.ltr),
+    .sizedBox(height: 300)
+    .directionality(textDirection: TextDirection.ltr),
   ).attachToRenderTree(WidgetsBinding.instance.buildOwner!, element);
 }
 
