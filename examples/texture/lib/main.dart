@@ -35,6 +35,7 @@ class _TexturePageState extends State<TexturePage> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          spacing: 10.0,
           children: <Widget>[
             FutureBuilder<int?>(
               future: textureId,
@@ -54,31 +55,25 @@ class _TexturePageState extends State<TexturePage> {
                 }
               },
             ),
-            const SizedBox(height: 10),
             OutlinedButton(
-                child: const Text('Flutter Navy'),
-                onPressed: () => setColor(0x04, 0x2b, 0x59)),
-            const SizedBox(height: 10),
+              child: const Text('Flutter Navy'),
+              onPressed: () => setColor(0x04, 0x2b, 0x59),
+            ),
             OutlinedButton(
                 child: const Text('Flutter Blue'),
                 onPressed: () => setColor(0x05, 0x53, 0xb1)),
-            const SizedBox(height: 10),
             OutlinedButton(
                 child: const Text('Flutter Sky'),
                 onPressed: () => setColor(0x02, 0x7d, 0xfd)),
-            const SizedBox(height: 10),
             OutlinedButton(
                 child: const Text('Red'),
                 onPressed: () => setColor(0xf2, 0x5d, 0x50)),
-            const SizedBox(height: 10),
             OutlinedButton(
                 child: const Text('Yellow'),
                 onPressed: () => setColor(0xff, 0xf2, 0x75)),
-            const SizedBox(height: 10),
             OutlinedButton(
                 child: const Text('Purple'),
                 onPressed: () => setColor(0x62, 0x00, 0xee)),
-            const SizedBox(height: 10),
             OutlinedButton(
                 child: const Text('Green'),
                 onPressed: () => setColor(0x1c, 0xda, 0xc5)),

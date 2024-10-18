@@ -36,43 +36,39 @@ RenderObjectToWidgetElement<RenderBox>? element;
 void attachWidgetTreeToRenderTree(RenderProxyBox container) {
   element = RenderObjectToWidgetAdapter<RenderBox>(
     container: container,
-    child: Directionality(
-      textDirection: TextDirection.ltr,
-      child: SizedBox(
-        height: 300.0,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            const Rectangle(Color(0xFF00FFFF)),
-            Material(
-              child: Container(
-                padding: const EdgeInsets.all(10.0),
-                margin: const EdgeInsets.all(10.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: <Widget>[
-                    ElevatedButton(
-                      child: const Row(
-                        children: <Widget>[
-                          FlutterLogo(),
-                          Text('PRESS ME'),
-                        ],
-                      ),
-                      onPressed: () {
-                        value = value == null ? 0.1 : (value! + 0.1) % 1.0;
-                        attachWidgetTreeToRenderTree(container);
-                      },
-                    ),
-                    CircularProgressIndicator(value: value),
-                  ],
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        const Rectangle(Color(0xFF00FFFF)),
+        Material(
+          child: Container(
+            padding: const EdgeInsets.all(10.0),
+            margin: const EdgeInsets.all(10.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: <Widget>[
+                ElevatedButton(
+                  child: const Row(
+                    children: <Widget>[
+                      FlutterLogo(),
+                      Text('PRESS ME'),
+                    ],
+                  ),
+                  onPressed: () {
+                    value = value == null ? 0.1 : (value! + 0.1) % 1.0;
+                    attachWidgetTreeToRenderTree(container);
+                  },
                 ),
-              ),
+                CircularProgressIndicator(value: value),
+              ],
             ),
-            const Rectangle(Color(0xFFFFFF00)),
-          ],
+          ),
         ),
-      ),
-    ),
+        const Rectangle(Color(0xFFFFFF00)),
+      ],
+    )
+      .sizedBox(height: 300)
+      .directionality(textDirection: TextDirection.ltr),
   ).attachToRenderTree(WidgetsBinding.instance.buildOwner!, element);
 }
 

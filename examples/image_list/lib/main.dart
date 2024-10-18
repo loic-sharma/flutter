@@ -200,21 +200,20 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Row(children: createImageList(images, completers, controllers)),
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Row(children: createImageList(images, completers, controllers)),
+          const Text(
+            'You have pushed the button this many times:',
+          ),
+          Text(
+            '$_counter',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+        ],
+      )
+        .center(),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
         tooltip: 'Increment',
@@ -230,14 +229,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   ) {
     final List<Widget> list = <Widget>[];
     for (int i = 0; i < count; i++) {
-      list.add(Flexible(
-        fit: FlexFit.tight,
-        flex: i + 1,
-        child: RotationTransition(
-          turns: controllers[i],
-          child: createImage(i + 1, completers[i]),
-        ),
-      ));
+      list.add(
+        createImage(i + 1, completers[i])
+          .rotationTransition(turns: controllers[i])
+          .flexible(fit: FlexFit.tight, flex: i + 1),
+      );
     }
     return list;
   }

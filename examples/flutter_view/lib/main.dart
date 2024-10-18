@@ -64,23 +64,19 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Expanded(
-            child: Center(
-              child: Text(
-                'Platform button tapped $_counter time${ _counter == 1 ? '' : 's' }.',
-                style: const TextStyle(fontSize: 17.0),
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.only(bottom: 15.0, left: 5.0),
-            child: Row(
-              children: <Widget>[
-                Image.asset('assets/flutter-mark-square-64.png', scale: 1.5),
-                const Text('Flutter', style: TextStyle(fontSize: 30.0)),
-              ],
-            ),
-          ),
+          Text(
+            'Platform button tapped $_counter time${ _counter == 1 ? '' : 's' }.',
+            style: const TextStyle(fontSize: 17.0),
+          )
+            .center()
+            .expanded(),
+          Row(
+            children: <Widget>[
+              Image.asset('assets/flutter-mark-square-64.png', scale: 1.5),
+              const Text('Flutter', style: TextStyle(fontSize: 30.0)),
+            ],
+          )
+            .padding(padding: const EdgeInsets.only(bottom: 15.0, left: 5.0)),
         ],
       ),
       floatingActionButton: FloatingActionButton(

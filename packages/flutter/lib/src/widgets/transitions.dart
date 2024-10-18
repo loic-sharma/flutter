@@ -1232,3 +1232,20 @@ class AnimatedBuilder extends ListenableBuilder {
   @override
   TransitionBuilder get builder => super.builder;
 }
+
+extension TransitionDecorators on Widget {
+  RotationTransition rotationTransition({
+    Key? key,
+    required Animation<double> turns,
+    Alignment alignment = Alignment.center,
+    FilterQuality? filterQuality,
+  }) {
+    return RotationTransition(
+      key: key,
+      turns: turns,
+      alignment: alignment,
+      filterQuality: filterQuality,
+      child: this,
+    );
+  }
+}

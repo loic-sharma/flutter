@@ -6,26 +6,22 @@ import 'package:flutter/material.dart';
 
 void main() {
   runApp(
-    const DecoratedBox(
-      decoration: BoxDecoration(color: Colors.white),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          textDirection: TextDirection.ltr,
-          children: <Widget>[
-            FlutterLogo(size: 48),
-            Padding(
-              padding: EdgeInsets.all(32),
-              child: Text(
-                'This app is only meant to be run under the Flutter debugger',
-                textDirection: TextDirection.ltr,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black87),
-              ),
-            ),
-          ],
+    const Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        FlutterLogo(size: 48),
+        Padding(
+          padding: EdgeInsets.all(32),
+          child: Text(
+            'This app is only meant to be run under the Flutter debugger',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black87),
+          ),
         ),
-      ),
-    ),
+      ],
+    )
+      .center()
+      .decoratedBox(decoration: BoxDecoration(color: Colors.white))
+      .directionality(textDirection: TextDirection.ltr),
   );
 }
