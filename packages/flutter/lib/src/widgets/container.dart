@@ -15,6 +15,7 @@ import 'package:flutter/rendering.dart';
 import 'basic.dart';
 import 'framework.dart';
 import 'image.dart';
+import 'widget_inspector.dart';
 
 // Examples can assume:
 // late BuildContext context;
@@ -478,7 +479,8 @@ class _DecorationClipper extends CustomClipper<Path> {
   }
 }
 
-extension ContainerDecorators on Widget {
+extension ContainerDecorators on Widget? {
+  @widgetFactory
   Container container({
     Key? key,
     AlignmentGeometry? alignment,
@@ -512,6 +514,7 @@ extension ContainerDecorators on Widget {
     );
   }
 
+  @widgetFactory
   DecoratedBox decoratedBox({
     Key? key,
     required Decoration decoration,

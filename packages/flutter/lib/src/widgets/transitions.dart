@@ -14,6 +14,7 @@ import 'basic.dart';
 import 'container.dart';
 import 'framework.dart';
 import 'text.dart';
+import 'widget_inspector.dart';
 
 export 'package:flutter/rendering.dart' show RelativeRect;
 
@@ -1233,7 +1234,8 @@ class AnimatedBuilder extends ListenableBuilder {
   TransitionBuilder get builder => super.builder;
 }
 
-extension TransitionDecorators on Widget {
+extension TransitionDecorators on Widget? {
+  @widgetFactory
   RotationTransition rotationTransition({
     Key? key,
     required Animation<double> turns,

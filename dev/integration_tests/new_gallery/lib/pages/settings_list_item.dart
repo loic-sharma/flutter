@@ -34,47 +34,43 @@ class ToggleSetting extends StatelessWidget {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    return Semantics(
-      container: true,
-      child: Container(
-        margin: settingItemHeaderMargin,
-        child: Material(
-          shape: RoundedRectangleBorder(borderRadius: settingItemBorderRadius),
-          color: colorScheme.secondary,
-          clipBehavior: Clip.antiAlias,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      SelectableText(
-                        text,
-                        style: textTheme.titleMedium!.apply(
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            SelectableText(
+              text,
+              style: textTheme.titleMedium!.apply(
+                color: colorScheme.onSurface,
               ),
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: 8),
-                child: Switch(
-                  activeColor: colorScheme.primary,
-                  value: value,
-                  onChanged: onChanged,
-                ),
-              ),
-            ],
+            ),
+          ],
+        )
+        .padding(padding: const EdgeInsets.all(16))
+        .expanded(),
+
+        // TODO: Switch has a padding property.
+        // This has precedence over the .padding decorator :(
+        Padding(
+          padding: const EdgeInsetsDirectional.only(end: 8),
+          child: Switch(
+            activeColor: colorScheme.primary,
+            value: value,
+            onChanged: onChanged,
           ),
         ),
-      ),
-    );
+      ],
+    )
+    .material(
+      shape: RoundedRectangleBorder(borderRadius: settingItemBorderRadius),
+      color: colorScheme.secondary,
+      clipBehavior: Clip.antiAlias,
+    )
+    .container(margin: settingItemHeaderMargin)
+    .semantics(container: true);
   }
 }
 
@@ -184,15 +180,10 @@ class _SettingsListItemState<T> extends State<SettingsListItem<T?>>
           subtitle: widget.optionsMap[widget.selectedOption]?.title ?? '',
           onTap: () => widget.onTapSetting(),
         ),
-        Padding(
-          padding: _childrenPadding.value,
-          child: ClipRect(
-            child: Align(
-              heightFactor: _childrenHeightFactor.value,
-              child: child,
-            ),
-          ),
-        ),
+        child
+          .align(heightFactor: _childrenHeightFactor.value)
+          .clipRect()
+          .padding(padding: _childrenPadding.value),
       ],
     );
   }
@@ -282,59 +273,49 @@ class _CategoryHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final TextTheme textTheme = Theme.of(context).textTheme;
-    return Container(
-      margin: margin,
-      child: Material(
-        shape: RoundedRectangleBorder(borderRadius: borderRadius),
-        color: colorScheme.secondary,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Expanded(
-                child: Padding(
-                  padding: padding,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        title,
-                        style: textTheme.titleMedium!.apply(
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      SizeTransition(
-                        sizeFactor: subtitleHeight,
-                        child: Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.labelSmall!.apply(
-                            color: colorScheme.primary,
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              title,
+              style: textTheme.titleMedium!.apply(
+                color: colorScheme.onSurface,
+              ),
+            ),
+            SizeTransition(
+              sizeFactor: subtitleHeight,
+              child: Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.labelSmall!.apply(
+                  color: colorScheme.primary,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsetsDirectional.only(
-                  start: 8,
-                  end: 24,
-                ),
-                child: RotationTransition(
-                  turns: chevronRotation,
-                  child: const Icon(Icons.arrow_drop_down),
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
+            )
+          ],
+        )
+        .padding(padding: padding)
+        .expanded(),
+
+        const Icon(Icons.arrow_drop_down)
+          .rotationTransition(turns: chevronRotation)
+          .padding(padding: const EdgeInsetsDirectional.only(
+            start: 8,
+            end: 24,
+          ))
+      ],
+    )
+    .inkWell(onTap: onTap)
+    .material(
+      shape: RoundedRectangleBorder(borderRadius: borderRadius),
+      color: colorScheme.secondary,
+      clipBehavior: Clip.antiAlias,
+    )
+    .container(margin: margin);
   }
 }

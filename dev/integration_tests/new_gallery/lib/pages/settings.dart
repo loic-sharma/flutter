@@ -281,15 +281,12 @@ class _SettingsPageState extends State<SettingsPage> {
             children: <Widget>[
               if (isDesktop)
                 const SizedBox(height: firstHeaderDesktopTopPadding),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: ExcludeSemantics(
-                  child: Header(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    text: localizations.settingsTitle,
-                  ),
-                ),
-              ),
+              Header(
+                color: Theme.of(context).colorScheme.onSurface,
+                text: localizations.settingsTitle,
+              )
+              .excludeSemantics()
+              .padding(padding: const EdgeInsets.symmetric(horizontal: 32)),
               if (isDesktop)
                 ...settingsListItems
               else ...<Widget>[
@@ -355,24 +352,21 @@ class SettingsAttribution extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isDesktop = isDisplayDesktop(context);
     final double verticalPadding = isDesktop ? 0.0 : 28.0;
-    return MergeSemantics(
-      child: Padding(
-        padding: EdgeInsetsDirectional.only(
-          start: isDesktop ? 24 : 32,
-          end: isDesktop ? 0 : 32,
-          top: verticalPadding,
-          bottom: verticalPadding,
-        ),
-        child: SelectableText(
-          GalleryLocalizations.of(context)!.settingsAttribution,
-          style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSecondary,
-              ),
-          textAlign: isDesktop ? TextAlign.end : TextAlign.start,
-        ),
+    return SelectableText(
+      GalleryLocalizations.of(context)!.settingsAttribution,
+      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+        fontSize: 12,
+        color: Theme.of(context).colorScheme.onSecondary,
       ),
-    );
+      textAlign: isDesktop ? TextAlign.end : TextAlign.start,
+    )
+    .padding(padding: EdgeInsetsDirectional.only(
+      start: isDesktop ? 24 : 32,
+      end: isDesktop ? 0 : 32,
+      top: verticalPadding,
+      bottom: verticalPadding,
+    ))
+    .mergeSemantics();
   }
 }
 
@@ -393,40 +387,37 @@ class _SettingsLink extends StatelessWidget {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final bool isDesktop = isDisplayDesktop(context);
 
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: isDesktop ? 24 : 32,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Icon(
+          icon,
+          color: colorScheme.onSecondary.withOpacity(0.5),
+          size: 24,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(
-              icon,
-              color: colorScheme.onSecondary.withOpacity(0.5),
-              size: 24,
-            ),
-            Flexible(
-              child: Padding(
-                padding: const EdgeInsetsDirectional.only(
-                  start: 16,
-                  top: 12,
-                  bottom: 12,
-                ),
-                child: Text(
-                  title,
-                  style: textTheme.titleSmall!.apply(
-                    color: colorScheme.onSecondary,
-                  ),
-                  textAlign: isDesktop ? TextAlign.end : TextAlign.start,
-                ),
-              ),
-            ),
-          ],
-        ),
+        Text(
+          title,
+          style: textTheme.titleSmall!.apply(
+            color: colorScheme.onSecondary,
+          ),
+          textAlign: isDesktop ? TextAlign.end : TextAlign.start,
+        )
+        .padding(
+          padding: const EdgeInsetsDirectional.only(
+            start: 16,
+            top: 12,
+            bottom: 12,
+          ),
+        )
+        .flexible(),
+      ],
+    )
+    .padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 24 : 32,
       ),
-    );
+    )
+    .inkWell(onTap: onTap);
   }
 }
 

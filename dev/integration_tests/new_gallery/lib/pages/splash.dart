@@ -116,9 +116,9 @@ class _SplashPageState extends State<SplashPage>
             final Animation<RelativeRect> animation = _getPanelAnimation(context, constraints);
             Widget frontLayer = widget.child;
             if (_isSplashVisible) {
-              frontLayer = MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
+              frontLayer = frontLayer
+                .ignorePointer()
+                .gestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: _controller.reverse,
                   onVerticalDragEnd: (DragEndDetails details) {
@@ -126,21 +126,18 @@ class _SplashPageState extends State<SplashPage>
                       _controller.reverse();
                     }
                   },
-                  child: IgnorePointer(child: frontLayer),
-                ),
-              );
+                )
+                .mouseRegion(cursor: SystemMouseCursors.click);
             }
 
             if (isDisplayDesktop(context)) {
-              frontLayer = Padding(
-                padding: const EdgeInsets.only(top: 136),
-                child: ClipRRect(
+              frontLayer = frontLayer
+                .clipRRect(
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(40),
                   ),
-                  child: frontLayer,
-                ),
-              );
+                )
+                .padding(padding: const EdgeInsets.only(top: 136));
             }
 
             return Stack(
@@ -185,19 +182,11 @@ class _SplashBackLayer extends StatelessWidget {
     Widget? child;
     if (isSplashCollapsed) {
       if (isDisplayDesktop(context)) {
-        child = Padding(
-          padding: const EdgeInsets.only(top: 50),
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: onTap,
-                child: flutterLogo,
-              ),
-            ),
-          ),
-        );
+        child = flutterLogo
+          .gestureDetector(onTap: onTap)
+          .mouseRegion(cursor: SystemMouseCursors.click)
+          .align(alignment: Alignment.topCenter)
+          .padding(padding: const EdgeInsets.only(top: 50));
       }
     } else {
       child = Stack(
@@ -213,19 +202,14 @@ class _SplashBackLayer extends StatelessWidget {
       );
     }
 
-    return ExcludeSemantics(
-      child: Material(
+    return child
+      .padding(padding: EdgeInsets.only(
+        bottom: isDisplayDesktop(context) ? homePeekDesktop : homePeekMobile,
+      ))
+      .material(
         // This is the background color of the gifs.
         color: const Color(0xFF030303),
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: isDisplayDesktop(context)
-                ? homePeekDesktop
-                : homePeekMobile,
-          ),
-          child: child,
-        ),
-      ),
-    );
+      )
+      .excludeSemantics();
   }
 }

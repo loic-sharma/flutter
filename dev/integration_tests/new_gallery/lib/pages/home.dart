@@ -193,32 +193,31 @@ class HomePage extends StatelessWidget {
             _DesktopHomeItem(
               child: Row(
                 children: <Widget>[
-                  MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      onTap: () async {
-                        final Uri url = Uri.parse('https://flutter.dev');
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(url);
-                        }
-                      },
-                      excludeFromSemantics: true,
-                      child: FadeInImage(
-                        image: Theme.of(context).colorScheme.brightness ==
-                                Brightness.dark
-                            ? const AssetImage(
-                                'assets/logo/flutter_logo.png',
-                                package: 'flutter_gallery_assets',
-                              )
-                            : const AssetImage(
-                                'assets/logo/flutter_logo_color.png',
-                                package: 'flutter_gallery_assets',
-                              ),
-                        placeholder: MemoryImage(kTransparentImage),
-                        fadeInDuration: entranceAnimationDuration,
-                      ),
-                    ),
-                  ),
+                  FadeInImage(
+                    image: Theme.of(context).colorScheme.brightness ==
+                            Brightness.dark
+                        ? const AssetImage(
+                            'assets/logo/flutter_logo.png',
+                            package: 'flutter_gallery_assets',
+                          )
+                        : const AssetImage(
+                            'assets/logo/flutter_logo_color.png',
+                            package: 'flutter_gallery_assets',
+                          ),
+                    placeholder: MemoryImage(kTransparentImage),
+                    fadeInDuration: entranceAnimationDuration,
+                  )
+                  .gestureDetector(
+                    onTap: () async {
+                      final Uri url = Uri.parse('https://flutter.dev');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url);
+                      }
+                    },
+                    excludeFromSemantics: true,
+                  )
+                  .mouseRegion(cursor: SystemMouseCursors.click),
+
                   const Expanded(
                     child: Wrap(
                       crossAxisAlignment: WrapCrossAlignment.center,
@@ -290,23 +289,18 @@ class Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: AlignmentDirectional.centerStart,
-      child: Padding(
-        padding: EdgeInsets.only(
-          top: isDisplayDesktop(context) ? 63 : 15,
-          bottom: isDisplayDesktop(context) ? 21 : 11,
-        ),
-        child: SelectableText(
-          text,
-          style: Theme.of(context).textTheme.headlineMedium!.apply(
-                color: color,
-                fontSizeDelta:
-                    isDisplayDesktop(context) ? desktopDisplay1FontDelta : 0,
-              ),
-        ),
+    return SelectableText(
+      text,
+      style: Theme.of(context).textTheme.headlineMedium!.apply(
+        color: color,
+        fontSizeDelta: isDisplayDesktop(context) ? desktopDisplay1FontDelta : 0,
       ),
-    );
+    )
+    .padding(padding: EdgeInsets.only(
+      top: isDisplayDesktop(context) ? 63 : 15,
+      bottom: isDisplayDesktop(context) ? 21 : 11,
+    ))
+    .align(alignment: AlignmentDirectional.centerStart);
   }
 }
 
@@ -458,23 +452,21 @@ class _AnimatedHomePageState extends State<_AnimatedHomePage>
             ),
           ],
         ),
-        Align(
-          alignment: Alignment.topCenter,
-          child: GestureDetector(
-            onVerticalDragEnd: (DragEndDetails details) {
-              if (details.velocity.pixelsPerSecond.dy > 200) {
-                ToggleSplashNotification().dispatch(context);
-              }
-            },
-            child: SafeArea(
-              child: Container(
-                height: 40,
-                // If we don't set the color, gestures are not detected.
-                color: Colors.transparent,
-              ),
-            ),
-          ),
-        ),
+
+        Container(
+          height: 40,
+          // If we don't set the color, gestures are not detected.
+          color: Colors.transparent,
+        )
+        .safeArea()
+        .gestureDetector(
+          onVerticalDragEnd: (DragEndDetails details) {
+            if (details.velocity.pixelsPerSecond.dy > 200) {
+              ToggleSplashNotification().dispatch(context);
+            }
+          }
+        )
+        .align(alignment: Alignment.topCenter),
       ],
     );
   }
@@ -487,15 +479,14 @@ class _DesktopHomeItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      child: Container(
+    return child
+      .container(
         constraints: const BoxConstraints(maxWidth: maxHomeItemWidth),
         padding: const EdgeInsets.symmetric(
           horizontal: _horizontalDesktopPadding,
-        ),
-        child: child,
-      ),
-    );
+        )
+      )
+      .align();
   }
 }
 

@@ -10,6 +10,7 @@ import 'basic.dart';
 import 'debug.dart';
 import 'framework.dart';
 import 'media_query.dart';
+import 'widget_inspector.dart';
 
 /// A widget that insets its child by sufficient padding to avoid intrusions by
 /// the operating system.
@@ -209,5 +210,29 @@ class SliverSafeArea extends StatelessWidget {
     properties.add(FlagProperty('top', value: top, ifTrue: 'avoid top padding'));
     properties.add(FlagProperty('right', value: right, ifTrue: 'avoid right padding'));
     properties.add(FlagProperty('bottom', value: bottom, ifTrue: 'avoid bottom padding'));
+  }
+}
+
+extension SafeAreaDecorators on Widget {
+  @widgetFactory
+  SafeArea safeArea({
+    Key? key,
+    bool left = true,
+    bool top = true,
+    bool right = true,
+    bool bottom = true,
+    EdgeInsets minimum = EdgeInsets.zero,
+    bool maintainBottomViewPadding = false,
+  }) {
+    return SafeArea(
+      key: key,
+      left: left,
+      top: top,
+      right: right,
+      bottom: bottom,
+      minimum: minimum,
+      maintainBottomViewPadding: maintainBottomViewPadding,
+      child: this,
+    );
   }
 }

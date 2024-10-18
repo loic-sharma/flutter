@@ -22,6 +22,7 @@ import 'debug.dart';
 import 'framework.dart';
 import 'localizations.dart';
 import 'visibility.dart';
+import 'widget_inspector.dart';
 import 'widget_span.dart';
 
 export 'package:flutter/animation.dart';
@@ -7850,6 +7851,44 @@ class _RenderColoredBox extends RenderProxyBoxWithHitTestBehavior {
 }
 
 extension BasicDecorators on Widget {
+  @widgetFactory
+  Directionality directionality({
+    Key? key,
+    required TextDirection textDirection,
+  }) {
+    return Directionality(
+      key: key,
+      textDirection: textDirection,
+      child: this,
+    );
+  }
+
+  @widgetFactory
+  Expanded expanded({Key? key, int flex = 1}) {
+    return Expanded(
+      key: key,
+      flex: flex,
+      child: this,
+    );
+  }
+
+  @widgetFactory
+  Flexible flexible({
+    Key? key,
+    int flex = 1,
+    FlexFit fit = FlexFit.loose,
+  }) {
+    return Flexible(
+      key: key,
+      flex: flex,
+      fit: fit,
+      child: this,
+    );
+  }
+}
+
+extension NullableBasicDecorators on Widget? {
+  @widgetFactory
   AbsorbPointer absorbPointer({
     Key? key,
     bool absorbing = true,
@@ -7864,6 +7903,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   Align align({
     Key? key,
     AlignmentGeometry alignment = Alignment.center,
@@ -7879,6 +7919,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   AspectRatio aspectRatio({
     Key? key,
     required double aspectRatio,
@@ -7890,6 +7931,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   BackdropFilter backdropFilter({
     Key? key,
     required ui.ImageFilter filter,
@@ -7903,6 +7945,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   Baseline baseline({
     Key? key,
     required double baseline,
@@ -7916,6 +7959,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   BlockSemantics blockSemantics({
     Key? key,
     bool blocking = true,
@@ -7927,6 +7971,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   Center center({
     Key? key,
     double? widthFactor,
@@ -7940,6 +7985,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   ClipOval clipOval({
     Key? key,
     CustomClipper<Rect>? clipper,
@@ -7953,6 +7999,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   ClipPath clipPath({
     Key? key,
     CustomClipper<Path>? clipper,
@@ -7966,6 +8013,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   ClipRect clipRect({
     Key? key,
     CustomClipper<Rect>? clipper,
@@ -7979,6 +8027,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   ClipRRect clipRRect({
     Key? key,
     BorderRadiusGeometry borderRadius = BorderRadius.zero,
@@ -7992,6 +8041,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   ColoredBox coloredBox({Key? key, required Color color}) {
     return ColoredBox(
       key: key,
@@ -8000,6 +8050,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   ConstrainedBox constrainedBox({
     Key? key,
     required BoxConstraints constraints
@@ -8011,17 +8062,7 @@ extension BasicDecorators on Widget {
     );
   }
 
-  Directionality directionality({
-    Key? key,
-    required TextDirection textDirection,
-  }) {
-    return Directionality(
-      key: key,
-      textDirection: textDirection,
-      child: this,
-    );
-  }
-
+  @widgetFactory
   ExcludeSemantics excludeSemantics({Key? key, bool excluding = true}) {
     return ExcludeSemantics(
       key: key,
@@ -8030,14 +8071,7 @@ extension BasicDecorators on Widget {
     );
   }
 
-  Expanded expanded({Key? key, int flex = 1}) {
-    return Expanded(
-      key: key,
-      flex: flex,
-      child: this,
-    );
-  }
-
+  @widgetFactory
   FittedBox fittedBox({
     Key? key,
     BoxFit fit = BoxFit.contain,
@@ -8053,19 +8087,7 @@ extension BasicDecorators on Widget {
     );
   }
 
-  Flexible flexible({
-    Key? key,
-    int flex = 1,
-    FlexFit fit = FlexFit.loose,
-  }) {
-    return Flexible(
-      key: key,
-      flex: flex,
-      fit: fit,
-      child: this,
-    );
-  }
-
+  @widgetFactory
   FractionalTranslation fractionalTranslation({
     Key? key,
     required Offset translation,
@@ -8079,6 +8101,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   FractionallySizedBox fractionallySizedBox({
     Key? key,
     AlignmentGeometry alignment = Alignment.center,
@@ -8094,6 +8117,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   IgnorePointer ignorePointer({
     Key? key,
     bool ignoring = true,
@@ -8108,6 +8132,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   IntrinsicHeight intrinsicHeight({Key? key}) {
     return IntrinsicHeight(
       key: key,
@@ -8115,6 +8140,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   IntrinsicWidth intrinsicWidth({Key? key}) {
     return IntrinsicWidth(
       key: key,
@@ -8122,6 +8148,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   LimitedBox limitedBox({
     Key? key,
     double maxWidth = double.infinity,
@@ -8135,6 +8162,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   MergeSemantics mergeSemantics({Key? key}) {
     return MergeSemantics(
       key: key,
@@ -8142,6 +8170,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   MouseRegion mouseRegion({
     Key? key,
     PointerEnterEventListener? onEnter,
@@ -8163,6 +8192,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   Opacity opacity({
     Key? key,
     required double opacity,
@@ -8176,6 +8206,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   OverflowBox overflowBox({
     Key? key,
     AlignmentGeometry alignment = Alignment.center,
@@ -8197,6 +8228,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   Padding padding({
     Key? key,
     required EdgeInsetsGeometry padding,
@@ -8208,6 +8240,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   RotatedBox rotatedBox({
     Key? key,
     required int quarterTurns,
@@ -8219,6 +8252,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   Semantics semantics({
     Key? key,
     bool container = false,
@@ -8363,6 +8397,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   SizedBox sizedBox({
     Key? key,
     double? width,
@@ -8379,6 +8414,7 @@ extension BasicDecorators on Widget {
   // TODO: Name?
   // TODO: Alternative: create a SizedBoxDecorator object that is also callable.
   // This would allow foo.sizedBox.expand() or foo.sizedBox(width: 5, height: 5)
+  @widgetFactory
   SizedBox sizedBoxExpand({Key? key}) {
     return SizedBox.expand(
       key: key,
@@ -8387,6 +8423,7 @@ extension BasicDecorators on Widget {
   }
 
   // TODO: Name?
+  @widgetFactory
   SizedBox sizedBoxfromSize({Key? key, Size? size}) {
     return SizedBox.fromSize(
       key: key,
@@ -8395,6 +8432,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   SizedBox sizedBoxShrink({Key? key}) {
     return SizedBox.shrink(
       key: key,
@@ -8402,6 +8440,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   SizedBox sizedBoxSquare({
     Key? key,
     double? dimension,
@@ -8413,6 +8452,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   SizedOverflowBox sizedOverflowBox({
     Key? key,
     required Size size,
@@ -8426,6 +8466,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   Transform transform({
     Key? key,
     required Matrix4 transform,
@@ -8446,6 +8487,7 @@ extension BasicDecorators on Widget {
   }
 
   // TODO: Name?
+  @widgetFactory
   Transform transformFlip({
     Key? key,
     bool flipX = false,
@@ -8466,6 +8508,7 @@ extension BasicDecorators on Widget {
   }
 
   // TODO: Name?
+  @widgetFactory
   Transform transformRotate({
     Key? key,
     required double angle,
@@ -8485,6 +8528,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   Transform transformScale({
     Key? key,
     double? scale,
@@ -8507,6 +8551,7 @@ extension BasicDecorators on Widget {
   }
 
   // TODO: Name?
+  @widgetFactory
   Transform transformTranslate({
     Key? key,
     required Offset offset,
@@ -8522,6 +8567,7 @@ extension BasicDecorators on Widget {
     );
   }
 
+  @widgetFactory
   UnconstrainedBox unconstrainedBox({
     Key? key,
     TextDirection? textDirection,

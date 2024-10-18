@@ -973,7 +973,8 @@ class _ShapeBorderPainter extends CustomPainter {
   }
 }
 
-extension MaterialDecorators on Widget {
+extension MaterialDecorators on Widget? {
+  @widgetFactory
   Material material({
     Key? key,
     MaterialType type = MaterialType.canvas,
