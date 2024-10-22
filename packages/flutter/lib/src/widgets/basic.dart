@@ -7863,6 +7863,25 @@ extension BasicDecorators on Widget {
     );
   }
 
+  /// Wraps a widget with an [Expanded] widget to make it fill the available
+  /// space in a [Row], [Column], or [Flex].
+  ///
+  /// {@tool snippet}
+  ///
+  /// A column that contains text and a blue box that fills the remaining
+  /// vertical space.
+  ///
+  /// ```dart
+  /// Column(
+  ///   children: [
+  ///     Text('Hello world'),
+  ///
+  ///     Container(color: Colors.blue)
+  ///       .expanded(),
+  ///   ],
+  /// )
+  /// ```
+  /// {@end-tool}
   @widgetFactory
   Expanded expanded({Key? key, int flex = 1}) {
     return Expanded(
