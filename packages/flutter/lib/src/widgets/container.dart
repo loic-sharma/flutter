@@ -480,6 +480,23 @@ class _DecorationClipper extends CustomClipper<Path> {
 }
 
 extension ContainerDecorators on Widget? {
+  /// Wraps a widget with a [Container] widget to add alignment, padding,
+  /// color, decorations, sizes, transforms, etc...
+  ///
+  /// {@tool snippet}
+  ///
+  /// A [FlutterLogo] that's centered, with 8 pixels of padding in each
+  /// direction, on a blue background.
+  ///
+  /// ```dart
+  /// const FlutterLogo(size: 60)
+  ///   .container(
+  ///     alignment: Alignment.center,
+  ///     padding: EdgeInsets.all(8.0),
+  ///     color: Colors.blue,
+  ///   )
+  /// ```
+  /// {@end-tool}
   @widgetFactory
   Container container({
     Key? key,
@@ -514,6 +531,30 @@ extension ContainerDecorators on Widget? {
     );
   }
 
+
+  /// Wraps a widget with a [DecoratedBox] to paint a [Decoration].
+  ///
+  /// {@tool snippet}
+  ///
+  /// Text that has a rounded border and a shadow.
+  ///
+  /// ```dart
+  /// const Text('Hello world')
+  ///   .decoratedBox(
+  ///     decoration: BoxDecoration(
+  ///       border: Border.all(width: 1),
+  ///       borderRadius: BorderRadius.circular(10),
+  ///       boxShadow: [
+  ///         BoxShadow(
+  ///           color: Colors.grey,
+  ///           offset: Offset(5, 5),
+  ///           blurRadius: 10,
+  ///         )
+  ///       ],
+  ///     ),
+  ///   )
+  /// ```
+  /// {@end-tool}
   @widgetFactory
   DecoratedBox decoratedBox({
     Key? key,

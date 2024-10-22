@@ -7851,6 +7851,18 @@ class _RenderColoredBox extends RenderProxyBoxWithHitTestBehavior {
 }
 
 extension BasicDecorators on Widget {
+  /// Wraps a widget with a [Directionality] widget to set its text direction.
+  ///
+  /// {@tool snippet}
+  ///
+  /// A [FlutterLogo] with 8 pixels of padding on its right.
+  ///
+  /// ```dart
+  /// const FlutterLogo()
+  ///   .padding(EdgeInsetsDirectional.only(start: 8.0))
+  ///   .directionality(TextDirection.rtl)
+  /// ```
+  /// {@end-tool}
   @widgetFactory
   Directionality directionality({
     Key? key,
@@ -8037,6 +8049,17 @@ extension NullableBasicDecorators on Widget? {
     );
   }
 
+  /// Wraps a widget with a [ClipOval] widget to clip it with an oval.
+  ///
+  /// {@tool snippet}
+  ///
+  /// An image of a cat clipped with an oval.
+  ///
+  /// ```dart
+  /// Image.asset('images/cat.png')
+  ///   .clipOval()
+  /// ```
+  /// {@end-tool}
   @widgetFactory
   ClipOval clipOval({
     Key? key,
@@ -8065,6 +8088,17 @@ extension NullableBasicDecorators on Widget? {
     );
   }
 
+  /// Wraps a widget with a [ClipRect] widget to clip it with a rectangle.
+  ///
+  /// {@tool snippet}
+  ///
+  /// An image of a cat clipped with a rectangle.
+  ///
+  /// ```dart
+  /// Image.asset('images/cat.png')
+  ///   .clipRRect()
+  /// ```
+  /// {@end-tool}
   @widgetFactory
   ClipRect clipRect({
     Key? key,
@@ -8079,6 +8113,18 @@ extension NullableBasicDecorators on Widget? {
     );
   }
 
+  /// Wraps a widget with a [ClipRRect] widget to clip it with a rounded
+  /// rectangle.
+  ///
+  /// {@tool snippet}
+  ///
+  /// An image of a cat clipped with a rounded rectangle.
+  ///
+  /// ```dart
+  /// Image.asset('images/cat.png')
+  ///   .clipRRect()
+  /// ```
+  /// {@end-tool}
   @widgetFactory
   ClipRRect clipRRect({
     Key? key,
@@ -8234,6 +8280,21 @@ extension NullableBasicDecorators on Widget? {
     );
   }
 
+  /// Wraps a widget with a [MouseRegion] to track the movement of mice.
+  ///
+  /// {@tool snippet}
+  ///
+  /// A `FlutterLogo` that invokes callbacks on pointer events.
+  ///
+  /// ```dart
+  /// const FlutterLogo()
+  ///   .mouseRegion(
+  ///     onEnter: _onEnter,
+  ///     onExit: _onExit,
+  ///     onHover: _onHover,
+  ///   )
+  /// ```
+  /// {@end-tool}
   @widgetFactory
   MouseRegion mouseRegion({
     Key? key,
