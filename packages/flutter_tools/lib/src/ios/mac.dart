@@ -18,6 +18,7 @@ import '../base/utils.dart';
 import '../build_info.dart';
 import '../cache.dart';
 import '../device.dart';
+import '../features.dart';
 import '../flutter_manifest.dart';
 import '../flutter_plugins.dart';
 import '../globals.dart' as globals;
@@ -175,8 +176,9 @@ Future<XcodeBuildResult> buildXcodeProject({
         logger: globals.logger,
         fileSystem: globals.fs,
         plistParser: globals.plistParser,
+        features: featureFlags,
       ),
-      SwiftPackageManagerGitignoreMigration(project, globals.logger),
+    SwiftPackageManagerGitignoreMigration(project, globals.logger),
   ];
 
   final ProjectMigration migration = ProjectMigration(migrators);

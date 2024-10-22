@@ -13,6 +13,7 @@ import '../base/terminal.dart';
 import '../base/utils.dart';
 import '../build_info.dart';
 import '../convert.dart';
+import '../features.dart';
 import '../globals.dart' as globals;
 import '../ios/xcode_build_settings.dart';
 import '../ios/xcodeproj.dart';
@@ -100,8 +101,9 @@ Future<void> buildMacOS({
         logger: globals.logger,
         fileSystem: globals.fs,
         plistParser: globals.plistParser,
+        features: featureFlags,
       ),
-      SwiftPackageManagerGitignoreMigration(flutterProject, globals.logger),
+    SwiftPackageManagerGitignoreMigration(flutterProject, globals.logger),
   ];
 
   final ProjectMigration migration = ProjectMigration(migrators);
