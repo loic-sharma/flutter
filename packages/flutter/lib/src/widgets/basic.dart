@@ -7903,24 +7903,10 @@ extension NullableBasicDecorators on Widget? {
     );
   }
 
-  /// A decorator that aligns its child within itself and optionally sizes
-  /// itself based on the child's size.
-  ///
-  /// For example, to align a box at the bottom right, you would pass this box a
-  /// tight constraint that is bigger than the child's natural size,
-  /// with an alignment of [Alignment.bottomRight].
-  ///
-  /// {@youtube 560 315 https://www.youtube.com/watch?v=g2E7yl3MwMk}
-  ///
-  /// This widget will be as big as possible if its dimensions are constrained and
-  /// [widthFactor] and [heightFactor] are null. If a dimension is unconstrained
-  /// and the corresponding size factor is null then the widget will match its
-  /// child's size in that dimension. If a size factor is non-null then the
-  /// corresponding dimension of this widget will be the product of the child's
-  /// dimension and the size factor. For example if widthFactor is 2.0 then
-  /// the width of this widget will always be twice its child's width.
+  /// Wraps a widget with an [Align] widget to align and optionally size it.
   ///
   /// {@tool snippet}
+  ///
   /// The [Align] widget in this example uses one of the defined constants from
   /// [Alignment], [Alignment.topRight]. This places the [FlutterLogo] in the top
   /// right corner of the parent blue [Container].
@@ -7928,105 +7914,16 @@ extension NullableBasicDecorators on Widget? {
   /// ![A blue square container with the Flutter logo in the top right corner.](https://flutter.github.io/assets-for-api-docs/assets/widgets/align_constant.png)
   ///
   /// ```dart
-  /// const FlutterLogo(
-  ///   size: 60,
-  /// )
-  /// .align(alignment: Alignment.topRight)
-  /// .container(
-  ///   height: 120.0,
-  ///   width: 120.0,
-  ///   color: Colors.blue[50],
-  /// )
-  /// .center()
+  /// const FlutterLogo(size: 60)
+  ///   .align(alignment: Alignment.topRight)
+  ///   .container(
+  ///     height: 120.0,
+  ///     width: 120.0,
+  ///     color: Colors.blue[50],
+  ///   )
+  ///   .center()
   /// ```
   /// {@end-tool}
-  ///
-  /// ## How it works
-  ///
-  /// The [alignment] property describes a point in the `child`'s coordinate system
-  /// and a different point in the coordinate system of this widget. The [Align]
-  /// widget positions the `child` such that both points are lined up on top of
-  /// each other.
-  ///
-  /// {@tool snippet}
-  /// The [Alignment] used in the following example defines two points:
-  ///
-  ///   * (0.2 * width of [FlutterLogo]/2 + width of [FlutterLogo]/2, 0.6 * height
-  ///     of [FlutterLogo]/2 + height of [FlutterLogo]/2) = (36.0, 48.0) in the
-  ///     coordinate system of the [FlutterLogo].
-  ///   * (0.2 * width of [Align]/2 + width of [Align]/2, 0.6 * height
-  ///     of [Align]/2 + height of [Align]/2) = (72.0, 96.0) in the
-  ///     coordinate system of the [Align] widget (blue area).
-  ///
-  /// The [Align] widget positions the [FlutterLogo] such that the two points are on
-  /// top of each other. In this example, the top left of the [FlutterLogo] will
-  /// be placed at (72.0, 96.0) - (36.0, 48.0) = (36.0, 48.0) from the top left of
-  /// the [Align] widget.
-  ///
-  /// ![A blue square container with the Flutter logo positioned according to the
-  /// Alignment specified above. A point is marked at the center of the container
-  /// for the origin of the Alignment coordinate system.](https://flutter.github.io/assets-for-api-docs/assets/widgets/align_alignment.png)
-  ///
-  /// ```dart
-  /// const FlutterLogo(
-  ///   size: 60,
-  /// )
-  /// .align(alignment: const Alignment(0.2, 0.6))
-  /// .container(
-  ///   height: 120.0,
-  ///   width: 120.0,
-  ///   color: Colors.blue[50],
-  /// )
-  /// .center()
-  /// ```
-  /// {@end-tool}
-  ///
-  /// {@tool snippet}
-  /// The [FractionalOffset] used in the following example defines two points:
-  ///
-  ///   * (0.2 * width of [FlutterLogo], 0.6 * height of [FlutterLogo]) = (12.0, 36.0)
-  ///     in the coordinate system of the [FlutterLogo].
-  ///   * (0.2 * width of [Align], 0.6 * height of [Align]) = (24.0, 72.0) in the
-  ///     coordinate system of the [Align] widget (blue area).
-  ///
-  /// The [Align] widget positions the [FlutterLogo] such that the two points are on
-  /// top of each other. In this example, the top left of the [FlutterLogo] will
-  /// be placed at (24.0, 72.0) - (12.0, 36.0) = (12.0, 36.0) from the top left of
-  /// the [Align] widget.
-  ///
-  /// The [FractionalOffset] class uses a coordinate system with an origin in the top-left
-  /// corner of the [Container] in difference to the center-oriented system used in
-  /// the example above with [Alignment].
-  ///
-  /// ![A blue square container with the Flutter logo positioned according to the
-  /// FractionalOffset specified above. A point is marked at the top left corner
-  /// of the container for the origin of the FractionalOffset coordinate system.](https://flutter.github.io/assets-for-api-docs/assets/widgets/align_fractional_offset.png)
-  ///
-  /// ```dart
-  /// const FlutterLogo(
-  ///   size: 60,
-  /// )
-  /// .align(alignment: const FractionalOffset(0.2, 0.6))
-  /// .container(
-  ///   height: 120.0,
-  ///   width: 120.0,
-  ///   color: Colors.blue[50],
-  /// )
-  /// .center()
-  /// ```
-  /// {@end-tool}
-  ///
-  /// See also:
-  ///
-  ///  * [AnimatedAlign], which animates changes in [alignment] smoothly over a
-  ///    given duration.
-  ///  * [CustomSingleChildLayout], which uses a delegate to control the layout of
-  ///    a single child.
-  ///  * [center], which is the same as [Align] but with the [alignment] always
-  ///    set to [Alignment.center].
-  ///  * [FractionallySizedBox], which sizes its child based on a fraction of its
-  ///    own size and positions the child according to an [Alignment] value.
-  ///  * The [catalog of layout widgets](https://flutter.dev/widgets/layout/).
   @widgetFactory
   Align align({
     Key? key,
@@ -8095,25 +7992,18 @@ extension NullableBasicDecorators on Widget? {
     );
   }
 
-  /// A decorator that centers its child within itself.
+  /// Wraps a widget with a [Center] widget to center it.
   ///
-  /// This widget will be as big as possible if its dimensions are constrained and
-  /// [widthFactor] and [heightFactor] are null. If a dimension is unconstrained
-  /// and the corresponding size factor is null then the widget will match its
-  /// child's size in that dimension. If a size factor is non-null then the
-  /// corresponding dimension of this widget will be the product of the child's
-  /// dimension and the size factor. For example if widthFactor is 2.0 then
-  /// the width of this widget will always be twice its child's width.
+  /// {@tool snippet}
   ///
-  /// See also:
+  /// A grey square containing the [FlutterLogo] in its center.
   ///
-  ///  * [Align], which lets you arbitrarily position a child within itself,
-  ///    rather than just centering it.
-  ///  * [Row], a widget that displays its children in a horizontal array.
-  ///  * [Column], a widget that displays its children in a vertical array.
-  ///  * [Container], a convenience widget that combines common painting,
-  ///    positioning, and sizing widgets.
-  ///  * The [catalog of layout widgets](https://flutter.dev/widgets/layout/).
+  /// ```dart
+  /// const FlutterLogo(size: 60)
+  ///   .center()
+  ///   .container(color: Colors.grey)
+  /// ```
+  /// {@end-tool}
   @widgetFactory
   Center center({
     Key? key,
@@ -8184,8 +8074,18 @@ extension NullableBasicDecorators on Widget? {
     );
   }
 
-  /// A decorator that paints its area with a specified [Color] and then draws
-  /// its child on top of that color.
+  /// Wraps a widget with a [Color] widget to draw it on top of a color.
+  ///
+  /// {@tool snippet}
+  ///
+  /// A grey square containing the [FlutterLogo] in its center.
+  ///
+  /// ```dart
+  /// const FlutterLogo(size: 60)
+  ///   .center()
+  ///   .coloredBox(color: Colors.grey)
+  /// ```
+  /// {@end-tool}
   @widgetFactory
   ColoredBox coloredBox({Key? key, required Color color}) {
     return ColoredBox(
@@ -8337,106 +8237,17 @@ extension NullableBasicDecorators on Widget? {
     );
   }
 
-  /// A widget that makes its child partially transparent.
-  ///
-  /// This decorator paints its child into an intermediate buffer and then blends
-  /// the child back into the scene partially transparent.
-  ///
-  /// For values of opacity other than 0.0 and 1.0, this class is relatively
-  /// expensive because it requires painting the child into an intermediate
-  /// buffer. For the value 0.0, the child is not painted at all. For the
-  /// value 1.0, the child is painted immediately without an intermediate buffer.
-  ///
-  /// The presence of the intermediate buffer which has a transparent background
-  /// by default may cause some child widgets to behave differently. For example
-  /// a [BackdropFilter] child will only be able to apply its filter to the content
-  /// between this widget and the backdrop child and may require adjusting the
-  /// [BackdropFilter.blendMode] property to produce the desired results.
-  ///
-  /// {@youtube 560 315 https://www.youtube.com/watch?v=9hltevOHQBw}
+  /// Wraps a widget in an [Opacity] widget to make it partially transparent.
   ///
   /// {@tool snippet}
   ///
-  /// This example shows some [Text] when the `_visible` member field is true, and
-  /// hides it when it is false:
+  /// A [FlutterLogo] that is semi-transparent.
   ///
   /// ```dart
-  /// const Text('Now you see me, now you don't!')
-  ///   .opacity(opacity: _visible ? 1.0 : 0.0)
+  /// const FlutterLogo(size: 60)
+  ///   .opacity(opacity. 0.5)
   /// ```
   /// {@end-tool}
-  ///
-  /// This is more efficient than adding and removing the child widget from the
-  /// tree on demand.
-  ///
-  /// ## Performance considerations for opacity animation
-  ///
-  /// Animating an [Opacity] widget directly causes the widget (and possibly its
-  /// subtree) to rebuild each frame, which is not very efficient. Consider using
-  /// one of these alternative widgets instead:
-  ///
-  ///  * [AnimatedOpacity], which uses an animation internally to efficiently
-  ///    animate opacity.
-  ///  * [FadeTransition], which uses a provided animation to efficiently animate
-  ///    opacity.
-  ///
-  /// ## Transparent image
-  ///
-  /// If only a single [Image] or [Color] needs to be composited with an opacity
-  /// between 0.0 and 1.0, it's much faster to directly use them without [Opacity]
-  /// widgets.
-  ///
-  /// For example, `Container(color: Color.fromRGBO(255, 0, 0, 0.5))` is much
-  /// faster than `Container(color: Colors.red).opacity(opacity: 0.5)`.
-  ///
-  /// {@tool snippet}
-  ///
-  /// The following example draws an [Image] with 0.5 opacity without using
-  /// [Opacity]:
-  ///
-  /// ```dart
-  /// Image.network(
-  ///   'https://raw.githubusercontent.com/flutter/assets-for-api-docs/main/packages/diagrams/assets/blend_mode_destination.jpeg',
-  ///   color: const Color.fromRGBO(255, 255, 255, 0.5),
-  ///   colorBlendMode: BlendMode.modulate
-  /// )
-  /// ```
-  ///
-  /// {@end-tool}
-  ///
-  /// Directly drawing an [Image] or [Color] with opacity is faster than using
-  /// [Opacity] on top of them because [Opacity] could apply the opacity to a
-  /// group of widgets and therefore a costly offscreen buffer will be used.
-  /// Drawing content into the offscreen buffer may also trigger render target
-  /// switches and such switching is particularly slow in older GPUs.
-  ///
-  /// ## Hit testing
-  ///
-  /// Setting the [opacity] to zero does not prevent hit testing from being applied
-  /// to the descendants of the [Opacity] widget. This can be confusing for the
-  /// user, who may not see anything, and may believe the area of the interface
-  /// where the [Opacity] is hiding a widget to be non-interactive.
-  ///
-  /// With certain widgets, such as [Flow], that compute their positions only when
-  /// they are painted, this can actually lead to bugs (from unexpected geometry
-  /// to exceptions), because those widgets are not painted by the [Opacity]
-  /// widget at all when the [opacity] is zero.
-  ///
-  /// To avoid such problems, it is generally a good idea to use an
-  /// [IgnorePointer] widget when setting the [opacity] to zero. This prevents
-  /// interactions with any children in the subtree.
-  ///
-  /// See also:
-  ///
-  ///  * [Visibility], which can hide a child more efficiently (albeit less
-  ///    subtly, because it is either visible or hidden, rather than allowing
-  ///    fractional opacity values). Specifically, the [Visibility.maintain]
-  ///    constructor is equivalent to using an opacity widget with values of
-  ///    `0.0` or `1.0`.
-  ///  * [ShaderMask], which can apply more elaborate effects to its child.
-  ///  * [Transform], which applies an arbitrary transform to its child widget at
-  ///    paint time.
-  ///  * [SliverOpacity], the sliver version of this widget.
   @widgetFactory
   Opacity opacity({
     Key? key,
@@ -8473,37 +8284,17 @@ extension NullableBasicDecorators on Widget? {
     );
   }
 
-  /// Wraps a widget with the given padding.
-  ///
-  /// {@youtube 560 315 https://www.youtube.com/watch?v=oD5RtLhhubg}
-  ///
-  /// When passing layout constraints to its child, padding shrinks the
-  /// constraints by the given padding, causing the child to layout at a smaller
-  /// size. Padding then sizes itself to its child's size, inflated by the
-  /// padding, effectively creating empty space around the child.
+  /// Wraps a widget with a [Padding] widget to pad it.
   ///
   /// {@tool snippet}
   ///
-  /// This snippet creates "Hello World!" [Text] inside a [Card] that is indented
-  /// by sixteen pixels in each direction.
-  ///
-  /// ![](https://flutter.github.io/assets-for-api-docs/assets/widgets/padding.png)
+  /// A [FlutterLogo] that is indented by sixteen pixels in each direction.
   ///
   /// ```dart
-  /// const Card(
-  ///   child: Text('Hello World!')
-  ///     .padding(padding: EdgeInsets.all(16.0)),
-  /// )
+  /// const FlutterLogo(size: 60)
+  ///   .padding(padding: EdgeInsets.all(16.0))
   /// ```
   /// {@end-tool}
-  ///
-  /// See also:
-  ///
-  ///  * [EdgeInsets], the class that is used to describe the padding dimensions.
-  ///  * [AnimatedPadding], which animates changes in [padding] over a given
-  ///    duration.
-  ///  * [SliverPadding], the sliver equivalent of this widget.
-  ///  * The [catalog of layout widgets](https://flutter.dev/widgets/layout/).
   @widgetFactory
   Padding padding({
     Key? key,
@@ -8673,59 +8464,21 @@ extension NullableBasicDecorators on Widget? {
     );
   }
 
-  /// A box with a specified size.
-  ///
-  /// If given a child, this widget forces it to have a specific width and/or height.
-  /// These values will be ignored if this widget's parent does not permit them.
-  /// For example, this happens if the parent is the screen (forces the child to
-  /// be the same size as the parent), or another [SizedBox] (forces its child to
-  /// have a specific width and/or height). This can be remedied by wrapping the
-  /// child [SizedBox] in a widget that does permit it to be any size up to the
-  /// size of the parent, such as [Center] or [Align].
-  ///
-  /// If either the width or height is null, this widget will try to size itself to
-  /// match the child's size in that dimension. If the child's size depends on the
-  /// size of its parent, the height and width must be provided.
-  ///
-  /// If not given a child, [SizedBox] will try to size itself as close to the
-  /// specified height and width as possible given the parent's constraints. If
-  /// [height] or [width] is null or unspecified, it will be treated as zero.
-  ///
-  /// The [SizedBox.expand] constructor can be used to make a [SizedBox] that
-  /// sizes itself to fit the parent. It is equivalent to setting [width] and
-  /// [height] to [double.infinity].
-  ///
-  /// {@youtube 560 315 https://www.youtube.com/watch?v=EHPu_DzRfqA}
+  /// Wraps a widget in a [SizedBox] to force it to have a specific width and/or
+  /// height, if permitted by the parent.
   ///
   /// {@tool snippet}
   ///
-  /// This snippet makes the child widget (a [Card] with some [Text]) have the
-  /// exact size 200x300, parental constraints permitting:
+  /// A [FlutterLogo] with size 200x300, parental constraints permitting:
   ///
   /// ```dart
-  /// const Card(child: Text('Hello World!'))
+  /// const FlutterLogo()
   ///   .sizedBox(
   ///     with: 200.0,
   ///     height: 300.0,
   ///   )
   /// ```
   /// {@end-tool}
-  ///
-  /// See also:
-  ///
-  ///  * [ConstrainedBox], a more generic version of this class that takes
-  ///    arbitrary [BoxConstraints] instead of an explicit width and height.
-  ///  * [UnconstrainedBox], a container that tries to let its child draw without
-  ///    constraints.
-  ///  * [FractionallySizedBox], a widget that sizes its child to a fraction of
-  ///    the total available space.
-  ///  * [AspectRatio], a widget that attempts to fit within the parent's
-  ///    constraints while also sizing its child to match a given aspect ratio.
-  ///  * [FittedBox], which sizes and positions its child widget to fit the parent
-  ///    according to a given [BoxFit] discipline.
-  ///  * The [catalog of layout widgets](https://flutter.dev/widgets/layout/).
-  ///  * [Understanding constraints](https://docs.flutter.dev/ui/layout/constraints),
-  ///    an in-depth article about layout in Flutter.
   @widgetFactory
   SizedBox sizedBox({
     Key? key,
