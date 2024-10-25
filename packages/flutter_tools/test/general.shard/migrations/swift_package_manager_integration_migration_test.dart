@@ -46,7 +46,6 @@ void main() {
         fileSystem: memoryFileSystem,
         plistParser: FakePlistParser(),
         features: TestFeatureFlags(
-          isSwiftPackageManagerEnabled: false,
           isSwiftPackageManagerMigrationEnabled: true,
         ),
       );
@@ -76,7 +75,6 @@ void main() {
         plistParser: FakePlistParser(),
         features: TestFeatureFlags(
           isSwiftPackageManagerEnabled: true,
-          isSwiftPackageManagerMigrationEnabled: false,
         ),
       );
       await projectMigration.migrate();

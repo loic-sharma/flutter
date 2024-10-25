@@ -639,7 +639,7 @@ dependencies:
         final DateTime dateCreated = DateTime(1970);
         systemClock.currentTime = dateCreated;
 
-        flutterProject.usesSwiftPackageManager = true;
+        iosProject.usesSwiftPackageManager = true;
 
         await refreshPluginsList(flutterProject);
 
@@ -676,7 +676,7 @@ dependencies:
         final DateTime dateCreated = DateTime(1970);
         systemClock.currentTime = dateCreated;
 
-        flutterProject.usesSwiftPackageManager = true;
+        iosProject.usesSwiftPackageManager = true;
 
         await refreshPluginsList(flutterProject, forceCocoaPodsOnly: true);
 
@@ -2051,9 +2051,6 @@ class FakeFlutterProject extends Fake implements FlutterProject {
   bool isModule = false;
 
   @override
-  bool usesSwiftPackageManager = false;
-
-  @override
   late FlutterManifest manifest;
 
   @override
@@ -2100,6 +2097,9 @@ class FakeMacOSProject extends Fake implements MacOSProject {
   late Directory managedDirectory;
 
   @override
+  bool usesSwiftPackageManager = false;
+
+  @override
   bool existsSync() => exists;
 }
 
@@ -2129,6 +2129,9 @@ class FakeIosProject extends Fake implements IosProject {
 
   @override
   late File podManifestLock;
+
+  @override
+  bool usesSwiftPackageManager = false;
 }
 
 class FakeAndroidProject extends Fake implements AndroidProject {
