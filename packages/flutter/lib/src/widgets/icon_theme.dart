@@ -14,6 +14,7 @@ import 'basic.dart';
 import 'framework.dart';
 import 'icon_theme_data.dart';
 import 'inherited_theme.dart';
+import 'widget_inspector.dart';
 
 // Examples can assume:
 // late BuildContext context;
@@ -103,5 +104,16 @@ class IconTheme extends InheritedTheme {
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
     data.debugFillProperties(properties);
+  }
+}
+
+extension IconThemeDecorators on Widget {
+  @widgetFactory
+  IconTheme iconTheme({Key? key, required IconThemeData data}) {
+    return IconTheme(
+      key: key,
+      data: data,
+      child: this,
+    );
   }
 }

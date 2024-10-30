@@ -383,68 +383,122 @@ class _CupertinoButtonState extends State<CupertinoButton> with SingleTickerProv
         : kCupertinoButtonDefaultIconSize,
     );
 
-    return MouseRegion(
-      cursor: enabled && kIsWeb ? SystemMouseCursors.click : MouseCursor.defer,
-      child: FocusableActionDetector(
+    return widget.child
+      .iconTheme(data: iconTheme)
+      .defaultTextStyle(style: textStyle)
+      .align(
+        alignment: widget.alignment,
+        widthFactor: 1.0,
+        heightFactor: 1.0,
+      )
+      .padding(padding: widget.padding ?? kCupertinoButtonPadding[widget.sizeStyle]!)
+      .decoratedBox(
+        decoration: BoxDecoration(
+          border: enabled && isFocused
+            ? Border.fromBorderSide(
+                BorderSide(
+                  color: effectiveFocusOutlineColor,
+                  width: 3.5,
+                  strokeAlign: BorderSide.strokeAlignOutside,
+                ),
+              )
+            : null,
+          borderRadius: widget.borderRadius ?? kCupertinoButtonSizeBorderRadius[widget.sizeStyle],
+          color: backgroundColor != null && !enabled
+            ? CupertinoDynamicColor.resolve(widget.disabledColor, context)
+            : backgroundColor,
+        ),
+      )
+      .fadeTransition(opacity: _opacityAnimation)
+      .constrainedBox(
+        constraints: BoxConstraints(
+          minWidth: widget.minSize ?? kCupertinoButtonMinSize[widget.sizeStyle] ?? kMinInteractiveDimensionCupertino,
+          minHeight: widget.minSize ?? kCupertinoButtonMinSize[widget.sizeStyle] ?? kMinInteractiveDimensionCupertino,
+        ),
+      )
+      .semantics(button: true)
+      .gestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: enabled ? _handleTapDown : null,
+        onTapUp: enabled ? _handleTapUp : null,
+        onTapCancel: enabled ? _handleTapCancel : null,
+        onTap: widget.onPressed,
+        onLongPress: widget.onLongPress,
+      )
+      .focusableActionDetector(
         actions: _actionMap,
         focusNode: widget.focusNode,
         autofocus: widget.autofocus,
         onFocusChange: widget.onFocusChange,
         onShowFocusHighlight: _onShowFocusHighlight,
         enabled: enabled,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: enabled ? _handleTapDown : null,
-          onTapUp: enabled ? _handleTapUp : null,
-          onTapCancel: enabled ? _handleTapCancel : null,
-          onTap: widget.onPressed,
-          onLongPress: widget.onLongPress,
-          child: Semantics(
-            button: true,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: widget.minSize ?? kCupertinoButtonMinSize[widget.sizeStyle] ?? kMinInteractiveDimensionCupertino,
-                minHeight: widget.minSize ?? kCupertinoButtonMinSize[widget.sizeStyle] ?? kMinInteractiveDimensionCupertino,
-              ),
-              child: FadeTransition(
-                opacity: _opacityAnimation,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: enabled && isFocused
-                      ? Border.fromBorderSide(
-                          BorderSide(
-                            color: effectiveFocusOutlineColor,
-                            width: 3.5,
-                            strokeAlign: BorderSide.strokeAlignOutside,
-                          ),
-                        )
-                      : null,
-                    borderRadius: widget.borderRadius ?? kCupertinoButtonSizeBorderRadius[widget.sizeStyle],
-                    color: backgroundColor != null && !enabled
-                      ? CupertinoDynamicColor.resolve(widget.disabledColor, context)
-                      : backgroundColor,
-                  ),
-                  child: Padding(
-                    padding: widget.padding ?? kCupertinoButtonPadding[widget.sizeStyle]!,
-                    child: Align(
-                      alignment: widget.alignment,
-                      widthFactor: 1.0,
-                      heightFactor: 1.0,
-                      child: DefaultTextStyle(
-                        style: textStyle,
-                        child: IconTheme(
-                          data: iconTheme,
-                          child: widget.child,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+      )
+      .mouseRegion(
+        cursor: enabled && kIsWeb ? SystemMouseCursors.click : MouseCursor.defer,
+      );
+
+    // return MouseRegion(
+    //   cursor: enabled && kIsWeb ? SystemMouseCursors.click : MouseCursor.defer,
+    //   child: FocusableActionDetector(
+    //     actions: _actionMap,
+    //     focusNode: widget.focusNode,
+    //     autofocus: widget.autofocus,
+    //     onFocusChange: widget.onFocusChange,
+    //     onShowFocusHighlight: _onShowFocusHighlight,
+    //     enabled: enabled,
+    //     child: GestureDetector(
+    //       behavior: HitTestBehavior.opaque,
+    //       onTapDown: enabled ? _handleTapDown : null,
+    //       onTapUp: enabled ? _handleTapUp : null,
+    //       onTapCancel: enabled ? _handleTapCancel : null,
+    //       onTap: widget.onPressed,
+    //       onLongPress: widget.onLongPress,
+    //       child: Semantics(
+    //         button: true,
+    //         child: ConstrainedBox(
+    //           constraints: BoxConstraints(
+    //             minWidth: widget.minSize ?? kCupertinoButtonMinSize[widget.sizeStyle] ?? kMinInteractiveDimensionCupertino,
+    //             minHeight: widget.minSize ?? kCupertinoButtonMinSize[widget.sizeStyle] ?? kMinInteractiveDimensionCupertino,
+    //           ),
+    //           child: FadeTransition(
+    //             opacity: _opacityAnimation,
+    //             child: DecoratedBox(
+    //               decoration: BoxDecoration(
+    //                 border: enabled && isFocused
+    //                   ? Border.fromBorderSide(
+    //                       BorderSide(
+    //                         color: effectiveFocusOutlineColor,
+    //                         width: 3.5,
+    //                         strokeAlign: BorderSide.strokeAlignOutside,
+    //                       ),
+    //                     )
+    //                   : null,
+    //                 borderRadius: widget.borderRadius ?? kCupertinoButtonSizeBorderRadius[widget.sizeStyle],
+    //                 color: backgroundColor != null && !enabled
+    //                   ? CupertinoDynamicColor.resolve(widget.disabledColor, context)
+    //                   : backgroundColor,
+    //               ),
+    //               child: Padding(
+    //                 padding: widget.padding ?? kCupertinoButtonPadding[widget.sizeStyle]!,
+    //                 child: Align(
+    //                   alignment: widget.alignment,
+    //                   widthFactor: 1.0,
+    //                   heightFactor: 1.0,
+    //                   child: DefaultTextStyle(
+    //                     style: textStyle,
+    //                     child: IconTheme(
+    //                       data: iconTheme,
+    //                       child: widget.child,
+    //                     ),
+    //                   ),
+    //                 ),
+    //               ),
+    //             ),
+    //           ),
+    //         ),
+    //       ),
+    //     ),
+    //   ),
+    // );
   }
 }

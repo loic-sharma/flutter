@@ -22,6 +22,7 @@ import 'focus_scope.dart';
 import 'framework.dart';
 import 'media_query.dart';
 import 'shortcuts.dart';
+import 'widget_inspector.dart';
 
 /// Returns the parent [BuildContext] of a given `context`.
 ///
@@ -1857,4 +1858,42 @@ class _ContextActionToActionAdapter<T extends Intent> extends Action<T> {
 
   @override
   Object? invoke(T intent) => action.invoke(intent, invokeContext);
+}
+
+extension ActionsDecorators on Widget {
+  @widgetFactory
+  FocusableActionDetector focusableActionDetector({
+    Key? key,
+    bool enabled = true,
+    FocusNode? focusNode,
+    bool autofocus = false,
+    bool descendantsAreFocusable = true,
+    bool descendantsAreTraversable = true,
+    Map<ShortcutActivator,
+    Intent>? shortcuts,
+    Map<Type,
+    Action<Intent>>? actions,
+    ValueChanged<bool>? onShowFocusHighlight,
+    ValueChanged<bool>? onShowHoverHighlight,
+    ValueChanged<bool>? onFocusChange,
+    MouseCursor mouseCursor = MouseCursor.defer,
+    bool includeFocusSemantics = true,
+  }) {
+    return FocusableActionDetector(
+      key: key,
+      enabled: enabled,
+      focusNode: focusNode,
+      autofocus: autofocus,
+      descendantsAreFocusable: descendantsAreFocusable,
+      descendantsAreTraversable: descendantsAreTraversable,
+      shortcuts: shortcuts,
+      actions: actions,
+      onShowFocusHighlight: onShowFocusHighlight,
+      onShowHoverHighlight: onShowHoverHighlight,
+      onFocusChange: onFocusChange,
+      mouseCursor: mouseCursor,
+      includeFocusSemantics: includeFocusSemantics,
+      child: this,
+    );
+  }
 }

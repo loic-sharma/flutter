@@ -25,6 +25,7 @@ import 'inherited_theme.dart';
 import 'media_query.dart';
 import 'selectable_region.dart';
 import 'selection_container.dart';
+import 'widget_inspector.dart';
 
 // Examples can assume:
 // late String _name;
@@ -1415,5 +1416,31 @@ class _SelectableTextContainerDelegate extends MultiSelectableSelectionContainer
     _hasReceivedEndEvent.removeWhere((Selectable selectable) => !selectableSet.contains(selectable));
     _hasReceivedStartEvent.removeWhere((Selectable selectable) => !selectableSet.contains(selectable));
     super.didChangeSelectables();
+  }
+}
+
+extension TextDecorations on Widget {
+  @widgetFactory
+  DefaultTextStyle defaultTextStyle({
+    Key? key,
+    required TextStyle style,
+    TextAlign? textAlign,
+    bool softWrap = true,
+    TextOverflow overflow = TextOverflow.clip,
+    int? maxLines,
+    TextWidthBasis textWidthBasis = TextWidthBasis.parent,
+    TextHeightBehavior? textHeightBehavior,
+  }) {
+    return DefaultTextStyle(
+      key: key,
+      style: style,
+      textAlign: textAlign,
+      softWrap: softWrap,
+      overflow: overflow,
+      maxLines: maxLines,
+      textWidthBasis: textWidthBasis,
+      textHeightBehavior: textHeightBehavior,
+      child: this,
+    );
   }
 }

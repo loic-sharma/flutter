@@ -1236,6 +1236,20 @@ class AnimatedBuilder extends ListenableBuilder {
 
 extension TransitionDecorators on Widget? {
   @widgetFactory
+  FadeTransition fadeTransition({
+    Key? key,
+    required Animation<double> opacity,
+    bool alwaysIncludeSemantics = false,
+  }) {
+    return FadeTransition(
+      key: key,
+      opacity: opacity,
+      alwaysIncludeSemantics: alwaysIncludeSemantics,
+      child: this,
+    );
+  }
+
+  @widgetFactory
   RotationTransition rotationTransition({
     Key? key,
     required Animation<double> turns,
