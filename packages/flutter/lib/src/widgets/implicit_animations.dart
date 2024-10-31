@@ -25,6 +25,7 @@ import 'framework.dart';
 import 'text.dart';
 import 'ticker_provider.dart';
 import 'transitions.dart';
+import 'widget_inspector.dart';
 
 // Examples can assume:
 // class MyWidget extends ImplicitlyAnimatedWidget {
@@ -2216,5 +2217,46 @@ class _AnimatedFractionallySizedBoxState extends AnimatedWidgetBaseState<Animate
     description.add(DiagnosticsProperty<AlignmentGeometryTween>('alignment', _alignment, defaultValue: null));
     description.add(DiagnosticsProperty<Tween<double>>('widthFactor', _widthFactorTween, defaultValue: null));
     description.add(DiagnosticsProperty<Tween<double>>('heightFactor', _heightFactorTween, defaultValue: null));
+  }
+}
+
+extension ImplicitAnimationsNullableDecorators on Widget? {
+  AnimatedContainer animatedContainer({
+    Key? key,
+    AlignmentGeometry? alignment,
+    EdgeInsetsGeometry? padding,
+    Color? color,
+    Decoration? decoration,
+    Decoration? foregroundDecoration,
+    double? width,
+    double? height,
+    BoxConstraints? constraints,
+    EdgeInsetsGeometry? margin,
+    Matrix4? transform,
+    AlignmentGeometry? transformAlignment,
+    Clip clipBehavior = Clip.none,
+    Curve curve = Curves.linear,
+    required Duration duration,
+    VoidCallback? onEnd,
+  }) {
+    return AnimatedContainer(
+      key: key,
+      alignment: alignment,
+      padding: padding,
+      color: color,
+      decoration: decoration,
+      foregroundDecoration: foregroundDecoration,
+      width: width,
+      height: height,
+      constraints: constraints,
+      margin: margin,
+      transform: transform,
+      transformAlignment: transformAlignment,
+      clipBehavior: clipBehavior,
+      curve: curve,
+      duration: duration,
+      onEnd: onEnd,
+      child: this,
+    );
   }
 }
