@@ -2221,6 +2221,29 @@ class _AnimatedFractionallySizedBoxState extends AnimatedWidgetBaseState<Animate
 }
 
 extension ImplicitAnimationsNullableDecorators on Widget? {
+  @widgetFactory
+  AnimatedAlign animatedAlign({
+    Key? key,
+    required AlignmentGeometry alignment,
+    double? heightFactor,
+    double? widthFactor,
+    Curve curve = Curves.linear,
+    required Duration duration,
+    VoidCallback? onEnd,
+  }) {
+    return AnimatedAlign(
+      key: key,
+      alignment: alignment,
+      heightFactor: heightFactor,
+      widthFactor: widthFactor,
+      curve: curve,
+      duration: duration,
+      onEnd: onEnd,
+      child: this,
+    );
+  }
+
+  @widgetFactory
   AnimatedContainer animatedContainer({
     Key? key,
     AlignmentGeometry? alignment,
