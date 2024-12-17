@@ -132,7 +132,7 @@ void main() {
     });
 
     group('usesSwiftPackageManager', () {
-      testUsingContext('is true if feature on', () async {
+      testUsingContext('is true if the feature is on', () async {
         final MemoryFileSystem fs = MemoryFileSystem.test();
         final Directory projectDirectory = fs.directory('path');
         projectDirectory.childDirectory('ios').createSync(recursive: true);
