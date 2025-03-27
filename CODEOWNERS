@@ -14,3 +14,12 @@
 /dev/** @matanlurey
 /packages/flutter_driver/** @matanlurey
 /packages/integration_test/** @matanlurey
+
+# iOS team - keep this synced with .github/labeler.yml's team-ios section.
+/engine/src/flutter/shell/platform/darwin/common/ @ios-reviewers
+/engine/src/flutter/shell/platform/darwin/ios/framework/ @ios-reviewers
+/packages/flutter_tools/**/ios/* @ios-reviewers
+/packages/flutter_tools/**/macos/* @ios-reviewers
+/packages/flutter_tools/**/*xcode* @ios-reviewers
+/packages/flutter_tools/**/*ios* @ios-reviewers
+/packages/flutter_tools/**/*macos* @ios-reviewers
