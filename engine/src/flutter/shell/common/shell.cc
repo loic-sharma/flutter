@@ -1099,25 +1099,13 @@ void Shell::OnPlatformViewSetViewportMetrics(int64_t view_id,
   {
     std::scoped_lock<std::mutex> lock(resize_mutex_);
 
-    bool has_given_constraints = (metrics.width_constraint != 0.0 ||
-                                  metrics.height_constraint != 0.0);
-
-    if (has_given_constraints) {
-      expected_frame_constraints_[view_id] = {
-          .min_width = 0,
-          .max_width = metrics.width_constraint,
-          .min_height = 0,
-          .max_height = metrics.height_constraint,
-
-      };
-    } else {
-      expected_frame_constraints_[view_id] = {
-          .min_width = metrics.physical_width,
-          .max_width = metrics.physical_width,
-          .min_height = metrics.physical_height,
-          .max_height = metrics.physical_height,
-      };
-    }
+    expected_frame_constraints_[view_id] = {
+      // TODO: I would rename these to physical to make it unambiguous.
+      .min_width = metrics.physical_min_width,
+      .max_width = metrics.physical_max_width,
+      .min_height = metrics.physical_min_height,
+      .max_height = metrics.physical_max_height,
+    };
     device_pixel_ratio_ = metrics.device_pixel_ratio;
   }
 }
@@ -1751,6 +1739,7 @@ fml::TimePoint Shell::GetLatestFrameTargetTime() const {
 bool Shell::ShouldDiscardLayerTree(int64_t view_id,
                                    const flutter::LayerTree& tree) {
   std::scoped_lock<std::mutex> lock(resize_mutex_);
+  // TODO: Check tree satisfies expected constraints.
   return false;
 }
 

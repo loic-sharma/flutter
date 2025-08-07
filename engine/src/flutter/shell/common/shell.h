@@ -45,6 +45,9 @@
 
 namespace flutter {
 
+// TODO:
+// Can we unify this with embedders' BoxConstraints abstraction?
+// https://github.com/flutter/flutter/blob/b57c9742f30015b4ee392e1af770a8614b56812e/engine/src/flutter/shell/platform/common/geometry.h#L86-L103
 typedef struct {
   double min_width = 0.0;
   double max_width = 0.0;

@@ -45,13 +45,8 @@ class ViewConfiguration {
     final double devicePixelRatio = view.devicePixelRatio;
 
     return ViewConfiguration(
-      physicalConstraints: BoxConstraints.tight(view.physicalSize),
-      logicalConstraints: BoxConstraints(
-        minWidth: 0,
-        maxWidth: (view.physicalConstraints.maxWidth) / devicePixelRatio,
-        minHeight: 0,
-         maxHeight: (view.physicalConstraints.maxHeight) / devicePixelRatio,
-       ),
+      physicalConstraints: physicalConstraints,
+      logicalConstraints:physicalConstraints / devicePixelRatio,
        devicePixelRatio: devicePixelRatio,
     );
   }
@@ -297,15 +292,11 @@ class RenderView extends RenderObject with RenderObjectWithChildMixin<RenderBox>
   @override
   void performLayout() {
     assert(_rootTransform != null);
-    final bool sizedByChild = true;
-    print("Constraints $constraints");
-    child?.layout(constraints, parentUsesSize: true);
+    final bool sizedByChild = !constraints.isTight;
+    child?.layout(constraints, parentUsesSize: sizedByChild);
     _size = sizedByChild && child != null ? child!.size : constraints.smallest;
-    print("child size ${child!.size}");
-    print("size ${_size}");
     assert(size.isFinite);
     assert(constraints.isSatisfiedBy(size));
-    assert(_rootTransform != null);
   }
 
   /// Determines the set of render objects located at the given position.
@@ -370,8 +361,8 @@ class RenderView extends RenderObject with RenderObjectWithChildMixin<RenderBox>
       if (automaticSystemUiAdjustment) {
         _updateSystemChrome();
       }
-      // assert(configuration.logicalConstraints.isSatisfiedBy(size));
-      _view.render(scene);
+      assert(configuration.logicalConstraints.isSatisfiedBy(size));
+      _view.render(scene, size: configuration.toPhysicalSize(size));
       scene.dispose();
       assert(() {
         if (debugRepaintRainbowEnabled || debugRepaintTextRainbowEnabled) {

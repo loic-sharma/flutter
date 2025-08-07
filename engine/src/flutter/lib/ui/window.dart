@@ -164,47 +164,8 @@ class FlutterView {
   /// See also:
   ///
   ///  * [physicalSize], which returns the current size of the view.
-  // TODO(goderbauer): Wire this up so embedders can configure it. This will
-  //   also require to message the size provided to the render call back to the
-  //   embedder. Change this from ViewConstraints.tight to a lookup of the
-  //   stored view constraints on the FlutterView object.
   ViewConstraints get physicalConstraints {
-    final double dpr = devicePixelRatio;
-
-    if (_viewConfiguration.layoutConstraints.maxHeight != 0 ||
-        _viewConfiguration.layoutConstraints.maxWidth != 0) {
-      return _viewConfiguration.layoutConstraints;
-    }
-
-    return ViewConstraints(
-      minWidth: _computeMinConstraintValue(
-        _viewConfiguration.viewConstraints.minWidth,
-        physicalSize.width,
-      ),
-      minHeight: _computeMinConstraintValue(
-        _viewConfiguration.viewConstraints.minHeight,
-        physicalSize.height,
-      ),
-      maxWidth: _computeMaxConstraintValue(
-        _viewConfiguration.viewConstraints.maxWidth,
-        physicalSize.width,
-      ),
-      maxHeight: _computeMaxConstraintValue(
-        _viewConfiguration.viewConstraints.maxHeight,
-        physicalSize.height,
-      ),
-    );
-  }
-
-  double _computeMinConstraintValue(double? desired, double available) {
-    assert(desired == null || desired >= 0, 'Minimum constraint must be >= 0 if set.');
-    assert(desired == null || desired.isFinite, 'Minimum constraint must be finite.');
-    return desired ?? available;
-  }
-
-  double _computeMaxConstraintValue(double? desired, double available) {
-    assert(desired == null || desired >= 0, 'Maximum constraint must be >= 0 if set.');
-    return desired ?? available;
+    return _viewConfiguration.viewConstraints;
   }
 
   /// The current dimensions of the rectangle as last reported by the platform
@@ -413,13 +374,12 @@ class FlutterView {
   /// * [RendererBinding], the Flutter framework class which manages layout and
   ///   painting.
   void render(Scene scene, {Size? size}) {
-    print(_viewConfiguration.viewConstraints.maxHeight);
-    _render(viewId, scene as _NativeScene,
-        size?.width ?? _viewConfiguration.viewConstraints.maxWidth,
-        size?.height ?? _viewConfiguration.viewConstraints.maxHeight
+    _render(
+      viewId,
+      scene as _NativeScene,
+      size?.width ?? physicalSize.width,
+      size?.height ?? physicalSize.height,
     );
-    // size?.width ?? physicalConstraints.maxWidth,
-    // size?.height ?? physicalConstraints.maxHeight,
   }
 
   @Native<Void Function(Int64, Pointer<Void>, Double, Double)>(
