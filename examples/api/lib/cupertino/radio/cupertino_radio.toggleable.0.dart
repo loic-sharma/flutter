@@ -48,7 +48,7 @@ class _CupertinoRadioExampleState extends State<CupertinoRadioExample> {
           CupertinoListTile(
             title: Text('Hercules Mulligan'),
             leading: CupertinoRadio<SingingCharacter>(
-              value: SingingCharacter.mulligan,
+              value: .mulligan,
               // TRY THIS: Try setting the toggleable value to false and
               // see how that changes the behavior of the widget.
               toggleable: true,
@@ -57,7 +57,7 @@ class _CupertinoRadioExampleState extends State<CupertinoRadioExample> {
           CupertinoListTile(
             title: Text('Eliza Hamilton'),
             leading: CupertinoRadio<SingingCharacter>(
-              value: SingingCharacter.hamilton,
+              value: .hamilton,
               toggleable: true,
             ),
           ),

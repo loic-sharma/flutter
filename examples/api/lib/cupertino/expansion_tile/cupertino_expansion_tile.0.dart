@@ -34,11 +34,11 @@ class ExpansionTileExamples extends StatelessWidget {
       children: <Widget>[
         TransitionTileSection(
           title: 'Fade Transition',
-          transitionMode: ExpansionTileTransitionMode.fade,
+          transitionMode: .fade,
         ),
         TransitionTileSection(
           title: 'Scroll Transition',
-          transitionMode: ExpansionTileTransitionMode.scroll,
+          transitionMode: .scroll,
         ),
       ],
     );

@@ -15,7 +15,7 @@ class NavBarApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const CupertinoApp(
-      theme: CupertinoThemeData(brightness: Brightness.light),
+      theme: CupertinoThemeData(brightness: .light),
       home: NavBarExample(),
     );
   }
@@ -58,11 +58,11 @@ class _NavigationBarSearchField extends StatelessWidget implements PreferredSize
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: padding, vertical: padding),
+      padding: .symmetric(horizontal: padding, vertical: padding),
       child: SizedBox(height: searchFieldHeight, child: CupertinoSearchTextField()),
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(searchFieldHeight + padding * 2);
+  Size get preferredSize => const .fromHeight(searchFieldHeight + padding * 2);
 }

@@ -25,7 +25,7 @@ class AutocompleteExampleApp extends StatelessWidget {
         appBar: AppBar(title: const Text('Autocomplete - async, debouncing, and network errors')),
         body: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: .center,
             children: <Widget>[
               Text(
                 'Type below to autocomplete the following possible results: ${_FakeAPI._kOptions}.',
@@ -98,7 +98,7 @@ class _AsyncAutocompleteState extends State<_AsyncAutocomplete> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: .center,
       children: <Widget>[
         Text(
           _networkEnabled

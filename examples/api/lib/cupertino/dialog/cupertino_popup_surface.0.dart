@@ -35,8 +35,8 @@ class _PopupSurfaceExampleState extends State<PopupSurfaceExample> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: .min,
+              mainAxisAlignment: .spaceBetween,
               children: <Widget>[
                 const Text('Paint surface'),
                 const SizedBox(width: 16.0),
@@ -64,7 +64,7 @@ class _PopupSurfaceExampleState extends State<PopupSurfaceExample> {
           isSurfacePainted: _shouldPaintSurface,
           child: Container(
             height: 240,
-            padding: const EdgeInsets.all(8.0),
+            padding: const .all(8.0),
             child: Column(
               children: <Widget>[
                 Expanded(
@@ -74,7 +74,7 @@ class _PopupSurfaceExampleState extends State<PopupSurfaceExample> {
                         ? null
                         : BoxDecoration(
                             color: CupertinoTheme.of(context).scaffoldBackgroundColor,
-                            borderRadius: BorderRadius.circular(8.0),
+                            borderRadius: .circular(8.0),
                           ),
                     child: const Text('This is a popup surface.'),
                   ),

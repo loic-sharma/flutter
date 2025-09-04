@@ -46,8 +46,8 @@ class _MyHomePageState extends State<MyHomePage> {
   // The data of the bulleted list contained within a WidgetSpan. Each bullet is mapped
   // to a LocalSpanRange, being the range the bullet covers relative to the SelectionListener
   // it is under.
-  Map<LocalSpanRange, TextSpan> bulletSourceMap = <LocalSpanRange, TextSpan>{};
-  Map<int, Map<LocalSpanRange, TextSpan>> widgetSpanMaps = <int, Map<LocalSpanRange, TextSpan>>{};
+  Map<LocalSpanRange, TextSpan> bulletSourceMap = {};
+  Map<int, Map<LocalSpanRange, TextSpan>> widgetSpanMaps = .new();
   // The origin data used to restore the demo to its initial state.
   late final Map<LocalSpanRange, TextSpan> originSourceData;
   late final Map<LocalSpanRange, TextSpan> originBulletSourceData;

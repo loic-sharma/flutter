@@ -21,7 +21,7 @@ class AutocompleteExampleApp extends StatelessWidget {
         appBar: AppBar(title: const Text('Autocomplete - async')),
         body: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: .center,
             children: <Widget>[
               Text(
                 'Type below to autocomplete the following possible results: ${_FakeAPI._kOptions}.',
@@ -82,7 +82,7 @@ class _FakeAPI {
   static Future<Iterable<String>> search(String query) async {
     await Future<void>.delayed(fakeAPIDuration); // Fake 1 second delay.
     if (query == '') {
-      return const Iterable<String>.empty();
+      return const .empty();
     }
     return _kOptions.where((String option) {
       return option.contains(query.toLowerCase());

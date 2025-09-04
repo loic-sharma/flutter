@@ -21,7 +21,7 @@ class _PlaceholderDigit extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextStyle textStyle = Theme.of(
       context,
-    ).textTheme.displayLarge!.copyWith(fontWeight: FontWeight.w500);
+    ).textTheme.displayLarge!.copyWith(fontWeight: FontWeight.w100);
 
     final Iterable<Widget> placeholderDigits = <int>[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map<Widget>((
       int n,
@@ -130,7 +130,7 @@ class _AnimatedDigitState extends State<AnimatedDigit> with SingleTickerProvider
           SlideTransition(
             position: controller.drive(
               Tween<Offset>(
-                begin: Offset.zero,
+                begin: .zero,
                 end: const Offset(0, -1), // Out of view above the top.
               ),
             ),
@@ -140,7 +140,7 @@ class _AnimatedDigitState extends State<AnimatedDigit> with SingleTickerProvider
             position: controller.drive(
               Tween<Offset>(
                 begin: const Offset(0, 1), // Out of view below the bottom.
-                end: Offset.zero,
+                end: .zero,
               ),
             ),
             child: Text(key: ValueKey<int>(incomingValue), '$incomingValue', style: textStyle),

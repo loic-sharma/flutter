@@ -29,8 +29,8 @@ class ButtonStyleButtonIconAlignmentExample extends StatefulWidget {
 
 class _ButtonStyleButtonIconAlignmentExampleState
     extends State<ButtonStyleButtonIconAlignmentExample> {
-  TextDirection _textDirection = TextDirection.ltr;
-  IconAlignment _iconAlignment = IconAlignment.start;
+  TextDirection _textDirection = .ltr;
+  IconAlignment _iconAlignment = .start;
 
   @override
   Widget build(BuildContext context) {
@@ -40,15 +40,15 @@ class _ButtonStyleButtonIconAlignmentExampleState
         textDirection: _textDirection,
         child: Center(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: .min,
+            mainAxisAlignment: .center,
             children: <Widget>[
               const Spacer(),
               OverflowBar(
                 spacing: 10,
                 overflowSpacing: 20,
-                alignment: MainAxisAlignment.center,
-                overflowAlignment: OverflowBarAlignment.center,
+                alignment: .center,
+                overflowAlignment: .center,
                 children: <Widget>[
                   ElevatedButton.icon(
                     onPressed: () {},
@@ -84,8 +84,8 @@ class _ButtonStyleButtonIconAlignmentExampleState
               ),
               const Spacer(),
               OverflowBar(
-                alignment: MainAxisAlignment.spaceEvenly,
-                overflowAlignment: OverflowBarAlignment.center,
+                alignment: .spaceEvenly,
+                overflowAlignment: .center,
                 spacing: 10,
                 overflowSpacing: 10,
                 children: <Widget>[
@@ -122,11 +122,11 @@ class _ButtonStyleButtonIconAlignmentExampleState
                         selected: <TextDirection>{_textDirection},
                         segments: const <ButtonSegment<TextDirection>>[
                           ButtonSegment<TextDirection>(
-                            value: TextDirection.ltr,
+                            value: .ltr,
                             label: Text('LTR'),
                           ),
                           ButtonSegment<TextDirection>(
-                            value: TextDirection.rtl,
+                            value: .rtl,
                             label: Text('RTL'),
                           ),
                         ],

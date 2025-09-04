@@ -38,16 +38,16 @@ class _BottomAppBarDemoState extends State<BottomAppBarDemo> {
   bool _isVisible = true;
 
   FloatingActionButtonLocation get _fabLocation => _isVisible
-      ? FloatingActionButtonLocation.endContained
-      : FloatingActionButtonLocation.endFloat;
+      ? .endContained
+      : .endFloat;
 
   void _listen() {
     switch (_controller.position.userScrollDirection) {
-      case ScrollDirection.idle:
+      case .idle:
         break;
-      case ScrollDirection.forward:
+      case .forward:
         _show();
-      case ScrollDirection.reverse:
+      case .reverse:
         _hide();
     }
   }

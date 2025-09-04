@@ -14,7 +14,7 @@ class CupertinoTabBarApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const CupertinoApp(
-      theme: CupertinoThemeData(brightness: Brightness.light),
+      theme: CupertinoThemeData(brightness: .light),
       home: CupertinoTabBarExample(),
     );
   }
@@ -28,7 +28,7 @@ class CupertinoTabBarExample extends StatelessWidget {
     return CupertinoTabScaffold(
       tabBar: CupertinoTabBar(
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(CupertinoIcons.star_fill), label: 'Favorites'),
+          BottomNavigationBarItem(icon: Icon(.star_fill), label: 'Favorites'),
           BottomNavigationBarItem(icon: Icon(CupertinoIcons.clock_solid), label: 'Recents'),
           BottomNavigationBarItem(
             icon: Icon(CupertinoIcons.person_alt_circle_fill),

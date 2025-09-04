@@ -14,7 +14,7 @@ class SliverNavBarApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const CupertinoApp(
-      theme: CupertinoThemeData(brightness: Brightness.light),
+      theme: CupertinoThemeData(brightness: .light),
       home: SliverNavBarExample(),
     );
   }
@@ -35,11 +35,11 @@ class SliverNavBarExample extends StatelessWidget {
           ),
           SliverFillRemaining(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+              padding: const .symmetric(horizontal: 10.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: .spaceEvenly,
                 children: <Widget>[
-                  const Text('Drag me up', textAlign: TextAlign.center),
+                  const Text('Drag me up', textAlign: .center),
                   CupertinoButton.filled(
                     onPressed: () {
                       Navigator.push(
@@ -59,7 +59,7 @@ class SliverNavBarExample extends StatelessWidget {
                         context,
                         CupertinoPageRoute<Widget>(
                           builder: (BuildContext context) {
-                            return const NextPage(bottomMode: NavigationBarBottomMode.always);
+                            return const NextPage(bottomMode: .always);
                           },
                         ),
                       );
@@ -77,7 +77,7 @@ class SliverNavBarExample extends StatelessWidget {
 }
 
 class NextPage extends StatefulWidget {
-  const NextPage({super.key, this.bottomMode = NavigationBarBottomMode.automatic});
+  const NextPage({super.key, this.bottomMode = .automatic});
 
   final NavigationBarBottomMode bottomMode;
 

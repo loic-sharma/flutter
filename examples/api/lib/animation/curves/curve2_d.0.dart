@@ -21,7 +21,7 @@ class Curve2DExampleApp extends StatelessWidget {
 // that the coordinates can be specified that it must pass through. If the
 // tension is set to 1.0, it will linearly interpolate between those points,
 // instead of interpolating smoothly.
-final CatmullRomSpline path = CatmullRomSpline(
+final CatmullRomSpline path = .new(
   const <Offset>[
     Offset(0.05, 0.75),
     Offset(0.18, 0.23),
@@ -93,7 +93,7 @@ class Curve2DExample extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.white,
-      alignment: Alignment.center,
+      alignment: .center,
       child: FollowCurve2D(
         path: path,
         duration: const Duration(seconds: 3),

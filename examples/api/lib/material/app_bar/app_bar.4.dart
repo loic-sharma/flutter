@@ -30,9 +30,9 @@ class AppBarExample extends StatelessWidget {
         backgroundColor: colorScheme.primaryContainer,
         title: const Text('AppBar Sample'),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(64.0),
+          preferredSize: const .fromHeight(64.0),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: const .symmetric(horizontal: 16.0),
             child: TextField(
               decoration: InputDecoration(
                 border: OutlineInputBorder(borderSide: BorderSide(color: colorScheme.primary)),
@@ -50,7 +50,7 @@ class AppBarExample extends StatelessWidget {
         ),
       ),
       body: ListView.builder(
-        padding: const EdgeInsets.only(top: 45.0),
+        padding: const .only(top: 45.0),
         itemCount: 20,
         itemBuilder: (BuildContext context, int index) {
           return ListTile(title: Text('Item $index'));
@@ -127,7 +127,7 @@ class CustomAppBarShape extends OutlinedBorder {
   @override
   ShapeBorder? lerpTo(ShapeBorder? b, double t) {
     if (b is CustomAppBarShape) {
-      return CustomAppBarShape(side: BorderSide.lerp(b.side, side, t));
+      return CustomAppBarShape(side: .lerp(b.side, side, t));
     }
     return super.lerpTo(b, t);
   }

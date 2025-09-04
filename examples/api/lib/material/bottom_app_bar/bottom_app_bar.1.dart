@@ -64,25 +64,25 @@ class _BottomAppBarDemoState extends State<BottomAppBarDemo> {
             ),
             RadioListTile<FloatingActionButtonLocation>(
               title: const Text('Docked - End'),
-              value: FloatingActionButtonLocation.endDocked,
+              value: .endDocked,
               groupValue: _fabLocation,
               onChanged: _onFabLocationChanged,
             ),
             RadioListTile<FloatingActionButtonLocation>(
               title: const Text('Docked - Center'),
-              value: FloatingActionButtonLocation.centerDocked,
+              value: .centerDocked,
               groupValue: _fabLocation,
               onChanged: _onFabLocationChanged,
             ),
             RadioListTile<FloatingActionButtonLocation>(
               title: const Text('Floating - End'),
-              value: FloatingActionButtonLocation.endFloat,
+              value: .endFloat,
               groupValue: _fabLocation,
               onChanged: _onFabLocationChanged,
             ),
             RadioListTile<FloatingActionButtonLocation>(
               title: const Text('Floating - Center'),
-              value: FloatingActionButtonLocation.centerFloat,
+              value: .centerFloat,
               groupValue: _fabLocation,
               onChanged: _onFabLocationChanged,
             ),
@@ -115,8 +115,8 @@ class _DemoBottomAppBar extends StatelessWidget {
   final NotchedShape? shape;
 
   static final List<FloatingActionButtonLocation> centerLocations = <FloatingActionButtonLocation>[
-    FloatingActionButtonLocation.centerDocked,
-    FloatingActionButtonLocation.centerFloat,
+    .centerDocked,
+    .centerFloat,
   ];
 
   @override

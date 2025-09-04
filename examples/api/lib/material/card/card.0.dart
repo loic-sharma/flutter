@@ -30,7 +30,7 @@ class CardExample extends StatelessWidget {
     return Center(
       child: Card(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: .min,
           children: <Widget>[
             const ListTile(
               leading: Icon(Icons.album),

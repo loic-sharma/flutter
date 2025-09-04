@@ -45,8 +45,8 @@ class ListSectionInsetExample extends StatelessWidget {
           CupertinoListTile.notched(
             title: const Text('Push to master'),
             leading: Container(
-              width: double.infinity,
-              height: double.infinity,
+              width: .infinity,
+              height: .infinity,
               color: CupertinoColors.systemRed,
             ),
             additionalInfo: const Text('Not available'),
@@ -54,8 +54,8 @@ class ListSectionInsetExample extends StatelessWidget {
           CupertinoListTile.notched(
             title: const Text('View last commit'),
             leading: Container(
-              width: double.infinity,
-              height: double.infinity,
+              width: .infinity,
+              height: .infinity,
               color: CupertinoColors.activeOrange,
             ),
             additionalInfo: const Text('12 days ago'),

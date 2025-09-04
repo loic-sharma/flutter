@@ -25,9 +25,9 @@ class BottomSheetExampleApp extends StatelessWidget {
 enum AnimationStyles { defaultStyle, custom, none }
 
 const List<(AnimationStyles, String)> animationStyleSegments = <(AnimationStyles, String)>[
-  (AnimationStyles.defaultStyle, 'Default'),
-  (AnimationStyles.custom, 'Custom'),
-  (AnimationStyles.none, 'None'),
+  (.defaultStyle, 'Default'),
+  (.custom, 'Custom'),
+  (.none, 'None'),
 ];
 
 class BottomSheetExample extends StatefulWidget {
@@ -38,7 +38,7 @@ class BottomSheetExample extends StatefulWidget {
 }
 
 class _BottomSheetExampleState extends State<BottomSheetExample> {
-  Set<AnimationStyles> _animationStyleSelection = <AnimationStyles>{AnimationStyles.defaultStyle};
+  Set<AnimationStyles> _animationStyleSelection = <AnimationStyles>{.defaultStyle};
   AnimationStyle? _animationStyle;
 
   @override
@@ -52,12 +52,12 @@ class _BottomSheetExampleState extends State<BottomSheetExample> {
             onSelectionChanged: (Set<AnimationStyles> styles) {
               setState(() {
                 _animationStyle = switch (styles.first) {
-                  AnimationStyles.defaultStyle => null,
-                  AnimationStyles.custom => const AnimationStyle(
+                  .defaultStyle => null,
+                  .custom => const AnimationStyle(
                     duration: Duration(seconds: 3),
                     reverseDuration: Duration(seconds: 1),
                   ),
-                  AnimationStyles.none => AnimationStyle.noAnimation,
+                  .none => .noAnimation,
                 };
                 _animationStyleSelection = styles;
               });
@@ -79,8 +79,8 @@ class _BottomSheetExampleState extends State<BottomSheetExample> {
                   return SizedBox.expand(
                     child: Center(
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: .center,
+                        mainAxisSize: .min,
                         children: <Widget>[
                           const Text('Bottom sheet'),
                           ElevatedButton(

@@ -13,9 +13,9 @@ void main() {
 enum AnimationStyles { defaultStyle, custom, none }
 
 const List<(AnimationStyles, String)> animationStyleSegments = <(AnimationStyles, String)>[
-  (AnimationStyles.defaultStyle, 'Default'),
-  (AnimationStyles.custom, 'Custom'),
-  (AnimationStyles.none, 'None'),
+  (.defaultStyle, 'Default'),
+  (.custom, 'Custom'),
+  (.none, 'None'),
 ];
 
 class MaterialAppExample extends StatefulWidget {
@@ -26,7 +26,7 @@ class MaterialAppExample extends StatefulWidget {
 }
 
 class _MaterialAppExampleState extends State<MaterialAppExample> {
-  Set<AnimationStyles> _animationStyleSelection = <AnimationStyles>{AnimationStyles.defaultStyle};
+  Set<AnimationStyles> _animationStyleSelection = <AnimationStyles>{.defaultStyle};
   AnimationStyle? _animationStyle;
   bool isDarkTheme = false;
 
@@ -34,13 +34,13 @@ class _MaterialAppExampleState extends State<MaterialAppExample> {
   Widget build(BuildContext context) {
     return MaterialApp(
       themeAnimationStyle: _animationStyle,
-      themeMode: isDarkTheme ? ThemeMode.dark : ThemeMode.light,
+      themeMode: isDarkTheme ? .dark : .light,
       theme: ThemeData(colorSchemeSeed: Colors.green),
       darkTheme: ThemeData(colorSchemeSeed: Colors.green, brightness: Brightness.dark),
       home: Scaffold(
         body: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: .center,
             children: <Widget>[
               SegmentedButton<AnimationStyles>(
                 selected: _animationStyleSelection,
@@ -48,15 +48,15 @@ class _MaterialAppExampleState extends State<MaterialAppExample> {
                   setState(() {
                     _animationStyleSelection = styles;
                     switch (styles.first) {
-                      case AnimationStyles.defaultStyle:
+                      case .defaultStyle:
                         _animationStyle = null;
-                      case AnimationStyles.custom:
+                      case .custom:
                         _animationStyle = const AnimationStyle(
                           curve: Easing.emphasizedAccelerate,
                           duration: Duration(seconds: 1),
                         );
-                      case AnimationStyles.none:
-                        _animationStyle = AnimationStyle.noAnimation;
+                      case .none:
+                        _animationStyle = .noAnimation;
                     }
                   });
                 },

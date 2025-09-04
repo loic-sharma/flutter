@@ -14,7 +14,7 @@ class SliverNavBarApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const CupertinoApp(
-      theme: CupertinoThemeData(brightness: Brightness.light),
+      theme: CupertinoThemeData(brightness: .light),
       home: SliverNavBarExample(),
     );
   }
@@ -42,9 +42,9 @@ class SliverNavBarExample extends StatelessWidget {
           // Drag the scrollable area to collapse the CupertinoSliverNavigationBar.
           SliverFillRemaining(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: .spaceEvenly,
               children: <Widget>[
-                const Text('Drag me up', textAlign: TextAlign.center),
+                const Text('Drag me up', textAlign: .center),
                 CupertinoButton.filled(
                   onPressed: () {
                     Navigator.push(

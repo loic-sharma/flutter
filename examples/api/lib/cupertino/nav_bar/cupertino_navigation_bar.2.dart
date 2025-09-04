@@ -14,7 +14,7 @@ class NavBarApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const CupertinoApp(
-      theme: CupertinoThemeData(brightness: Brightness.light),
+      theme: CupertinoThemeData(brightness: .light),
       home: NavBarExample(),
     );
   }
@@ -43,7 +43,7 @@ class _NavBarExampleState extends State<NavBarExample> {
               Text('$_count', style: CupertinoTheme.of(context).textTheme.navLargeTitleTextStyle),
               const Spacer(),
               Padding(
-                padding: const EdgeInsets.all(15.0),
+                padding: const .all(15.0),
                 child: CupertinoButton.filled(
                   onPressed: () => setState(() => _count++),
                   child: const Text('Increment'),

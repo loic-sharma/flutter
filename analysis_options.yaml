@@ -29,6 +29,8 @@ analyzer:
       # Ignore protoc generated files
     - "dev/conductor/lib/proto/*"
     - "engine/**"
+  enable-experiment:
+    - dot-shorthands
 
 formatter:
   page_width: 100

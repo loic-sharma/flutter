@@ -94,13 +94,13 @@ class _CarouselExampleState extends State<CarouselExample> {
                 color: info.backgroundColor,
                 child: Center(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: .center,
                     children: <Widget>[
                       Icon(info.icon, color: info.color, size: 32.0),
                       Text(
                         info.label,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.clip,
+                        style: const TextStyle(fontWeight: .bold),
+                        overflow: .clip,
                         softWrap: false,
                       ),
                     ],
@@ -146,7 +146,7 @@ class HeroLayoutCard extends StatelessWidget {
             maxWidth: width * 7 / 8,
             minWidth: width * 7 / 8,
             child: Image(
-              fit: BoxFit.cover,
+              fit: .cover,
               image: NetworkImage(
                 'https://flutter.github.io/assets-for-api-docs/assets/material/${imageInfo.url}',
               ),
