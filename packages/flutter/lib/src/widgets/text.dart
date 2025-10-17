@@ -711,9 +711,9 @@ class Text extends StatelessWidget {
       effectiveTextStyle = defaultTextStyle.style.merge(style);
     }
     final bool boldText = MediaQuery.boldTextOf(context);
-    final double? lineHeightScaleFactor = MediaQuery.maybeLineHeightScaleFactorOf(context);
-    final double? letterSpacing = MediaQuery.maybeLetterSpacingOf(context);
-    final double? wordSpacing = MediaQuery.maybeWordSpacingOf(context);
+    final double? lineHeightScaleFactor = MediaQuery.maybeLineHeightScaleFactorOverrideOf(context);
+    final double? letterSpacing = MediaQuery.maybeLetterSpacingOverrideOf(context);
+    final double? wordSpacing = MediaQuery.maybeWordSpacingOverrideOf(context);
     if (boldText || lineHeightScaleFactor != null || letterSpacing != null || wordSpacing != null) {
       effectiveTextStyle = effectiveTextStyle!.merge(
         TextStyle(
@@ -799,8 +799,10 @@ class Text extends StatelessWidget {
         child: ExcludeSemantics(excluding: semanticsLabel != null, child: result),
       );
     }
+    // TODO(loic-sharma): This does not work if a single text has multiple
+    // paragraphs. For example, `Text('Hello\n\nWorld')`.
     final double? paragraphSpacing = MediaQuery.maybeParagraphSpacingOf(context);
-    if (paragraphSpacing != null) {
+    if (paragraphSpacing != null && paragraphSpacing != 0.0) {
       result = Padding(
         padding: EdgeInsets.only(bottom: paragraphSpacing),
         child: result,

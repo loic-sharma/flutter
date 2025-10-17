@@ -16659,9 +16659,9 @@ void main() {
           textDirection: TextDirection.ltr,
           child: MediaQuery(
             data: const MediaQueryData(
-              lineHeightScaleFactor: 2.0,
-              letterSpacing: 2.0,
-              wordSpacing: 2.0,
+              lineHeightScaleFactorOverride: 2.0,
+              letterSpacingOverride: 2.0,
+              wordSpacingOverride: 2.0,
             ),
             child: EditableText(
               controller: controller,

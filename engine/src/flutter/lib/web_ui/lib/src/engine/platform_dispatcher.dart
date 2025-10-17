@@ -758,13 +758,13 @@ class EnginePlatformDispatcher extends ui.PlatformDispatcher {
   }
 
   @override
-  double get lineHeightScaleFactor => configuration.lineHeightScaleFactor;
+  double? get lineHeightScaleFactorOverride => configuration.lineHeightScaleFactorOverride;
 
   @override
-  double get letterSpacing => configuration.letterSpacing;
+  double? get letterSpacingOverride => configuration.letterSpacingOverride;
 
   @override
-  double get wordSpacing => configuration.wordSpacing;
+  double? get wordSpacingOverride => configuration.wordSpacingOverride;
 
   @override
   double get paragraphSpacing => configuration.paragraphSpacing;
@@ -1033,37 +1033,54 @@ class EnginePlatformDispatcher extends ui.PlatformDispatcher {
   }
 
   /// Watches for resize changes on an off-screen invisible element to
-  /// recalculate [typographySettings].
+  /// recalculate the user's text styling preferences.
   ///
-  /// Updates [typographySettings] with the new value.
+  /// Updates the following with new values:
+  ///
+  /// * [lineHeightScaleFactorOverride]
+  /// * [letterSpacingOverride]
+  /// * [wordSpacingOverride]
+  /// * [paragraphSpacing]
   DomResizeObserver? _typographySettingsObserver;
   DomElement? _typographyMeasurementElement;
 
-  /// Updates [lineHeightScaleFactor] and invokes [onPlatformConfigurationChanged] and
-  /// [onMetricsChanged] callbacks if [lineHeightScaleFactor] changed.
-  void _updateLineHeightScaleFactor(double value) {
-    if (configuration.lineHeightScaleFactor != value) {
-      configuration = configuration.copyWith(lineHeightScaleFactor: value);
+  /// Updates [lineHeightScaleFactorOverride] and invokes [onPlatformConfigurationChanged] and
+  /// [onMetricsChanged] callbacks if [lineHeightScaleFactorOverride] changed.
+  void _updateLineHeightScaleFactorOverride(double? value) {
+    if (configuration.lineHeightScaleFactorOverride != value) {
+      configuration = configuration.copyWithTextSpacingOverrides(
+        lineHeightScaleFactorOverride: value,
+        letterSpacingOverride: configuration.letterSpacingOverride,
+        wordSpacingOverride: configuration.wordSpacingOverride,
+      );
       invokeOnPlatformConfigurationChanged();
       invokeOnMetricsChanged();
     }
   }
 
-  /// Updates [letterSpacing] and invokes [onPlatformConfigurationChanged] and
-  /// [onMetricsChanged] callbacks if [letterSpacing] changed.
-  void _updateLetterSpacing(double value) {
-    if (configuration.letterSpacing != value) {
-      configuration = configuration.copyWith(letterSpacing: value);
+  /// Updates [letterSpacingOverride] and invokes [onPlatformConfigurationChanged] and
+  /// [onMetricsChanged] callbacks if [letterSpacingOverride] changed.
+  void _updateLetterSpacingOverride(double? value) {
+    if (configuration.letterSpacingOverride != value) {
+      configuration = configuration.copyWithTextSpacingOverrides(
+        lineHeightScaleFactorOverride: configuration.lineHeightScaleFactorOverride,
+        letterSpacingOverride: value,
+        wordSpacingOverride: configuration.wordSpacingOverride,
+      );
       invokeOnPlatformConfigurationChanged();
       invokeOnMetricsChanged();
     }
   }
 
-  /// Updates [wordSpacing] and invokes [onPlatformConfigurationChanged] and
-  /// [onMetricsChanged] callbacks if [wordSpacing] changed.
-  void _updateWordSpacing(double value) {
-    if (configuration.wordSpacing != value) {
-      configuration = configuration.copyWith(wordSpacing: value);
+  /// Updates [wordSpacingOverride] and invokes [onPlatformConfigurationChanged] and
+  /// [onMetricsChanged] callbacks if [wordSpacingOverride] changed.
+  void _updateWordSpacingOverride(double? value) {
+    if (configuration.wordSpacingOverride != value) {
+      configuration = configuration.copyWithTextSpacingOverrides(
+        lineHeightScaleFactorOverride: configuration.lineHeightScaleFactorOverride,
+        letterSpacingOverride: configuration.letterSpacingOverride,
+        wordSpacingOverride: value,
+      );
       invokeOnPlatformConfigurationChanged();
       invokeOnMetricsChanged();
     }
@@ -1102,7 +1119,7 @@ class EnginePlatformDispatcher extends ui.PlatformDispatcher {
     style.lineHeight = '${spacingDefault}px';
     style.letterSpacing = '${spacingDefault}px';
     style.wordSpacing = '${spacingDefault}px';
-    style.margin = '0px 0px ${spacingDefault}px 0px';
+    style.margin = '0px ${spacingDefault}px 0px 0px';
     domDocument.body!.append(_typographyMeasurementElement!);
     final double? typographyMeasurementElementFontSize = parseFontSize(
       _typographyMeasurementElement!,
@@ -1138,31 +1155,27 @@ class EnginePlatformDispatcher extends ui.PlatformDispatcher {
         'margin-bottom',
       )?.toDouble();
 
-      // if (computedLineHeightScaleFactor == defaultLineHeightFactor) {
-      //   _updateLineHeightScaleFactor();
-      // }
-      // if (computedLetterSpacing == spacingDefault) {
-      //   _updateLetterSpacing();
-      // }
-      // if (computedWordSpacing == spacingDefault) {
-      //   _updateWordSpacing();
-      // }
-      // if (computedParagraphSpacing == spacingDefault) {
-      //   _updateParagraphSpacing();
-      // }
-
-      if (computedLineHeightScaleFactor != null &&
-          computedLineHeightScaleFactor != defaultLineHeightFactor) {
-        _updateLineHeightScaleFactor(computedLineHeightScaleFactor);
+      if (computedLineHeightScaleFactor != null) {
+        _updateLineHeightScaleFactorOverride(
+          computedLineHeightScaleFactor == defaultLineHeightFactor
+              ? null
+              : computedLineHeightScaleFactor,
+          );
       }
-      if (computedLetterSpacing != null && computedLetterSpacing != spacingDefault) {
-        _updateLetterSpacing(computedLetterSpacing);
+      if (computedLetterSpacing != null) {
+        _updateLetterSpacingOverride(
+          computedLetterSpacing == spacingDefault ? null : computedLetterSpacing,
+        );
       }
-      if (computedWordSpacing != null && computedWordSpacing != spacingDefault) {
-        _updateWordSpacing(computedWordSpacing);
+      if (computedWordSpacing != null) {
+        _updateWordSpacingOverride(
+          computedWordSpacing == spacingDefault ? null : computedWordSpacing,
+        );
       }
-      if (computedParagraphSpacing != null && computedParagraphSpacing != spacingDefault) {
-        _updateParagraphSpacing(computedParagraphSpacing);
+      if (computedParagraphSpacing != null) {
+        _updateParagraphSpacing(
+          computedParagraphSpacing == spacingDefault ? 0.0 : computedParagraphSpacing,
+        );
       }
     });
 
@@ -1834,9 +1847,9 @@ class PlatformConfiguration {
     this.locales = const <ui.Locale>[],
     this.defaultRouteName = '/',
     this.systemFontFamily,
-    this.lineHeightScaleFactor = 1.0,
-    this.letterSpacing = 0.0,
-    this.wordSpacing = 0.0,
+    this.lineHeightScaleFactorOverride = null,
+    this.letterSpacingOverride = null,
+    this.wordSpacingOverride = null,
     this.paragraphSpacing = 0.0,
   });
 
@@ -1849,9 +1862,9 @@ class PlatformConfiguration {
     List<ui.Locale>? locales,
     String? defaultRouteName,
     String? systemFontFamily,
-    double? lineHeightScaleFactor,
-    double? letterSpacing,
-    double? wordSpacing,
+    double? lineHeightScaleFactorOverride,
+    double? letterSpacingOverride,
+    double? wordSpacingOverride,
     double? paragraphSpacing,
   }) {
     return PlatformConfiguration(
@@ -1863,10 +1876,31 @@ class PlatformConfiguration {
       locales: locales ?? this.locales,
       defaultRouteName: defaultRouteName ?? this.defaultRouteName,
       systemFontFamily: systemFontFamily ?? this.systemFontFamily,
-      lineHeightScaleFactor: lineHeightScaleFactor ?? this.lineHeightScaleFactor,
-      letterSpacing: letterSpacing ?? this.letterSpacing,
-      wordSpacing: wordSpacing ?? this.wordSpacing,
+      lineHeightScaleFactorOverride: lineHeightScaleFactorOverride ?? this.lineHeightScaleFactorOverride,
+      letterSpacingOverride: letterSpacingOverride ?? this.letterSpacingOverride,
+      wordSpacingOverride: wordSpacingOverride ?? this.wordSpacingOverride,
       paragraphSpacing: paragraphSpacing ?? this.paragraphSpacing,
+    );
+  }
+
+  PlatformConfiguration copyWithTextSpacingOverrides({
+    required double? lineHeightScaleFactorOverride,
+    required double? letterSpacingOverride,
+    required double? wordSpacingOverride,
+  }) {
+    return PlatformConfiguration(
+      accessibilityFeatures: accessibilityFeatures,
+      alwaysUse24HourFormat: alwaysUse24HourFormat,
+      semanticsEnabled: semanticsEnabled,
+      platformBrightness: platformBrightness,
+      textScaleFactor: textScaleFactor,
+      locales: locales,
+      defaultRouteName: defaultRouteName,
+      systemFontFamily: systemFontFamily,
+      lineHeightScaleFactorOverride: lineHeightScaleFactorOverride,
+      letterSpacingOverride: letterSpacingOverride,
+      wordSpacingOverride: wordSpacingOverride,
+      paragraphSpacing: paragraphSpacing,
     );
   }
 
@@ -1878,9 +1912,9 @@ class PlatformConfiguration {
   final List<ui.Locale> locales;
   final String defaultRouteName;
   final String? systemFontFamily;
-  final double lineHeightScaleFactor;
-  final double letterSpacing;
-  final double wordSpacing;
+  final double? lineHeightScaleFactorOverride;
+  final double? letterSpacingOverride;
+  final double? wordSpacingOverride;
   final double paragraphSpacing;
 }
 

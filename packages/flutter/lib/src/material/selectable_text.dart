@@ -798,8 +798,10 @@ class _SelectableTextState extends State<SelectableText>
       autofillHints: null,
       contextMenuBuilder: widget.contextMenuBuilder,
     );
+    // TODO(loic-sharma): This does not work if a editable text has multiple
+    // paragraphs. For example, `Text('Hello\n\nWorld')`.
     final double? paragraphSpacing = MediaQuery.maybeParagraphSpacingOf(context);
-    if (paragraphSpacing != null) {
+    if (paragraphSpacing != null && paragraphSpacing != 0.0) {
       editable = Padding(
         padding: EdgeInsets.only(bottom: paragraphSpacing),
         child: editable,
