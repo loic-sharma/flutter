@@ -1160,7 +1160,7 @@ class EnginePlatformDispatcher extends ui.PlatformDispatcher {
           computedLineHeightScaleFactor == defaultLineHeightFactor
               ? null
               : computedLineHeightScaleFactor,
-          );
+        );
       }
       if (computedLetterSpacing != null) {
         _updateLetterSpacingOverride(
@@ -1876,7 +1876,8 @@ class PlatformConfiguration {
       locales: locales ?? this.locales,
       defaultRouteName: defaultRouteName ?? this.defaultRouteName,
       systemFontFamily: systemFontFamily ?? this.systemFontFamily,
-      lineHeightScaleFactorOverride: lineHeightScaleFactorOverride ?? this.lineHeightScaleFactorOverride,
+      lineHeightScaleFactorOverride:
+          lineHeightScaleFactorOverride ?? this.lineHeightScaleFactorOverride,
       letterSpacingOverride: letterSpacingOverride ?? this.letterSpacingOverride,
       wordSpacingOverride: wordSpacingOverride ?? this.wordSpacingOverride,
       paragraphSpacing: paragraphSpacing ?? this.paragraphSpacing,

@@ -1869,7 +1869,8 @@ class _PlatformConfiguration {
       defaultRouteName: defaultRouteName ?? this.defaultRouteName,
       systemFontFamily: systemFontFamily ?? this.systemFontFamily,
       configurationId: configurationId ?? this.configurationId,
-      lineHeightScaleFactorOverride: lineHeightScaleFactorOverride ?? this.lineHeightScaleFactorOverride,
+      lineHeightScaleFactorOverride:
+          lineHeightScaleFactorOverride ?? this.lineHeightScaleFactorOverride,
       letterSpacingOverride: letterSpacingOverride ?? this.letterSpacingOverride,
       wordSpacingOverride: wordSpacingOverride ?? this.wordSpacingOverride,
       paragraphSpacing: paragraphSpacing ?? this.paragraphSpacing,

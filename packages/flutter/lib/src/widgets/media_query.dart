@@ -332,9 +332,12 @@ class MediaQueryData {
           platformData?.supportsShowingSystemContextMenu ??
           view.platformDispatcher.supportsShowingSystemContextMenu,
       lineHeightScaleFactorOverride =
-          platformData?.lineHeightScaleFactorOverride ?? view.platformDispatcher.lineHeightScaleFactorOverride,
-      letterSpacingOverride = platformData?.letterSpacingOverride ?? view.platformDispatcher.letterSpacingOverride,
-      wordSpacingOverride = platformData?.wordSpacingOverride ?? view.platformDispatcher.wordSpacingOverride,
+          platformData?.lineHeightScaleFactorOverride ??
+          view.platformDispatcher.lineHeightScaleFactorOverride,
+      letterSpacingOverride =
+          platformData?.letterSpacingOverride ?? view.platformDispatcher.letterSpacingOverride,
+      wordSpacingOverride =
+          platformData?.wordSpacingOverride ?? view.platformDispatcher.wordSpacingOverride,
       paragraphSpacing = platformData?.paragraphSpacing ?? view.platformDispatcher.paragraphSpacing;
 
   static TextScaler _textScalerFromView(ui.FlutterView view, MediaQueryData? platformData) {
@@ -992,7 +995,12 @@ class MediaQueryData {
     gestureSettings,
     Object.hashAll(displayFeatures),
     supportsShowingSystemContextMenu,
-    Object.hash(lineHeightScaleFactorOverride, letterSpacingOverride, wordSpacingOverride, paragraphSpacing),
+    Object.hash(
+      lineHeightScaleFactorOverride,
+      letterSpacingOverride,
+      wordSpacingOverride,
+      paragraphSpacing,
+    ),
   );
 
   @override
@@ -1916,8 +1924,10 @@ class MediaQuery extends InheritedModel<_MediaQueryAspect> {
   /// changes.
   ///
   /// {@macro flutter.widgets.media_query.MediaQuery.dontUseMaybeOf}
-  static double? maybeLineHeightScaleFactorOverrideOf(BuildContext context) =>
-      _maybeOf(context, _MediaQueryAspect.lineHeightScaleFactorOverride)?.lineHeightScaleFactorOverride;
+  static double? maybeLineHeightScaleFactorOverrideOf(BuildContext context) => _maybeOf(
+    context,
+    _MediaQueryAspect.lineHeightScaleFactorOverride,
+  )?.lineHeightScaleFactorOverride;
 
   /// Returns the [MediaQueryData.letterSpacingOverride] for the nearest
   /// [MediaQuery] ancestor or null, if no such ancestor exists.
@@ -2018,8 +2028,10 @@ class MediaQuery extends InheritedModel<_MediaQueryAspect> {
                   oldWidget.data.supportsShowingSystemContextMenu,
             _MediaQueryAspect.lineHeightScaleFactorOverride =>
               data.lineHeightScaleFactorOverride != oldWidget.data.lineHeightScaleFactorOverride,
-            _MediaQueryAspect.letterSpacingOverride => data.letterSpacingOverride != oldWidget.data.letterSpacingOverride,
-            _MediaQueryAspect.wordSpacingOverride => data.wordSpacingOverride != oldWidget.data.wordSpacingOverride,
+            _MediaQueryAspect.letterSpacingOverride =>
+              data.letterSpacingOverride != oldWidget.data.letterSpacingOverride,
+            _MediaQueryAspect.wordSpacingOverride =>
+              data.wordSpacingOverride != oldWidget.data.wordSpacingOverride,
             _MediaQueryAspect.paragraphSpacing =>
               data.paragraphSpacing != oldWidget.data.paragraphSpacing,
           },
