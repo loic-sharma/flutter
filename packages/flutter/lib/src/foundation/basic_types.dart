@@ -262,3 +262,70 @@ Duration lerpDuration(Duration a, Duration b, double t) {
     microseconds: (a.inMicroseconds + (b.inMicroseconds - a.inMicroseconds) * t).round(),
   );
 }
+
+/// An option type that can represent a value that is either present or absent.
+///
+/// This is often used in APIs that need to distinguish between three states:
+///
+/// 1. A value that is absent.
+/// 2. A value that is present.
+/// 3. A value that is null.
+///
+/// If you only need to distinguish between a value and null, use a
+/// nullable type instead.
+///
+/// Example:
+///
+/// ```dart
+/// class Car {
+///   Car({required this.make, this.model});
+///
+///   final String make;
+///   final String? model;
+///
+///   Foo copyWith({
+///     String make,
+///     Option<String?> model = const None<String?>(),
+///   }) {
+///     return Car(
+///      make: make ?? this.make,
+///      model: model.valueOr(this.model),
+///     );
+///   }
+/// }
+///
+/// See also:
+///
+/// * [None], the absent value case.
+/// * [Some], the value (null or non-null) case.
+sealed class Option<T> {
+  const Option();
+
+  T valueOr(T defaultValue) {
+    if (this is Some<T>) {
+      return (this as Some<T>).value;
+    }
+
+    return defaultValue;
+  }
+}
+
+/// Represents an absent value.
+///
+/// See also:
+///
+/// * [Some], the value case.
+class None<T> extends Option<T> {
+  const None();
+}
+
+/// Represents a value, which can be null.
+///
+/// See also:
+///
+/// * [None], the absent value case.
+class Some<T> extends Option<T> {
+  const Some(this.value);
+
+  final T value;
+}

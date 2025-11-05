@@ -218,6 +218,7 @@ class MediaQueryData {
     this.gestureSettings = const DeviceGestureSettings(touchSlop: kTouchSlop),
     this.displayFeatures = const <ui.DisplayFeature>[],
     this.supportsShowingSystemContextMenu = false,
+    this.paragraphSpacingOverride,
   }) : _textScaleFactor = textScaleFactor,
        _textScaler = textScaler,
        assert(
@@ -314,7 +315,8 @@ class MediaQueryData {
       displayFeatures = view.displayFeatures,
       supportsShowingSystemContextMenu =
           platformData?.supportsShowingSystemContextMenu ??
-          view.platformDispatcher.supportsShowingSystemContextMenu;
+          view.platformDispatcher.supportsShowingSystemContextMenu,
+      paragraphSpacingOverride = platformData?.paragraphSpacingOverride; // TODO: Use platform dispatcher.
 
   static TextScaler _textScalerFromView(ui.FlutterView view, MediaQueryData? platformData) {
     return platformData?.textScaler ?? SystemTextScaler._(view.platformDispatcher);
@@ -660,6 +662,8 @@ class MediaQueryData {
     return size.width > size.height ? Orientation.landscape : Orientation.portrait;
   }
 
+  final double? paragraphSpacingOverride;
+
   /// Creates a copy of this media query data but with the given fields replaced
   /// with the new values.
   ///
@@ -692,6 +696,7 @@ class MediaQueryData {
     DeviceGestureSettings? gestureSettings,
     List<ui.DisplayFeature>? displayFeatures,
     bool? supportsShowingSystemContextMenu,
+    Option<double?> paragraphSpacingOverride = const None<double?>(),
   }) {
     assert(textScaleFactor == null || textScaler == null);
     if (textScaleFactor != null) {
@@ -719,6 +724,7 @@ class MediaQueryData {
       displayFeatures: displayFeatures ?? this.displayFeatures,
       supportsShowingSystemContextMenu:
           supportsShowingSystemContextMenu ?? this.supportsShowingSystemContextMenu,
+      paragraphSpacingOverride: paragraphSpacingOverride.valueOr(this.paragraphSpacingOverride),
     );
   }
 

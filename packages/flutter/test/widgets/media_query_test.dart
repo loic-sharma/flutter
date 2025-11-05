@@ -5,6 +5,7 @@
 import 'dart:ui'
     show Brightness, DisplayFeature, DisplayFeatureState, DisplayFeatureType, GestureSettings;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,6 +43,41 @@ class _MediaQueryAspectVariant extends TestVariant<_MediaQueryAspectCase> {
 }
 
 void main() {
+  test('can retain original implicity', () {
+    const MediaQueryData original = MediaQueryData(paragraphSpacingOverride: 10.0);
+    final MediaQueryData modified = original.copyWith();
+
+    expect(modified.paragraphSpacingOverride, 10.0);
+  });
+
+  test('can retain original explicitly', () {
+    const MediaQueryData original = MediaQueryData(paragraphSpacingOverride: 10.0);
+    final MediaQueryData modified = original.copyWith(
+      // ignore: avoid_redundant_argument_values
+      paragraphSpacingOverride: const None<double?>(),
+    );
+
+    expect(modified.paragraphSpacingOverride, 10.0);
+  });
+
+  test('can override', () {
+    const MediaQueryData original = MediaQueryData(paragraphSpacingOverride: 10.0);
+    final MediaQueryData modified = original.copyWith(
+      paragraphSpacingOverride: const Some<double?>(20.0),
+    );
+
+    expect(modified.paragraphSpacingOverride, 20.0);
+  });
+
+  test('can set to null', () {
+    const MediaQueryData original = MediaQueryData(paragraphSpacingOverride: 10.0);
+    final MediaQueryData modified = original.copyWith(
+      paragraphSpacingOverride: const Some<double?>(null),
+    );
+
+    expect(modified.paragraphSpacingOverride, null);
+  });
+
   testWidgets('MediaQuery does not have a default', (WidgetTester tester) async {
     late final FlutterError error;
     // Cannot use tester.pumpWidget here because it wraps the widget in a View,
