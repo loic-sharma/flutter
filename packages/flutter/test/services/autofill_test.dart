@@ -165,6 +165,9 @@ class FakeAutofillClient implements TextInputClient, AutofillClient {
   FakeAutofillClient(this.currentTextEditingValue);
 
   @override
+  int get clientId => hashCode;
+
+  @override
   String get autofillId => hashCode.toString();
 
   @override

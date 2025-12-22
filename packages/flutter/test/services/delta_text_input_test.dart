@@ -271,6 +271,9 @@ class FakeDeltaTextInputClient implements DeltaTextInputClient {
   String latestMethodCall = '';
 
   @override
+  int get clientId => hashCode;
+
+  @override
   TextEditingValue currentTextEditingValue;
 
   @override

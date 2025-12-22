@@ -152,6 +152,9 @@ class _PerformSelectorInputClient with TextInputClient {
   bool _performSelectorCalled = false;
 
   @override
+  int get clientId => hashCode;
+
+  @override
   AutofillScope? get currentAutofillScope => null;
 
   @override

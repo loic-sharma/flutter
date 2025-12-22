@@ -1475,6 +1475,9 @@ class FakeTextInputClient with TextInputClient {
   late Map<String, dynamic>? latestPrivateCommandData;
 
   @override
+  int get clientId => hashCode;
+
+  @override
   TextEditingValue currentTextEditingValue;
 
   @override

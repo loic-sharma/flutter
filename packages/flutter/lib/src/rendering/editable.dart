@@ -331,6 +331,7 @@ class RenderEditable extends RenderBox
     RenderEditablePainter? painter,
     RenderEditablePainter? foregroundPainter,
     List<RenderBox>? children,
+    bool preventFlutterPaint = false,
   }) : assert(maxLines == null || maxLines > 0),
        assert(minLines == null || minLines > 0),
        assert(
@@ -380,6 +381,7 @@ class RenderEditable extends RenderBox
        _forceLine = forceLine,
        _clipBehavior = clipBehavior,
        _hasFocus = hasFocus ?? false,
+       _preventFlutterPaint = preventFlutterPaint,
        _disposeShowCursor = showCursor == null {
     assert(!_showCursor.value || cursorColor != null);
 
@@ -2677,8 +2679,21 @@ class RenderEditable extends RenderBox
     defaultApplyPaintTransform(child, transform);
   }
 
+  /// TODO: Docs
+  bool get preventFlutterPaint => _preventFlutterPaint;
+  bool _preventFlutterPaint;
+  set preventFlutterPaint(bool value) {
+    // TODO: Updating this should likely call markNeedsPaint.
+    _preventFlutterPaint = value;
+  }
+
   @override
   void paint(PaintingContext context, Offset offset) {
+    // Let the platform view paint the text field.
+    if (preventFlutterPaint) {
+      return;
+    }
+
     _computeTextMetricsIfNeeded();
     if (_hasVisualOverflow && clipBehavior != Clip.none) {
       _clipRectLayer.layer = context.pushClipRect(
