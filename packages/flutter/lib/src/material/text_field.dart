@@ -16,6 +16,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/src/widgets/editable_text_web.dart';
 
 import 'adaptive_text_selection_toolbar.dart';
 import 'color_scheme.dart';
@@ -1673,7 +1674,7 @@ class _TextFieldState extends State<TextField>
     Widget child = RepaintBoundary(
       child: UnmanagedRestorationScope(
         bucket: bucket,
-        child: EditableText(
+        child: EditableTextWeb(
           key: editableTextKey,
           readOnly: widget.readOnly || !_isEnabled,
           toolbarOptions: widget.toolbarOptions,
@@ -1840,10 +1841,14 @@ class _TextFieldState extends State<TextField>
                 child: child,
               );
             },
-            child: _selectionGestureDetectorBuilder.buildGestureDetector(
-              behavior: HitTestBehavior.translucent,
-              child: child,
-            ),
+            // child: _selectionGestureDetectorBuilder.buildGestureDetector(
+            //   behavior: HitTestBehavior.translucent,
+            //   child: child,
+            // ),
+            // TODO: HACK. Disable the selection gesture detector for now.
+            // TextSelectionGestureDetectorBuilder.onTapDown tries to call
+            // RenderEditable.handleTapDown.
+            child: child,
           ),
         ),
       ),
