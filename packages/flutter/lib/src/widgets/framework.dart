@@ -5113,17 +5113,45 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
   Set<Listenable>? _newListenables;
   int _unchangedListenables = 0;
 
+  @override
   void listen(Listenable listenable) {
     assert(_debugCheckOwnerBuildTargetExists('listen'));
-    // TODO: Optimize for the common case where the same
-    // listenables are listened to across multiple builds.
-    (_newListenables ??= <Listenable>{}).add(listenable);
+
+    // Handle unchanged listenable.
+    if (_listenables != null &&
+        _newListenables != null &&
+        _unchangedListenables < _listenables!.length &&
+        identical(_listenables!.elementAt(_unchangedListenables), listenable)) {
+      _unchangedListenables += 1;
+      return;
+    }
+
+    // Handle new listenable.
+    if (_newListenables == null) {
+      _newListenables = <Listenable>{};
+      for (int i = 0; i < _unchangedListenables; i++) {
+        _newListenables!.add(_listenables!.elementAt(i));
+      }
+    }
+
+    _newListenables!.add(listenable);
   }
 
   void _updateListenables() {
     assert(_debugCheckOwnerBuildTargetExists('_updateListenables'));
+
     final Set<Listenable>? oldListenables = _listenables;
     final Set<Listenable>? newListenables = _newListenables;
+    final bool allOldListenablesUnchanged =
+        _unchangedListenables == (oldListenables?.length ?? 0);
+
+    // Handle no changes.
+    if (allOldListenablesUnchanged && newListenables == null) {
+      _unchangedListenables = 0;
+      return;
+    }
+
+    // Handle removed listenables.
     if (oldListenables != null) {
       for (final Listenable listenable in oldListenables) {
         if (newListenables == null || !newListenables.contains(listenable)) {
@@ -5131,6 +5159,8 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
         }
       }
     }
+
+    // Handle added listenables.
     if (newListenables != null) {
       for (final Listenable listenable in newListenables) {
         if (oldListenables == null || !oldListenables.contains(listenable)) {
@@ -5138,8 +5168,10 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
         }
       }
     }
+
     _listenables = newListenables;
     _newListenables = null;
+    _unchangedListenables = 0;
   }
 
   @override
@@ -5579,6 +5611,7 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
       owner!._debugCurrentBuildTarget = this;
       return true;
     }());
+    assert(_unchangedListenables == 0);
     assert(_newListenables == null);
     try {
       performRebuild();
