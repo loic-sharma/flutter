@@ -5133,25 +5133,21 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
         _newListenables!.add(_listenables!.elementAt(i));
       }
     }
-
     _newListenables!.add(listenable);
   }
 
   void _updateListenables() {
     assert(_debugCheckOwnerBuildTargetExists('_updateListenables'));
-
+    assert(_unchangedListenables <= (_listenables?.length ?? 0));
     final Set<Listenable>? oldListenables = _listenables;
     final Set<Listenable>? newListenables = _newListenables;
     final bool allOldListenablesUnchanged =
         _unchangedListenables == (oldListenables?.length ?? 0);
-
-    // Handle no changes.
     if (allOldListenablesUnchanged && newListenables == null) {
       _unchangedListenables = 0;
       return;
     }
 
-    // Handle removed listenables.
     if (oldListenables != null) {
       for (final Listenable listenable in oldListenables) {
         if (newListenables == null || !newListenables.contains(listenable)) {
@@ -5160,7 +5156,6 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
       }
     }
 
-    // Handle added listenables.
     if (newListenables != null) {
       for (final Listenable listenable in newListenables) {
         if (oldListenables == null || !oldListenables.contains(listenable)) {
