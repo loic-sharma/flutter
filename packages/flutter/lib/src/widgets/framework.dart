@@ -4882,6 +4882,8 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
     if (key is GlobalKey) {
       owner!._unregisterGlobalKey(key, this);
     }
+    assert(_newListenables == null);
+    assert(_unchangedListenables == 0);
     if (_listenables != null) {
       for (final Listenable listenable in _listenables!) {
         listenable.removeListener(markNeedsBuild);
