@@ -2449,14 +2449,23 @@ abstract class BuildContext {
 
   /// Registers this build context to listen to the given [Listenable] until the next rebuild.
   ///
-  /// When the [Listenable] notifies its listeners, this build context will be
-  /// marked dirty and rebuilt.
+  /// This build context will rebuild if the [Listenable] notifies its listeners.
   ///
-  /// The build context will stop listening to the [Listenable] if the next rebuild
-  /// does not call this method again with the same [Listenable].
+  /// If the next rebuild does not call this method again with the same [Listenable],
+  /// this build context will stop listening to the [Listenable].
   ///
   /// This method must be called during the build phase.
   void listen(Listenable listenable);
+
+  /// Registers this build context to watch the given [ValueListenable] until the next rebuild.
+  ///
+  /// This build context will rebuild if the [ValueListenable]'s value changes.
+  ///
+  /// If the next rebuild does not call this method again with the same [ValueListenable],
+  /// this build context will stop listening to the [ValueListenable].
+  ///
+  /// This method must be called during the build phase.
+  T watch<T>(ValueListenable<T> valueListenable);
 
   /// Returns the nearest widget of the given [InheritedWidget] subclass `T` or
   /// null if an appropriate ancestor is not found.
@@ -5134,6 +5143,12 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
       }
     }
     _newListenables!.add(listenable);
+  }
+
+  @override
+  T watch<T>(ValueListenable<T> valueListenable) {
+    listen(valueListenable);
+    return valueListenable.value;
   }
 
   void _updateListenables() {
