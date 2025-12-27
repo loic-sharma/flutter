@@ -12,6 +12,7 @@ library;
 
 import 'dart:async';
 import 'dart:collection';
+import 'dart:core';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
@@ -2446,6 +2447,17 @@ abstract class BuildContext {
   /// {@endtemplate}
   T? dependOnInheritedWidgetOfExactType<T extends InheritedWidget>({Object? aspect});
 
+  /// Registers this build context to listen to the given [Listenable] until the next rebuild.
+  ///
+  /// When the [Listenable] notifies its listeners, this build context will be
+  /// marked dirty and rebuilt.
+  ///
+  /// The build context will stop listening to the [Listenable] if the next rebuild
+  /// does not call this method again with the same [Listenable].
+  ///
+  /// This method must be called during the build phase.
+  void listen(Listenable listenable);
+
   /// Returns the nearest widget of the given [InheritedWidget] subclass `T` or
   /// null if an appropriate ancestor is not found.
   ///
@@ -4861,6 +4873,12 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
     if (key is GlobalKey) {
       owner!._unregisterGlobalKey(key, this);
     }
+    if (_listenables != null) {
+      for (final Listenable listenable in _listenables!) {
+        listenable.removeListener(markNeedsBuild);
+      }
+      _listenables = null;
+    }
     // Release resources to reduce the severity of memory leaks caused by
     // defunct, but accidentally retained Elements.
     _widget = null;
@@ -5089,6 +5107,39 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
     }
     _hadUnsatisfiedDependencies = true;
     return null;
+  }
+
+  Set<Listenable>? _listenables;
+  Set<Listenable>? _newListenables;
+  int _unchangedListenables = 0;
+
+  void listen(Listenable listenable) {
+    assert(_debugCheckOwnerBuildTargetExists('listen'));
+    // TODO: Optimize for the common case where the same
+    // listenables are listened to across multiple builds.
+    (_newListenables ??= <Listenable>{}).add(listenable);
+  }
+
+  void _updateListenables() {
+    assert(_debugCheckOwnerBuildTargetExists('_updateListenables'));
+    final Set<Listenable>? oldListenables = _listenables;
+    final Set<Listenable>? newListenables = _newListenables;
+    if (oldListenables != null) {
+      for (final Listenable listenable in oldListenables) {
+        if (newListenables == null || !newListenables.contains(listenable)) {
+          listenable.removeListener(markNeedsBuild);
+        }
+      }
+    }
+    if (newListenables != null) {
+      for (final Listenable listenable in newListenables) {
+        if (oldListenables == null || !oldListenables.contains(listenable)) {
+          listenable.addListener(markNeedsBuild);
+        }
+      }
+    }
+    _listenables = newListenables;
+    _newListenables = null;
   }
 
   @override
@@ -5528,8 +5579,10 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
       owner!._debugCurrentBuildTarget = this;
       return true;
     }());
+    assert(_newListenables == null);
     try {
       performRebuild();
+      _updateListenables();
     } finally {
       assert(() {
         owner!._debugElementWasRebuilt(this);
@@ -5537,6 +5590,7 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
         owner!._debugCurrentBuildTarget = debugPreviousBuildTarget;
         return true;
       }());
+      _newListenables = null;
     }
     assert(!_dirty);
   }
