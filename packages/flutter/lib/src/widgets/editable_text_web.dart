@@ -676,38 +676,41 @@ class EditableTextStateWeb extends State<EditableText>
     };
 
     return _TODOHackRemoveMeSuppressTextSelectionGestures(
-      child: ListenableBuilder(
-        listenable: Listenable.merge([widget.focusNode, widget.controller]),
-        builder: (context, child) {
-          return _EditableWeb(
-            textStyle: _style,
-            cursorColor: widget.cursorColor,
-            showCursor: widget.showCursor,
-            forceLine: widget.forceLine,
-            hasFocus: widget.focusNode.hasFocus,
-            maxLines: widget.maxLines,
-            minLines: widget.minLines,
-            expands: widget.expands,
-            selectionColor: widget.selectionColor,
-            textScaler: textScaler,
-            textAlign: widget.textAlign,
-            textDirection: textDirection,
-            locale: widget.locale,
-            // offset: widget.offset,
-            rendererIgnoresPointer: widget.rendererIgnoresPointer,
-            devicePixelRatio: devicePixelRatio,
-            clipBehavior: widget.clipBehavior,
-            requestKeyboard: requestKeyboard,
-            clientId: 123, // TODO: Do we still need this?
-            performAction: performAction,
-            textInputConfiguration: textInputConfiguration,
-            currentAutofillScope: currentAutofillScope,
-            scrollTop: 0, // TODO
-            scrollLeft: 0, // TODO
-            textEditingValue: widget.controller.text,
-            updateEditingValue: updateEditingValue,
-          );
-        },
+      child: Focus(
+        focusNode: widget.focusNode,
+        child: ListenableBuilder(
+          listenable: Listenable.merge([widget.focusNode, widget.controller]),
+          builder: (context, child) {
+            return _EditableWeb(
+              textStyle: _style,
+              cursorColor: widget.cursorColor,
+              showCursor: widget.showCursor,
+              forceLine: widget.forceLine,
+              hasFocus: widget.focusNode.hasFocus,
+              maxLines: widget.maxLines,
+              minLines: widget.minLines,
+              expands: widget.expands,
+              selectionColor: widget.selectionColor,
+              textScaler: textScaler,
+              textAlign: widget.textAlign,
+              textDirection: textDirection,
+              locale: widget.locale,
+              // offset: widget.offset,
+              rendererIgnoresPointer: widget.rendererIgnoresPointer,
+              devicePixelRatio: devicePixelRatio,
+              clipBehavior: widget.clipBehavior,
+              requestKeyboard: requestKeyboard,
+              clientId: 123, // TODO: Do we still need this?
+              performAction: performAction,
+              textInputConfiguration: textInputConfiguration,
+              currentAutofillScope: currentAutofillScope,
+              scrollTop: 0, // TODO
+              scrollLeft: 0, // TODO
+              textEditingValue: widget.controller.text,
+              updateEditingValue: updateEditingValue,
+            );
+          },
+        ),
       ),
     );
   }
