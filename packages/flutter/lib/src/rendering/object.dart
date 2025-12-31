@@ -4017,6 +4017,67 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
   }
 }
 
+/// Generic interface for render objects with one child.
+///
+/// This interface is typically used to implement render objects created
+/// in a [SingleChildRenderObjectWidget].
+abstract interface class RenderObjectWithChild<ChildType extends RenderObject> extends RenderObject {
+  /// The render object's unique child.
+  ChildType? get child;
+  set child(ChildType? value);
+
+  /// Checks whether the given render object has the correct [runtimeType] to be
+  /// a child of this render object.
+  ///
+  /// Does nothing if assertions are disabled.
+  ///
+  /// Always returns true.
+  bool debugValidateChild(RenderObject child);
+}
+
+/// Checks whether the given render object has the correct [runtimeType] to be
+/// a child of this render object.
+///
+/// Does nothing if assertions are disabled.
+///
+/// Always returns true.
+bool debugValidateRenderObjectWithChild<ChildType extends RenderObject>(
+  RenderObjectWithChild<ChildType> renderObject,
+  RenderObject child,
+) {
+  assert(() {
+    if (child is! ChildType) {
+      throw FlutterError.fromParts(<DiagnosticsNode>[
+        ErrorSummary(
+          'A ${renderObject.runtimeType} expected a child of type $ChildType but received a '
+          'child of type ${child.runtimeType}.',
+        ),
+        ErrorDescription(
+          'RenderObjects expect specific types of children because they '
+          'coordinate with their children during layout and paint. For '
+          'example, a RenderSliver cannot be the child of a RenderBox because '
+          'a RenderSliver does not understand the RenderBox layout protocol.',
+        ),
+        ErrorSpacer(),
+        DiagnosticsProperty<Object?>(
+          'The ${renderObject.runtimeType} that expected a $ChildType child was created by',
+          renderObject.debugCreator,
+          style: DiagnosticsTreeStyle.errorProperty,
+        ),
+        ErrorSpacer(),
+        DiagnosticsProperty<Object?>(
+          'The ${child.runtimeType} that did not match the expected child type '
+          'was created by',
+          child.debugCreator,
+          style: DiagnosticsTreeStyle.errorProperty,
+        ),
+      ]);
+    }
+    return true;
+  }());
+  return true;
+}
+
 /// Generic mixin for render objects with one child.
 ///
 /// Provides a child model for a render object subclass that has
@@ -4024,51 +4085,25 @@ abstract class RenderObject with DiagnosticableTreeMixin implements HitTestTarge
 ///
 /// This mixin is typically used to implement render objects created
 /// in a [SingleChildRenderObjectWidget].
-mixin RenderObjectWithChildMixin<ChildType extends RenderObject> on RenderObject {
+mixin RenderObjectWithChildMixin<ChildType extends RenderObject> on RenderObject implements RenderObjectWithChild<ChildType> {
   /// Checks whether the given render object has the correct [runtimeType] to be
   /// a child of this render object.
   ///
   /// Does nothing if assertions are disabled.
   ///
   /// Always returns true.
+  @override
   bool debugValidateChild(RenderObject child) {
-    assert(() {
-      if (child is! ChildType) {
-        throw FlutterError.fromParts(<DiagnosticsNode>[
-          ErrorSummary(
-            'A $runtimeType expected a child of type $ChildType but received a '
-            'child of type ${child.runtimeType}.',
-          ),
-          ErrorDescription(
-            'RenderObjects expect specific types of children because they '
-            'coordinate with their children during layout and paint. For '
-            'example, a RenderSliver cannot be the child of a RenderBox because '
-            'a RenderSliver does not understand the RenderBox layout protocol.',
-          ),
-          ErrorSpacer(),
-          DiagnosticsProperty<Object?>(
-            'The $runtimeType that expected a $ChildType child was created by',
-            debugCreator,
-            style: DiagnosticsTreeStyle.errorProperty,
-          ),
-          ErrorSpacer(),
-          DiagnosticsProperty<Object?>(
-            'The ${child.runtimeType} that did not match the expected child type '
-            'was created by',
-            child.debugCreator,
-            style: DiagnosticsTreeStyle.errorProperty,
-          ),
-        ]);
-      }
-      return true;
-    }());
-    return true;
+    return debugValidateRenderObjectWithChild<ChildType>(this, child);
   }
 
   ChildType? _child;
 
   /// The render object's unique child.
+  @override
   ChildType? get child => _child;
+
+  @override
   set child(ChildType? value) {
     if (_child != null) {
       dropChild(_child!);
@@ -4209,6 +4244,100 @@ mixin ContainerParentDataMixin<ChildType extends RenderObject> on ParentData {
   }
 }
 
+abstract class ContainerRenderObject<ChildType extends RenderObject,
+    ParentDataType extends ContainerParentDataMixin<ChildType>> extends RenderObject {
+  /// The number of children.
+  int get childCount;
+
+  /// Checks whether the given render object has the correct [runtimeType] to be
+  /// a child of this render object.
+  ///
+  /// Does nothing if assertions are disabled.
+  ///
+  /// Always returns true.
+  bool debugValidateChild(RenderObject child);
+
+  /// The first child in the child list.
+  ChildType? get firstChild;
+
+  /// The last child in the child list.
+  ChildType? get lastChild;
+
+  /// Insert child into this render object's child list after the given child.
+  ///
+  /// If `after` is null, then this inserts the child at the start of the list,
+  /// and the child becomes the new [firstChild].
+  void insert(ChildType child, {ChildType? after});
+
+  /// Append child to the end of this render object's child list.
+  void add(ChildType child);
+
+  /// Add all the children to the end of this render object's child list.
+  void addAll(List<ChildType>? children);
+
+  /// Remove this child from the child list.
+  ///
+  /// Requires the child to be present in the child list.
+  void remove(ChildType child);
+
+  /// Remove all their children from this render object's child list.
+  ///
+  /// More efficient than removing them individually.
+  void removeAll();
+
+  /// Move the given `child` in the child list to be after another child.
+  ///
+  /// More efficient than removing and re-adding the child. Requires the child
+  /// to already be in the child list at some position. Pass null for `after` to
+  /// move the child to the start of the child list.
+  void move(ChildType child, {ChildType? after});
+}
+
+/// Checks whether the given render object has the correct [runtimeType] to be
+/// a child of this render object.
+///
+/// Does nothing if assertions are disabled.
+///
+/// Always returns true.
+bool debugValidateContainerRenderObject<
+    ChildType extends RenderObject,
+    ParentDataType extends ContainerParentDataMixin<ChildType>>(
+  ContainerRenderObject<ChildType, ParentDataType> renderObject,
+  RenderObject child,
+) {
+  assert(() {
+    if (child is! ChildType) {
+      throw FlutterError.fromParts(<DiagnosticsNode>[
+        ErrorSummary(
+          'A ${renderObject.runtimeType} expected a child of type $ChildType but received a '
+          'child of type ${child.runtimeType}.',
+        ),
+        ErrorDescription(
+          'RenderObjects expect specific types of children because they '
+          'coordinate with their children during layout and paint. For '
+          'example, a RenderSliver cannot be the child of a RenderBox because '
+          'a RenderSliver does not understand the RenderBox layout protocol.',
+        ),
+        ErrorSpacer(),
+        DiagnosticsProperty<Object?>(
+          'The ${renderObject.runtimeType} that expected a $ChildType child was created by',
+          renderObject.debugCreator,
+          style: DiagnosticsTreeStyle.errorProperty,
+        ),
+        ErrorSpacer(),
+        DiagnosticsProperty<Object?>(
+          'The ${child.runtimeType} that did not match the expected child type '
+          'was created by',
+          child.debugCreator,
+          style: DiagnosticsTreeStyle.errorProperty,
+        ),
+      ]);
+    }
+    return true;
+  }());
+  return true;
+}
+
 /// Generic mixin for render objects with a list of children.
 ///
 /// Provides a child model for a render object subclass that has a doubly-linked
@@ -4236,7 +4365,7 @@ mixin ContainerRenderObjectMixin<
   ChildType extends RenderObject,
   ParentDataType extends ContainerParentDataMixin<ChildType>
 >
-    on RenderObject {
+    on RenderObject implements ContainerRenderObject<ChildType, ParentDataType> {
   bool _debugUltimatePreviousSiblingOf(ChildType child, {ChildType? equals}) {
     var childParentData = child.parentData! as ParentDataType;
     while (childParentData.previousSibling != null) {
@@ -4260,6 +4389,7 @@ mixin ContainerRenderObjectMixin<
   int _childCount = 0;
 
   /// The number of children.
+  @override
   int get childCount => _childCount;
 
   /// Checks whether the given render object has the correct [runtimeType] to be
@@ -4268,38 +4398,9 @@ mixin ContainerRenderObjectMixin<
   /// Does nothing if assertions are disabled.
   ///
   /// Always returns true.
+  @override
   bool debugValidateChild(RenderObject child) {
-    assert(() {
-      if (child is! ChildType) {
-        throw FlutterError.fromParts(<DiagnosticsNode>[
-          ErrorSummary(
-            'A $runtimeType expected a child of type $ChildType but received a '
-            'child of type ${child.runtimeType}.',
-          ),
-          ErrorDescription(
-            'RenderObjects expect specific types of children because they '
-            'coordinate with their children during layout and paint. For '
-            'example, a RenderSliver cannot be the child of a RenderBox because '
-            'a RenderSliver does not understand the RenderBox layout protocol.',
-          ),
-          ErrorSpacer(),
-          DiagnosticsProperty<Object?>(
-            'The $runtimeType that expected a $ChildType child was created by',
-            debugCreator,
-            style: DiagnosticsTreeStyle.errorProperty,
-          ),
-          ErrorSpacer(),
-          DiagnosticsProperty<Object?>(
-            'The ${child.runtimeType} that did not match the expected child type '
-            'was created by',
-            child.debugCreator,
-            style: DiagnosticsTreeStyle.errorProperty,
-          ),
-        ]);
-      }
-      return true;
-    }());
-    return true;
+    return debugValidateContainerRenderObject<ChildType, ParentDataType>(this, child);
   }
 
   ChildType? _firstChild;
@@ -4352,6 +4453,7 @@ mixin ContainerRenderObjectMixin<
   ///
   /// If `after` is null, then this inserts the child at the start of the list,
   /// and the child becomes the new [firstChild].
+  @override
   void insert(ChildType child, {ChildType? after}) {
     assert(child != this, 'A RenderObject cannot be inserted into itself.');
     assert(
@@ -4372,11 +4474,13 @@ mixin ContainerRenderObjectMixin<
   }
 
   /// Append child to the end of this render object's child list.
+  @override
   void add(ChildType child) {
     insert(child, after: _lastChild);
   }
 
   /// Add all the children to the end of this render object's child list.
+  @override
   void addAll(List<ChildType>? children) {
     children?.forEach(add);
   }
@@ -4409,6 +4513,7 @@ mixin ContainerRenderObjectMixin<
   /// Remove this child from the child list.
   ///
   /// Requires the child to be present in the child list.
+  @override
   void remove(ChildType child) {
     _removeFromChildList(child);
     dropChild(child);
@@ -4417,6 +4522,7 @@ mixin ContainerRenderObjectMixin<
   /// Remove all their children from this render object's child list.
   ///
   /// More efficient than removing them individually.
+  @override
   void removeAll() {
     ChildType? child = _firstChild;
     while (child != null) {
@@ -4437,6 +4543,7 @@ mixin ContainerRenderObjectMixin<
   /// More efficient than removing and re-adding the child. Requires the child
   /// to already be in the child list at some position. Pass null for `after` to
   /// move the child to the start of the child list.
+  @override
   void move(ChildType child, {ChildType? after}) {
     assert(child != this);
     assert(after != this);
@@ -4494,9 +4601,11 @@ mixin ContainerRenderObjectMixin<
   }
 
   /// The first child in the child list.
+  @override
   ChildType? get firstChild => _firstChild;
 
   /// The last child in the child list.
+  @override
   ChildType? get lastChild => _lastChild;
 
   /// The previous child before the given child in the child list.

@@ -7124,7 +7124,7 @@ class SingleChildRenderObjectElement extends RenderObjectElement {
 
   @override
   void insertRenderObjectChild(RenderObject child, Object? slot) {
-    final renderObject = this.renderObject as RenderObjectWithChildMixin<RenderObject>;
+    final renderObject = this.renderObject as RenderObjectWithChild<RenderObject>;
     assert(slot == null);
     assert(renderObject.debugValidateChild(child));
     renderObject.child = child;
@@ -7138,7 +7138,7 @@ class SingleChildRenderObjectElement extends RenderObjectElement {
 
   @override
   void removeRenderObjectChild(RenderObject child, Object? slot) {
-    final renderObject = this.renderObject as RenderObjectWithChildMixin<RenderObject>;
+    final renderObject = this.renderObject as RenderObjectWithChild<RenderObject>;
     assert(slot == null);
     assert(renderObject.child == child);
     renderObject.child = null;
@@ -7165,10 +7165,10 @@ class MultiChildRenderObjectElement extends RenderObjectElement {
     : assert(!debugChildrenHaveDuplicateKeys(widget, widget.children));
 
   @override
-  ContainerRenderObjectMixin<RenderObject, ContainerParentDataMixin<RenderObject>>
+  ContainerRenderObject<RenderObject, ContainerParentDataMixin<RenderObject>>
   get renderObject {
     return super.renderObject
-        as ContainerRenderObjectMixin<RenderObject, ContainerParentDataMixin<RenderObject>>;
+        as ContainerRenderObject<RenderObject, ContainerParentDataMixin<RenderObject>>;
   }
 
   /// The current list of children of this element.
@@ -7187,7 +7187,7 @@ class MultiChildRenderObjectElement extends RenderObjectElement {
 
   @override
   void insertRenderObjectChild(RenderObject child, IndexedSlot<Element?> slot) {
-    final ContainerRenderObjectMixin<RenderObject, ContainerParentDataMixin<RenderObject>>
+    final ContainerRenderObject<RenderObject, ContainerParentDataMixin<RenderObject>>
     renderObject = this.renderObject;
     assert(renderObject.debugValidateChild(child));
     renderObject.insert(child, after: slot.value?.renderObject);
@@ -7200,7 +7200,7 @@ class MultiChildRenderObjectElement extends RenderObjectElement {
     IndexedSlot<Element?> oldSlot,
     IndexedSlot<Element?> newSlot,
   ) {
-    final ContainerRenderObjectMixin<RenderObject, ContainerParentDataMixin<RenderObject>>
+    final ContainerRenderObject<RenderObject, ContainerParentDataMixin<RenderObject>>
     renderObject = this.renderObject;
     assert(child.parent == renderObject);
     renderObject.move(child, after: newSlot.value?.renderObject);
@@ -7209,7 +7209,7 @@ class MultiChildRenderObjectElement extends RenderObjectElement {
 
   @override
   void removeRenderObjectChild(RenderObject child, Object? slot) {
-    final ContainerRenderObjectMixin<RenderObject, ContainerParentDataMixin<RenderObject>>
+    final ContainerRenderObject<RenderObject, ContainerParentDataMixin<RenderObject>>
     renderObject = this.renderObject;
     assert(child.parent == renderObject);
     renderObject.remove(child);
