@@ -3376,7 +3376,6 @@ class BuildOwner {
       }
       _elementsNeedingListenablesUpdate.clear();
       lockState(_inactiveElements._unmountAll); // this unregisters the GlobalKeys
-      // TODO: Clean up listenables here.
       assert(() {
         try {
           _debugVerifyGlobalKeyReservation();
