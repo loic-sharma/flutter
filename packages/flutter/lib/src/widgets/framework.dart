@@ -3357,7 +3357,8 @@ class BuildOwner {
     }());
   }
 
-  /// Complete the element build pass by unmounting any elements that are no
+  /// Complete the element build pass by updating elements'
+  /// listenables and unmounting any elements that are no
   /// longer active.
   ///
   /// This is called by [WidgetsBinding.drawFrame].
@@ -5168,6 +5169,8 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
     return valueListenable.value;
   }
 
+  // Called by BuildOwner.finalizeTree. This is necessary to support
+  // layout / paint callbacks, like LayoutBuilder.
   void _updateListenables() {
     assert(_unchangedListenables <= (_listenables?.length ?? 0));
     final Set<Listenable>? oldListenables = _listenables;
