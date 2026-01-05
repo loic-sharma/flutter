@@ -2952,6 +2952,8 @@ class BuildOwner {
   /// constructor.
   FocusManager focusManager;
 
+  final Set<Element> _elementsNeedingListenablesUpdate = <Element>{};
+
   /// Adds an element to the dirty elements list so that it will be rebuilt
   /// when [WidgetsBinding.drawFrame] calls [buildScope].
   void scheduleBuildFor(Element element) {
@@ -3014,6 +3016,12 @@ class BuildOwner {
       }
       return true;
     }());
+  }
+
+  void scheduleListenablesUpdateFor(Element element) {
+    assert(debugBuilding);
+    assert(element.owner == this);
+    _elementsNeedingListenablesUpdate.add(element);
   }
 
   int _debugStateLockLevel = 0;
@@ -3362,7 +3370,13 @@ class BuildOwner {
       FlutterTimeline.startSync('FINALIZE TREE');
     }
     try {
+      // Update all elements to add/remove listeners as needed.
+      for (final Element element in _elementsNeedingListenablesUpdate) {
+        element._updateListenables();
+      }
+      _elementsNeedingListenablesUpdate.clear();
       lockState(_inactiveElements._unmountAll); // this unregisters the GlobalKeys
+      // TODO: Clean up listenables here.
       assert(() {
         try {
           _debugVerifyGlobalKeyReservation();
@@ -5139,6 +5153,7 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
 
     // Handle new listenable.
     if (_newListenables == null) {
+      _owner!.scheduleListenablesUpdateFor(this);
       _newListenables = <Listenable>{};
       for (int i = 0; i < _unchangedListenables; i++) {
         _newListenables!.add(_listenables!.elementAt(i));
@@ -5149,12 +5164,12 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
 
   @override
   T watch<T>(ValueListenable<T> valueListenable) {
+    assert(_debugCheckOwnerBuildTargetExists('watch'));
     listen(valueListenable);
     return valueListenable.value;
   }
 
   void _updateListenables() {
-    assert(_debugCheckOwnerBuildTargetExists('_updateListenables'));
     assert(_unchangedListenables <= (_listenables?.length ?? 0));
     final Set<Listenable>? oldListenables = _listenables;
     final Set<Listenable>? newListenables = _newListenables;
@@ -5625,9 +5640,11 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
     }());
     assert(_unchangedListenables == 0);
     assert(_newListenables == null);
+    if (_listenables?.isNotEmpty ?? false) {
+      _owner!.scheduleListenablesUpdateFor(this);
+    }
     try {
       performRebuild();
-      _updateListenables();
     } finally {
       assert(() {
         owner!._debugElementWasRebuilt(this);
@@ -5635,8 +5652,6 @@ abstract class Element extends DiagnosticableTree implements BuildContext {
         owner!._debugCurrentBuildTarget = debugPreviousBuildTarget;
         return true;
       }());
-      _unchangedListenables = 0;
-      _newListenables = null;
     }
     assert(!_dirty);
   }
