@@ -1203,7 +1203,13 @@ class _EditableWebState extends State<_EditableWeb> {
     // }
 
     if (widget.selectionColor != null) {
+      // TODO(loic-sharma): I changed the class from .customInputSelection to .flt-text-field-platform-view.
+      // Is there a better class to distinguish the web text field platform view?
+      // NOTE: iOS Safari does not support ::selection.
+      // https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors/::selection#browser_compatibility
       /*
+
+
         Needs the following code in engine
           sheet.insertRule('''
             $cssSelectorPrefix flt-glass-pane {
@@ -1223,7 +1229,7 @@ class _EditableWebState extends State<_EditableWeb> {
 
       // To ensure we're only modifying selection on this specific input, we attach a custom class
       // instead of adding a blanket rule for all inputs.
-      inputEl.classes.add('customInputSelection');
+      inputEl.classes.add('flt-text-field-platform-view');
     }
   }
 
@@ -1284,7 +1290,7 @@ class _EditableWebState extends State<_EditableWeb> {
         // values. In that case, the variable is always set to whatever the last rendered input's selection
         // background value was set to.  To fix this, we update that CSS variable to the currently focused
         // element's selection color value.
-        inputEl.classes.add('customInputSelection');
+        inputEl.classes.add('flt-text-field-platform-view');
         html.document.querySelector('flt-glass-pane')!.style.setProperty(
             '--selection-background', colorToCss(widget.selectionColor!));
       }
@@ -1469,9 +1475,6 @@ class _EditableWebState extends State<_EditableWeb> {
   void didUpdateWidget(_EditableWeb oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    /*
-      should we listen to the hasFocus attribute? Focus seems fine for now.
-    */
     if (widget.hasFocus != oldWidget.hasFocus) {
       if (widget.hasFocus) {
         _inputEl.focus();
@@ -1488,7 +1491,7 @@ class _EditableWebState extends State<_EditableWeb> {
       if (widget.selectionColor != null) {
         html.document.querySelector('flt-glass-pane')!.style.setProperty(
             '--selection-background', colorToCss(widget.selectionColor!));
-        _inputEl.classes.add('customInputSelection');
+        _inputEl.classes.add('flt-text-field-platform-view');
       }
     }
   }
