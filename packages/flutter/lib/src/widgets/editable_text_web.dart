@@ -1472,6 +1472,13 @@ class _EditableWebState extends State<_EditableWeb> {
     /*
       should we listen to the hasFocus attribute? Focus seems fine for now.
     */
+    if (widget.hasFocus != oldWidget.hasFocus) {
+      if (widget.hasFocus) {
+        _inputEl.focus();
+      } else {
+        _inputEl.blur();
+      }
+    }
 
     // we do this because widget can sometimes selectionColor can be passed
     // as conditionally null depending on some state that's determined in a layer
