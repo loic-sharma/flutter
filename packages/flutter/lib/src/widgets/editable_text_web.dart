@@ -234,12 +234,168 @@ class EditableTextStateWeb extends State<EditableText>
 
   @override
   void updateEditingValue(TextEditingValue value) {
+    print('EditableTextWeb.updateEditingValue: $value');
     // TODO: implement updateEditingValue
+    // TODO: Ignore text changes but keep selection changes if readonly?
+    final TextEditingValue oldValue = _value;
+    final textChanged = oldValue.text != value.text;
+    final bool textCommitted = !oldValue.composing.isCollapsed && value.composing.isCollapsed;
+    final selectionChanged = oldValue.selection != value.selection;
+
+    // TODO: Readonly.
+    // if (widget.readOnly) {
+    //   // In the read-only case, we only care about selection changes, and reject
+    //   // everything else.
+    //   value = _value.copyWith(selection: value.selection);
+    // }
+
+    if (textChanged || textCommitted) {
+      // TODO: Input formatters
+    }
+
+    if (selectionChanged) {
+      const SelectionChangedCause cause = SelectionChangedCause.keyboard;
+      try {
+        widget.onSelectionChanged?.call(value.selection, cause);
+      } catch (exception, stack) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: exception,
+            stack: stack,
+            library: 'widgets',
+            context: ErrorDescription('while calling onSelectionChanged for $cause'),
+          ),
+        );
+      }
+    }
+
+    _value = value;
+
+    if (textChanged) {
+      try {
+        widget.onChanged?.call(value.text);
+      } catch (exception, stack) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: exception,
+            stack: stack,
+            library: 'widgets',
+            context: ErrorDescription('while calling onChanged'),
+          ),
+        );
+      }
+    }
   }
 
   @override
   void performAction(TextInputAction action) {
-    // TODO: implement performAction
+    // TODO: This is copied from EditableText.performAction. What's the best
+    // way to share logic?
+    switch (action) {
+      case TextInputAction.newline:
+        // If this is a multiline EditableText, do nothing for a "newline"
+        // action; The newline is already inserted. Otherwise, finalize
+        // editing.
+        if (!_isMultiline) {
+          _finalizeEditing(action, shouldUnfocus: true);
+        }
+      case TextInputAction.done:
+      case TextInputAction.go:
+      case TextInputAction.next:
+      case TextInputAction.previous:
+      case TextInputAction.search:
+      case TextInputAction.send:
+        _finalizeEditing(action, shouldUnfocus: true);
+      case TextInputAction.continueAction:
+      case TextInputAction.emergencyCall:
+      case TextInputAction.join:
+      case TextInputAction.none:
+      case TextInputAction.route:
+      case TextInputAction.unspecified:
+        // Finalize editing, but don't give up focus because this keyboard
+        // action does not imply the user is done inputting information.
+        _finalizeEditing(action, shouldUnfocus: false);
+    }
+  }
+
+  @pragma('vm:notify-debugger-on-exception')
+  void _finalizeEditing(TextInputAction action, {required bool shouldUnfocus}) {
+    // TODO(loic-sharma): This is copied from EditableText.performAction. What's the best
+    // way to share logic?
+    if (widget.onEditingComplete != null) {
+      try {
+        widget.onEditingComplete!();
+      } catch (exception, stack) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: exception,
+            stack: stack,
+            library: 'widgets',
+            context: ErrorDescription('while calling onEditingComplete for $action'),
+          ),
+        );
+      }
+    } else {
+      // Default behavior if the developer did not provide an
+      // onEditingComplete callback: Finalize editing and remove focus, or move
+      // it to the next/previous field, depending on the action.
+      widget.controller.clearComposing();
+      if (shouldUnfocus) {
+        switch (action) {
+          case TextInputAction.none:
+          case TextInputAction.unspecified:
+          case TextInputAction.done:
+          case TextInputAction.go:
+          case TextInputAction.search:
+          case TextInputAction.send:
+          case TextInputAction.continueAction:
+          case TextInputAction.join:
+          case TextInputAction.route:
+          case TextInputAction.emergencyCall:
+          case TextInputAction.newline:
+            widget.focusNode.unfocus();
+          case TextInputAction.next:
+            widget.focusNode.nextFocus();
+          case TextInputAction.previous:
+            widget.focusNode.previousFocus();
+        }
+      }
+    }
+
+    final ValueChanged<String>? onSubmitted = widget.onSubmitted;
+    if (onSubmitted == null) {
+      return;
+    }
+
+    // Invoke optional callback with the user's submitted content.
+    try {
+      print('EditableTextWeb._finalizeEditing: calling onSubmitted with ${_value.text}');
+      onSubmitted(_value.text);
+    } catch (exception, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: exception,
+          stack: stack,
+          library: 'widgets',
+          context: ErrorDescription('while calling onSubmitted for $action'),
+        ),
+      );
+    }
+
+    // TODO(loic-sharma): Do we need this for EditableTextWeb?
+    // If `shouldUnfocus` is true, the text field should no longer be focused
+    // after the microtask queue is drained. But in case the developer cancelled
+    // the focus change in the `onSubmitted` callback by focusing this input
+    // field again, reset the soft keyboard.
+    // See https://github.com/flutter/flutter/issues/84240.
+    //
+    // `_restartConnectionIfNeeded` creates a new TextInputConnection to replace
+    // the current one. This on iOS switches to a new input view and on Android
+    // restarts the input method, and in both cases the soft keyboard will be
+    // reset.
+    //if (shouldUnfocus) {
+      // _scheduleRestartConnection();
+    //}
   }
 
   @override
@@ -1462,12 +1618,13 @@ class _EditableWebState extends State<_EditableWeb> {
   void maybeSendAction(html.KeyboardEvent event) {
     if (event.keyCode == html.KeyCode.ENTER) {
       performAction(widget.textInputConfiguration.inputAction);
+      print('maybeSendAction: performed action ${widget.textInputConfiguration.inputAction}');
 
       // Prevent the browser from inserting a new line when it's not a multiline input.
       // note: taken from engine. Do we still need?
-      if (widget.textInputConfiguration.inputType != TextInputType.multiline) {
-        event.preventDefault();
-      }
+      // if (widget.textInputConfiguration.inputType != TextInputType.multiline) {
+        // event.preventDefault();
+      // }
     }
   }
 
