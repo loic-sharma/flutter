@@ -736,6 +736,11 @@ class PlatformViewRenderBox extends RenderBox with _PlatformViewGestureMixin {
   }
 
   @override
+  void performLayout() {
+    super.performLayout();
+  }
+
+  @override
   void paint(PaintingContext context, Offset offset) {
     context.addLayer(PlatformViewLayer(rect: offset & size, viewId: _controller.viewId));
   }

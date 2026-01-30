@@ -1008,6 +1008,32 @@ class _EditableWebState extends State<_EditableWeb> {
     _maxLines = widget.maxLines ?? 1;
   }
 
+  Size estimateSize(BoxConstraints constraints) {
+    // TODO: Cache the text painter.
+    // TODO: Improve this estimate. Incorrect esimates are noticeable in a growable
+    // text field when the text field grows at an unexpected time.
+    // TODO: What happens if the user is composing text?
+    // The text field might need to grow.
+    final TextPainter textPainter = TextPainter(
+      text: TextSpan(
+        text: widget.textEditingValue,
+        style: widget.textStyle,
+      ),
+      textAlign: widget.textAlign,
+      textDirection: widget.textDirection,
+      maxLines: widget.maxLines,
+      locale: widget.locale,
+      textScaler: widget.textScaler,
+    );
+
+    textPainter.layout(
+      minWidth: constraints.minWidth,
+      maxWidth: constraints.maxWidth,
+    );
+
+    return textPainter.size;
+  }
+
   String colorToCss(Color color) {
     // hard coding opacity to 1 for now because EditableText passes cursorColor with 0 opacity.
     return 'rgba(${color.red}, ${color.green}, ${color.blue}, ${color.opacity == 0 ? 1 : color.opacity})';
@@ -1346,6 +1372,7 @@ class _EditableWebState extends State<_EditableWeb> {
       ..padding = '0'
       ..overflow = 'hidden'
       ..textAlign = textAlignToCssValue(widget.textAlign, widget.textDirection)
+      ..resize = 'none'
       // ..pointerEvents = widget.rendererIgnoresPointer ? 'none' : 'auto' // Can't use this, material3 text field sets this to none
       ..direction = widget.textDirection.name
       ..lineHeight = '1.5'; // can this be modified by a property?
@@ -1656,16 +1683,22 @@ class _EditableWebState extends State<_EditableWeb> {
   // single EditableWeb that is a form owner for both cases.
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: sizedBoxHeight,
-      child: ExcludeFocus(
-        child: HtmlElementView.fromTagName(
-          tagName: _isMultiline ? 'textarea' : 'input',
-          onElementCreated: (Object element) {
-            initializePlatformView(element as html.HtmlElement);
-          },
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final Size estimatedSize = estimateSize(constraints);
+        return SizedBox(
+          width: estimatedSize.width,
+          height: estimatedSize.height,
+          child: ExcludeFocus(
+            child: HtmlElementView.fromTagName(
+              tagName: _isMultiline ? 'textarea' : 'input',
+              onElementCreated: (Object element) {
+                initializePlatformView(element as html.HtmlElement);
+              },
+            ),
+          ),
+        );
+      }
     );
   }
 }
