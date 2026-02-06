@@ -368,10 +368,10 @@ abstract class Animation<T> extends Listenable implements ValueListenable<T> {
   /// * "&#x23EE;": [AnimationStatus.dismissed] ([value] == 0.0)
   String toStringDetails() {
     return switch (status) {
-      AnimationStatus.forward => '\u25B6', // >
-      AnimationStatus.reverse => '\u25C0', // <
-      AnimationStatus.completed => '\u23ED', // >>|
-      AnimationStatus.dismissed => '\u23EE', // |<<
+      .forward => '\u25B6', // >
+      .reverse => '\u25C0', // <
+      .completed => '\u23ED', // >>|
+      .dismissed => '\u23EE', // |<<
     };
   }
 }
@@ -405,7 +405,7 @@ class _ValueListenableDelegateAnimation<T> extends Animation<T> {
   }
 
   @override
-  AnimationStatus get status => AnimationStatus.forward;
+  AnimationStatus get status => .forward;
 
   @override
   T get value => _transformer?.call(_listenable.value) ?? _listenable.value;

@@ -249,10 +249,10 @@ class AnimationController extends Animation<double>
     this.debugLabel,
     this.lowerBound = 0.0,
     this.upperBound = 1.0,
-    this.animationBehavior = AnimationBehavior.normal,
+    this.animationBehavior = .normal,
     required TickerProvider vsync,
   }) : assert(upperBound >= lowerBound),
-       _direction = _AnimationDirection.forward {
+       _direction = .forward {
     assert(debugMaybeDispatchCreated('animation', 'AnimationController', this));
     _ticker = vsync.createTicker(_tick);
     _internalSetValue(value ?? lowerBound);
@@ -281,10 +281,10 @@ class AnimationController extends Animation<double>
     this.reverseDuration,
     this.debugLabel,
     required TickerProvider vsync,
-    this.animationBehavior = AnimationBehavior.preserve,
+    this.animationBehavior = .preserve,
   }) : lowerBound = double.negativeInfinity,
        upperBound = double.infinity,
-       _direction = _AnimationDirection.forward {
+       _direction = .forward {
     assert(debugMaybeDispatchCreated('animation', 'AnimationController', this));
     _ticker = vsync.createTicker(_tick);
     _internalSetValue(value);
@@ -410,13 +410,13 @@ class AnimationController extends Animation<double>
   void _internalSetValue(double newValue) {
     _value = clampDouble(newValue, lowerBound, upperBound);
     if (_value == lowerBound) {
-      _status = AnimationStatus.dismissed;
+      _status = .dismissed;
     } else if (_value == upperBound) {
-      _status = AnimationStatus.completed;
+      _status = .completed;
     } else {
       _status = switch (_direction) {
-        _AnimationDirection.forward => AnimationStatus.forward,
-        _AnimationDirection.reverse => AnimationStatus.reverse,
+        .forward => .forward,
+        .reverse => .reverse,
       };
     }
   }
@@ -477,7 +477,7 @@ class AnimationController extends Animation<double>
       'AnimationController.forward() called after AnimationController.dispose()\n'
       'AnimationController methods should not be used after calling dispose.',
     );
-    _direction = _AnimationDirection.forward;
+    _direction = .forward;
     if (from != null) {
       value = from;
     }
@@ -514,7 +514,7 @@ class AnimationController extends Animation<double>
       'AnimationController.reverse() called after AnimationController.dispose()\n'
       'AnimationController methods should not be used after calling dispose.',
     );
-    _direction = _AnimationDirection.reverse;
+    _direction = .reverse;
     if (from != null) {
       value = from;
     }
@@ -553,13 +553,13 @@ class AnimationController extends Animation<double>
       'AnimationController.toggle() called after AnimationController.dispose()\n'
       'AnimationController methods should not be used after calling dispose.',
     );
-    _direction = isForwardOrCompleted ? _AnimationDirection.reverse : _AnimationDirection.forward;
+    _direction = isForwardOrCompleted ? .reverse : .forward;
     if (from != null) {
       value = from;
     }
     return _animateToInternal(switch (_direction) {
-      _AnimationDirection.forward => upperBound,
-      _AnimationDirection.reverse => lowerBound,
+      .forward => upperBound,
+      .reverse => lowerBound,
     });
   }
 
@@ -596,7 +596,7 @@ class AnimationController extends Animation<double>
       'AnimationController.animateTo() called after AnimationController.dispose()\n'
       'AnimationController methods should not be used after calling dispose.',
     );
-    _direction = _AnimationDirection.forward;
+    _direction = .forward;
     return _animateToInternal(target, duration: duration, curve: curve);
   }
 
@@ -633,7 +633,7 @@ class AnimationController extends Animation<double>
       'AnimationController.animateBack() called after AnimationController.dispose()\n'
       'AnimationController methods should not be used after calling dispose.',
     );
-    _direction = _AnimationDirection.reverse;
+    _direction = .reverse;
     return _animateToInternal(target, duration: duration, curve: curve);
   }
 
@@ -649,20 +649,20 @@ class AnimationController extends Animation<double>
       // pattern of an eternally repeating animation might cause an endless loop if it weren't delayed
       // for at least one frame.
       AnimationBehavior.normal when SemanticsBinding.instance.disableAnimations => 0.05,
-      AnimationBehavior.normal || AnimationBehavior.preserve => 1.0,
+      AnimationBehavior.normal || .preserve => 1.0,
     };
     var simulationDuration = duration;
     if (simulationDuration == null) {
-      assert(!(this.duration == null && _direction == _AnimationDirection.forward));
+      assert(!(this.duration == null && _direction == .forward));
       assert(
         !(this.duration == null &&
-            _direction == _AnimationDirection.reverse &&
+            _direction == .reverse &&
             reverseDuration == null),
       );
       final double range = upperBound - lowerBound;
       final double remainingFraction = range.isFinite ? (target - _value).abs() / range : 1.0;
       final Duration directionDuration =
-          (_direction == _AnimationDirection.reverse && reverseDuration != null)
+          (_direction == .reverse && reverseDuration != null)
           ? reverseDuration!
           : this.duration!;
       simulationDuration = directionDuration * remainingFraction;
@@ -676,9 +676,9 @@ class AnimationController extends Animation<double>
         _value = clampDouble(target, lowerBound, upperBound);
         notifyListeners();
       }
-      _status = (_direction == _AnimationDirection.forward)
-          ? AnimationStatus.completed
-          : AnimationStatus.dismissed;
+      _status = (_direction == .forward)
+          ? .completed
+          : .dismissed;
       _checkStatusChanged();
       return TickerFuture.complete();
     }
@@ -746,9 +746,9 @@ class AnimationController extends Animation<double>
 
   void _directionSetter(_AnimationDirection direction) {
     _direction = direction;
-    _status = (_direction == _AnimationDirection.forward)
-        ? AnimationStatus.forward
-        : AnimationStatus.reverse;
+    _status = (_direction == .forward)
+        ? .forward
+        : .reverse;
     _checkStatusChanged();
   }
 
@@ -780,7 +780,7 @@ class AnimationController extends Animation<double>
     AnimationBehavior? animationBehavior,
   }) {
     springDescription ??= _kFlingSpringDescription;
-    _direction = velocity < 0.0 ? _AnimationDirection.reverse : _AnimationDirection.forward;
+    _direction = velocity < 0.0 ? .reverse : .forward;
     final double target = velocity < 0.0
         ? lowerBound - _kFlingTolerance.distance
         : upperBound + _kFlingTolerance.distance;
@@ -788,7 +788,7 @@ class AnimationController extends Animation<double>
     final double scale = switch (behavior) {
       // This is arbitrary (it was chosen because it worked for the drawer widget).
       AnimationBehavior.normal when SemanticsBinding.instance.disableAnimations => 200.0,
-      AnimationBehavior.normal || AnimationBehavior.preserve => 1.0,
+      AnimationBehavior.normal || .preserve => 1.0,
     };
     final simulation = SpringSimulation(springDescription, value, target, velocity * scale)
       ..tolerance = _kFlingTolerance;
@@ -831,7 +831,7 @@ class AnimationController extends Animation<double>
       'AnimationController methods should not be used after calling dispose.',
     );
     stop();
-    _direction = _AnimationDirection.forward;
+    _direction = .forward;
     return _startSimulation(simulation);
   }
 
@@ -854,7 +854,7 @@ class AnimationController extends Animation<double>
       'AnimationController methods should not be used after calling dispose.',
     );
     stop();
-    _direction = _AnimationDirection.reverse;
+    _direction = .reverse;
     return _startSimulation(simulation);
   }
 
@@ -864,9 +864,9 @@ class AnimationController extends Animation<double>
     _lastElapsedDuration = Duration.zero;
     _value = clampDouble(simulation.x(0.0), lowerBound, upperBound);
     final TickerFuture result = _ticker!.start();
-    _status = (_direction == _AnimationDirection.forward)
-        ? AnimationStatus.forward
-        : AnimationStatus.reverse;
+    _status = (_direction == .forward)
+        ? .forward
+        : .reverse;
     _checkStatusChanged();
     return result;
   }
@@ -929,7 +929,7 @@ class AnimationController extends Animation<double>
     super.dispose();
   }
 
-  AnimationStatus _lastReportedStatus = AnimationStatus.dismissed;
+  AnimationStatus _lastReportedStatus = .dismissed;
   void _checkStatusChanged() {
     final AnimationStatus newStatus = status;
     if (_lastReportedStatus != newStatus) {
@@ -945,9 +945,9 @@ class AnimationController extends Animation<double>
     assert(elapsedInSeconds >= 0.0);
     _value = clampDouble(_simulation!.x(elapsedInSeconds), lowerBound, upperBound);
     if (_simulation!.isDone(elapsedInSeconds)) {
-      _status = (_direction == _AnimationDirection.forward)
-          ? AnimationStatus.completed
-          : AnimationStatus.dismissed;
+      _status = (_direction == .forward)
+          ? .completed
+          : .dismissed;
       stop(canceled: false);
     }
     notifyListeners();

@@ -37,7 +37,7 @@ class _AlwaysCompleteAnimation extends Animation<double> {
   void removeStatusListener(AnimationStatusListener listener) {}
 
   @override
-  AnimationStatus get status => AnimationStatus.completed;
+  AnimationStatus get status => .completed;
 
   @override
   double get value => 1.0;
@@ -69,7 +69,7 @@ class _AlwaysDismissedAnimation extends Animation<double> {
   void removeStatusListener(AnimationStatusListener listener) {}
 
   @override
-  AnimationStatus get status => AnimationStatus.dismissed;
+  AnimationStatus get status => .dismissed;
 
   @override
   double get value => 0.0;
@@ -114,7 +114,7 @@ class AlwaysStoppedAnimation<T> extends Animation<T> {
   void removeStatusListener(AnimationStatusListener listener) {}
 
   @override
-  AnimationStatus get status => AnimationStatus.forward;
+  AnimationStatus get status => .forward;
 
   @override
   String toStringDetails() {
@@ -183,7 +183,7 @@ class ProxyAnimation extends Animation<double>
   ProxyAnimation([Animation<double>? animation]) {
     _parent = animation;
     if (_parent == null) {
-      _status = AnimationStatus.dismissed;
+      _status = .dismissed;
       _value = 0.0;
     }
   }
@@ -312,10 +312,10 @@ class ReverseAnimation extends Animation<double>
 
   AnimationStatus _reverseStatus(AnimationStatus status) {
     return switch (status) {
-      AnimationStatus.forward => AnimationStatus.reverse,
-      AnimationStatus.reverse => AnimationStatus.forward,
-      AnimationStatus.completed => AnimationStatus.dismissed,
-      AnimationStatus.dismissed => AnimationStatus.completed,
+      .forward => .reverse,
+      .reverse => .forward,
+      .completed => .dismissed,
+      .dismissed => .completed,
     };
   }
 
@@ -421,7 +421,7 @@ class CurvedAnimation extends Animation<double> with AnimationWithParentMixin<do
   }
 
   bool get _useForwardCurve {
-    return reverseCurve == null || (_curveDirection ?? parent.status) != AnimationStatus.reverse;
+    return reverseCurve == null || (_curveDirection ?? parent.status) != .reverse;
   }
 
   /// Cleans up any listeners added by this CurvedAnimation.
@@ -511,10 +511,10 @@ class TrainHoppingAnimation extends Animation<double>
         _currentTrain = _nextTrain;
         _nextTrain = null;
       } else if (_currentTrain!.value > _nextTrain!.value) {
-        _mode = _TrainHoppingMode.maximize;
+        _mode = .maximize;
       } else {
         assert(_currentTrain!.value < _nextTrain!.value);
-        _mode = _TrainHoppingMode.minimize;
+        _mode = .minimize;
       }
     }
     _currentTrain!.addStatusListener(_statusChangeHandler);
@@ -559,8 +559,8 @@ class TrainHoppingAnimation extends Animation<double>
     if (_nextTrain != null) {
       assert(_mode != null);
       hop = switch (_mode!) {
-        _TrainHoppingMode.minimize => _nextTrain!.value <= _currentTrain!.value,
-        _TrainHoppingMode.maximize => _nextTrain!.value >= _currentTrain!.value,
+        .minimize => _nextTrain!.value <= _currentTrain!.value,
+        .maximize => _nextTrain!.value >= _currentTrain!.value,
       };
       if (hop) {
         _currentTrain!
