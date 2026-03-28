@@ -369,6 +369,8 @@ class PlatformDispatcher {
   ///   * [ViewFocusState] for a list of allowed focus transitions.
   ///   * [ViewFocusDirection] for a list of allowed focus directions.
   ///   * [ViewFocusEvent], which is the event object provided to the callback.
+  ///   * [WidgetsBindingObserver.didChangeViewFocus], for a mechanism to observe
+  ///     view focus changes.
   ViewFocusChangeCallback? get onViewFocusChange => _onViewFocusChange;
   ViewFocusChangeCallback? _onViewFocusChange;
   // ignore: unused_field, field will be used when platforms other than web use these focus APIs.
