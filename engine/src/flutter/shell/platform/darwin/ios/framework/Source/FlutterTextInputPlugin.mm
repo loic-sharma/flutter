@@ -2299,10 +2299,10 @@ static BOOL IsSelectionRectBoundaryCloserToPoint(CGPoint point,
 
   NSMutableArray<FlutterTextSelectionRect*>* copiedRects =
       [[NSMutableArray alloc] initWithCapacity:[_selectionRects count]];
-  UITextRange* rangeToReplace = self.markedTextRange != nil ? self.markedTextRange : _selectedTextRange;
+  UITextRange* rangeToReplace =
+      self.markedTextRange != nil ? self.markedTextRange : _selectedTextRange;
   NSAssert([rangeToReplace.start isKindOfClass:[FlutterTextPosition class]],
-           @"Expected a FlutterTextPosition for position (got %@).",
-           [rangeToReplace.start class]);
+           @"Expected a FlutterTextPosition for position (got %@).", [rangeToReplace.start class]);
   NSUInteger insertPosition = ((FlutterTextPosition*)rangeToReplace.start).index;
   NSUInteger endPosition = ((FlutterTextPosition*)rangeToReplace.end).index;
   NSInteger lengthDelta = text.length - (endPosition - insertPosition);
