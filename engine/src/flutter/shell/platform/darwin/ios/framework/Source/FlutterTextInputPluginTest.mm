@@ -689,8 +689,17 @@ class MockPlatformViewDelegate : public PlatformView::Delegate {
   XCTAssertEqualObjects(inputView.text, @"");
 }
 
-// This tests the workaround to fix an iOS 16 bug
-// See: https://github.com/flutter/flutter/issues/111494
+- (void)testMacUmlaut {
+  NSDictionary* config = self.mutableTemplateCopy;
+  [self setClientId:123 configuration:config];
+  NSArray<FlutterTextInputView*>* inputFields = self.installedInputViews;
+  FlutterTextInputView* inputView = inputFields[0];
+
+  [inputView setMarkedText:@"¨" selectedRange:NSMakeRange(1, 0)];
+  [inputView insertText:@"ü"];
+  XCTAssertEqualObjects(inputView.text, @"ü");
+}
+
 - (void)testSystemOnlyAddingPartialComposedCharacter {
   NSDictionary* config = self.mutableTemplateCopy;
   [self setClientId:123 configuration:config];
