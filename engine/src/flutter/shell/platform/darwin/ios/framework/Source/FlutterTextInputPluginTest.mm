@@ -689,7 +689,7 @@ class MockPlatformViewDelegate : public PlatformView::Delegate {
   XCTAssertEqualObjects(inputView.text, @"");
 }
 
-- (void)testMacUmlaut {
+- (void)testComposingCharacter {
   NSDictionary* config = self.mutableTemplateCopy;
   [self setClientId:123 configuration:config];
   NSArray<FlutterTextInputView*>* inputFields = self.installedInputViews;
