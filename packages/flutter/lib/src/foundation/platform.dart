@@ -50,6 +50,19 @@ import 'constants.dart';
 @pragma('vm:platform-const-if', !kDebugMode)
 TargetPlatform get defaultTargetPlatform => platform.defaultTargetPlatform;
 
+/// Whether the current platform is a desktop platform (e.g. Linux, macOS, Windows).
+@pragma('vm:platform-const-if', !kDebugMode)
+bool get defaultIsDesktop => platform.defaultIsDesktop;
+
+/// Whether the current platform is a mobile platform (e.g. Android, iOS, Fuchsia).
+@pragma('vm:platform-const-if', !kDebugMode)
+bool get defaultIsMobile => platform.defaultIsMobile;
+
+/// Whether the current platform is Darwin-based (e.g. iOS, macOS).
+// TODO: Maybe call this defaultIsApplePlatform?
+@pragma('vm:platform-const-if', !kDebugMode)
+bool get defaultIsDarwin => platform.defaultIsDarwin;
+
 /// The platform that user interaction should adapt to target.
 ///
 /// The [defaultTargetPlatform] getter returns the current platform.
@@ -111,3 +124,45 @@ set debugDefaultTargetPlatformOverride(TargetPlatform? value) {
 }
 
 TargetPlatform? _debugDefaultTargetPlatformOverride;
+
+/// Override the [defaultIsDesktop] in debug builds.
+///
+/// Attempting to override this property in non-debug builds causes an error.
+bool? get debugDefaultIsDesktopOverride => _debugDefaultIsDesktopOverride;
+
+set debugDefaultIsDesktopOverride(bool? value) {
+  if (!kDebugMode) {
+    throw FlutterError('Cannot modify debugDefaultIsDesktopOverride in non-debug builds.');
+  }
+  _debugDefaultIsDesktopOverride = value;
+}
+
+bool? _debugDefaultIsDesktopOverride;
+
+/// Override the [defaultIsMobile] in debug builds.
+///
+/// Attempting to override this property in non-debug builds causes an error.
+bool? get debugDefaultIsMobileOverride => _debugDefaultIsMobileOverride;
+
+set debugDefaultIsMobileOverride(bool? value) {
+  if (!kDebugMode) {
+    throw FlutterError('Cannot modify debugDefaultIsMobileOverride in non-debug builds.');
+  }
+  _debugDefaultIsMobileOverride = value;
+}
+
+bool? _debugDefaultIsMobileOverride;
+
+/// Override the [defaultIsDarwin] in debug builds.
+///
+/// Attempting to override this property in non-debug builds causes an error.
+bool? get debugDefaultIsDarwinOverride => _debugDefaultIsDarwinOverride;
+
+set debugDefaultIsDarwinOverride(bool? value) {
+  if (!kDebugMode) {
+    throw FlutterError('Cannot modify debugDefaultIsDarwinOverride in non-debug builds.');
+  }
+  _debugDefaultIsDarwinOverride = value;
+}
+
+bool? _debugDefaultIsDarwinOverride;

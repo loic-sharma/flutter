@@ -410,14 +410,7 @@ class _RawAutocompleteState<T extends Object> extends State<RawAutocomplete<T>> 
 
   static Map<ShortcutActivator, Intent> get _shortcuts => <ShortcutActivator, Intent>{
     ..._commonShortcuts,
-    ...switch (defaultTargetPlatform) {
-      TargetPlatform.iOS => _appleShortcuts,
-      TargetPlatform.macOS => _appleShortcuts,
-      TargetPlatform.android => _nonAppleShortcuts,
-      TargetPlatform.linux => _nonAppleShortcuts,
-      TargetPlatform.windows => _nonAppleShortcuts,
-      TargetPlatform.fuchsia => _nonAppleShortcuts,
-    },
+    ... (defaultIsDarwin ? _appleShortcuts : _nonAppleShortcuts),
   };
 
   /// The options view is considered eligible to show only while the field has

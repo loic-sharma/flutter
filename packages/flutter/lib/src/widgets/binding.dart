@@ -856,6 +856,8 @@ mixin WidgetsBinding
   /// [initInstances].
   late PlatformMenuDelegate platformMenuDelegate;
 
+  late PlatformConfiguration platformConfiguration;
+
   final List<WidgetsBindingObserver> _observers = <WidgetsBindingObserver>[];
 
   /// Registers the given object as a binding observer. Binding
@@ -2152,4 +2154,9 @@ class WidgetsFlutterBinding extends BindingBase
     }
     return WidgetsBinding.instance;
   }
+}
+
+/// TODO(loic-sharma): Docs.
+class PlatformConfiguration {
+
 }

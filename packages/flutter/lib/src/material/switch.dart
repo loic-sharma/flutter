@@ -622,15 +622,10 @@ class Switch extends StatelessWidget {
       case _SwitchType.material:
         effectiveActiveThumbColor = activeColor;
       case _SwitchType.adaptive:
-        switch (Theme.of(context).platform) {
-          case TargetPlatform.android:
-          case TargetPlatform.fuchsia:
-          case TargetPlatform.linux:
-          case TargetPlatform.windows:
-            effectiveActiveThumbColor = activeColor;
-          case TargetPlatform.iOS:
-          case TargetPlatform.macOS:
-            effectiveActiveTrackColor = activeColor;
+        if (Theme.of(context).isDarwin) {
+          effectiveActiveTrackColor = activeColor;
+        } else {
+          effectiveActiveThumbColor = activeColor;
         }
     }
     return _MaterialSwitch(
@@ -756,17 +751,12 @@ class _MaterialSwitchState extends State<_MaterialSwitch>
       if (position.value == 0.0 || position.value == 1.0) {
         switch (widget.switchType) {
           case _SwitchType.adaptive:
-            switch (Theme.of(context).platform) {
-              case TargetPlatform.android:
-              case TargetPlatform.fuchsia:
-              case TargetPlatform.linux:
-              case TargetPlatform.windows:
-                updateCurve();
-              case TargetPlatform.iOS:
-              case TargetPlatform.macOS:
-                position
-                  ..curve = Curves.linear
-                  ..reverseCurve = Curves.linear;
+            if (Theme.of(context).isDarwin) {
+              position
+                ..curve = Curves.linear
+                ..reverseCurve = Curves.linear;
+            } else {
+              updateCurve();
             }
           case _SwitchType.material:
             updateCurve();
@@ -830,25 +820,20 @@ class _MaterialSwitchState extends State<_MaterialSwitch>
   double get _trackInnerLength {
     switch (widget.switchType) {
       case _SwitchType.adaptive:
-        switch (Theme.of(context).platform) {
-          case TargetPlatform.android:
-          case TargetPlatform.fuchsia:
-          case TargetPlatform.linux:
-          case TargetPlatform.windows:
-            final _SwitchConfig config = Theme.of(context).useMaterial3
-                ? _SwitchConfigM3(context)
-                : _SwitchConfigM2();
-            final double trackInnerStart = config.trackHeight / 2.0;
-            final double trackInnerEnd = config.trackWidth - trackInnerStart;
-            final double trackInnerLength = trackInnerEnd - trackInnerStart;
-            return trackInnerLength;
-          case TargetPlatform.iOS:
-          case TargetPlatform.macOS:
-            final _SwitchConfig config = _SwitchConfigCupertino(context);
-            final double trackInnerStart = config.trackHeight / 2.0;
-            final double trackInnerEnd = config.trackWidth - trackInnerStart;
-            final double trackInnerLength = trackInnerEnd - trackInnerStart;
-            return trackInnerLength;
+        if (Theme.of(context).isDarwin) {
+          final _SwitchConfig config = _SwitchConfigCupertino(context);
+          final double trackInnerStart = config.trackHeight / 2.0;
+          final double trackInnerEnd = config.trackWidth - trackInnerStart;
+          final double trackInnerLength = trackInnerEnd - trackInnerStart;
+          return trackInnerLength;
+        } else {
+          final _SwitchConfig config = Theme.of(context).useMaterial3
+              ? _SwitchConfigM3(context)
+              : _SwitchConfigM2();
+          final double trackInnerStart = config.trackHeight / 2.0;
+          final double trackInnerEnd = config.trackWidth - trackInnerStart;
+          final double trackInnerLength = trackInnerEnd - trackInnerStart;
+          return trackInnerLength;
         }
       case _SwitchType.material:
         final _SwitchConfig config = Theme.of(context).useMaterial3
@@ -930,24 +915,17 @@ class _MaterialSwitchState extends State<_MaterialSwitch>
         final Adaptation<SwitchThemeData> switchAdaptation =
             theme.getAdaptation<SwitchThemeData>() ?? const _SwitchThemeAdaptation();
         switchTheme = switchAdaptation.adapt(theme, switchTheme);
-        switch (theme.platform) {
-          case TargetPlatform.android:
-          case TargetPlatform.fuchsia:
-          case TargetPlatform.linux:
-          case TargetPlatform.windows:
-            switchConfig = theme.useMaterial3 ? _SwitchConfigM3(context) : _SwitchConfigM2();
-            defaults = theme.useMaterial3 ? _SwitchDefaultsM3(context) : _SwitchDefaultsM2(context);
-          case TargetPlatform.iOS:
-          case TargetPlatform.macOS:
-            isCupertino = true;
-            applyCupertinoTheme =
-                widget.applyCupertinoTheme ??
-                theme.cupertinoOverrideTheme?.applyThemeToAll ??
-                false;
-            disabledOpacity = 0.5;
-            switchConfig = _SwitchConfigCupertino(context);
-            defaults = _SwitchDefaultsCupertino(context);
-            reactionController.duration = const Duration(milliseconds: 200);
+        if (theme.isDarwin) {
+          isCupertino = true;
+          applyCupertinoTheme =
+              widget.applyCupertinoTheme ?? theme.cupertinoOverrideTheme?.applyThemeToAll ?? false;
+          disabledOpacity = 0.5;
+          switchConfig = _SwitchConfigCupertino(context);
+          defaults = _SwitchDefaultsCupertino(context);
+          reactionController.duration = const Duration(milliseconds: 200);
+        } else {
+          switchConfig = theme.useMaterial3 ? _SwitchConfigM3(context) : _SwitchConfigM2();
+          defaults = theme.useMaterial3 ? _SwitchDefaultsM3(context) : _SwitchDefaultsM2(context);
         }
     }
 
@@ -1893,16 +1871,10 @@ class _SwitchThemeAdaptation extends Adaptation<SwitchThemeData> {
 
   @override
   SwitchThemeData adapt(ThemeData theme, SwitchThemeData defaultValue) {
-    switch (theme.platform) {
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        return defaultValue;
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        return const SwitchThemeData();
+    if (theme.isDarwin) {
+      return const SwitchThemeData();
     }
+    return defaultValue;
   }
 }
 

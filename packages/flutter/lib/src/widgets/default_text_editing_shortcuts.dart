@@ -959,6 +959,8 @@ class DefaultTextEditingShortcuts extends StatelessWidget {
       };
 
   static Map<ShortcutActivator, Intent> get _shortcuts {
+    // TODO: ???
+    // Allow out-of-tree platforms to provide their own default shortcuts.
     return switch (defaultTargetPlatform) {
       TargetPlatform.android => _androidShortcuts,
       TargetPlatform.fuchsia => _fuchsiaShortcuts,
@@ -986,6 +988,7 @@ class DefaultTextEditingShortcuts extends StatelessWidget {
           return _webDisablingTextShortcuts;
       }
     }
+    // TODO: ???
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.fuchsia:

@@ -44,3 +44,73 @@ platform.TargetPlatform get defaultTargetPlatform {
   }
   return result!;
 }
+
+/// The dart:io implementation of [platform.defaultIsDesktop].
+@pragma('vm:platform-const-if', !kDebugMode)
+bool get defaultIsDesktop {
+  if (kDebugMode && platform.debugDefaultIsDesktopOverride != null) {
+    return platform.debugDefaultIsDesktopOverride!;
+  }
+  if (kDebugMode && platform.debugDefaultTargetPlatformOverride != null) {
+    final platform.TargetPlatform tp = platform.debugDefaultTargetPlatformOverride!;
+    return tp == platform.TargetPlatform.linux ||
+        tp == platform.TargetPlatform.macOS ||
+        tp == platform.TargetPlatform.windows;
+  }
+  bool result = const bool.hasEnvironment('flutter.is_desktop')
+      ? const bool.fromEnvironment('flutter.is_desktop')
+      : (Platform.isLinux || Platform.isMacOS || Platform.isWindows);
+  assert(() {
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      result = false;
+    }
+    return true;
+  }());
+  return result;
+}
+
+/// The dart:io implementation of [platform.defaultIsMobile].
+@pragma('vm:platform-const-if', !kDebugMode)
+bool get defaultIsMobile {
+  if (kDebugMode && platform.debugDefaultIsMobileOverride != null) {
+    return platform.debugDefaultIsMobileOverride!;
+  }
+  if (kDebugMode && platform.debugDefaultTargetPlatformOverride != null) {
+    final platform.TargetPlatform tp = platform.debugDefaultTargetPlatformOverride!;
+    return tp == platform.TargetPlatform.android ||
+        tp == platform.TargetPlatform.iOS ||
+        tp == platform.TargetPlatform.fuchsia;
+  }
+  bool result = const bool.hasEnvironment('flutter.is_mobile')
+      ? const bool.fromEnvironment('flutter.is_mobile')
+      : (Platform.isAndroid || Platform.isIOS || Platform.isFuchsia);
+  assert(() {
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      result = true;
+    }
+    return true;
+  }());
+  return result;
+}
+
+/// The dart:io implementation of [platform.defaultIsDarwin].
+@pragma('vm:platform-const-if', !kDebugMode)
+bool get defaultIsDarwin {
+  if (kDebugMode && platform.debugDefaultIsDarwinOverride != null) {
+    return platform.debugDefaultIsDarwinOverride!;
+  }
+  if (kDebugMode && platform.debugDefaultTargetPlatformOverride != null) {
+    final platform.TargetPlatform tp = platform.debugDefaultTargetPlatformOverride!;
+    return tp == platform.TargetPlatform.iOS || tp == platform.TargetPlatform.macOS;
+  }
+  bool result = const bool.hasEnvironment('flutter.is_darwin')
+      ? const bool.fromEnvironment('flutter.is_darwin')
+      : (Platform.isIOS || Platform.isMacOS);
+  assert(() {
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      result = false;
+    }
+    return true;
+  }());
+  return result;
+}

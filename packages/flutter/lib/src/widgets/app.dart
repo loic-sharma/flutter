@@ -1392,15 +1392,10 @@ class WidgetsApp extends StatefulWidget {
       return _defaultWebShortcuts;
     }
 
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        return _defaultShortcuts;
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        return _defaultAppleOsShortcuts;
+    if (defaultIsDarwin) {
+      return _defaultAppleOsShortcuts;
+    } else {
+      return _defaultShortcuts;
     }
   }
 

@@ -1045,6 +1045,21 @@ class ThemeData with Diagnosticable {
   /// Determines the defaults for [typography] and [materialTapTargetSize].
   final TargetPlatform platform;
 
+  /// Whether the [platform] is a desktop platform (e.g. Linux, macOS, Windows).
+  bool get isDesktop =>
+      platform == TargetPlatform.linux ||
+      platform == TargetPlatform.macOS ||
+      platform == TargetPlatform.windows;
+
+  /// Whether the [platform] is a mobile platform (e.g. Android, iOS, Fuchsia).
+  bool get isMobile =>
+      platform == TargetPlatform.android ||
+      platform == TargetPlatform.iOS ||
+      platform == TargetPlatform.fuchsia;
+
+  /// Whether the [platform] is Darwin-based (e.g. iOS, macOS).
+  bool get isDarwin => platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
+
   /// A theme for customizing the colors, thickness, and shape of [Scrollbar]s.
   final ScrollbarThemeData scrollbarTheme;
 

@@ -90,6 +90,7 @@ abstract final class Feedback {
   ///    [GestureTapCallback].
   static Future<void> forTap(BuildContext context) async {
     context.findRenderObject()!.sendSemanticsEvent(const TapSemanticEvent());
+    // TODO: ???
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.fuchsia:
@@ -135,6 +136,7 @@ abstract final class Feedback {
   ///    executing a [GestureLongPressCallback].
   static Future<void> forLongPress(BuildContext context) {
     context.findRenderObject()!.sendSemanticsEvent(const LongPressSemanticsEvent());
+    // TODO: ???
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.fuchsia:

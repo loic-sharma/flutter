@@ -1667,6 +1667,7 @@ class FocusManager with DiagnosticableTreeMixin, ChangeNotifier {
   /// https://github.com/flutter/flutter/pull/142930#issuecomment-1981750069
   bool get _respondToLifecycleChange =>
       kIsWeb ||
+      // TODO: ????
       switch (defaultTargetPlatform) {
         TargetPlatform.android || TargetPlatform.iOS => false,
         TargetPlatform.fuchsia || TargetPlatform.linux => true,
@@ -2361,18 +2362,13 @@ class _HighlightModeManager {
     //
     // This only affects the initial value: the ongoing value is updated to a
     // known correct value as soon as any pointer/keyboard events are received.
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.iOS:
-        if (WidgetsBinding.instance.mouseTracker.mouseIsConnected) {
-          return FocusHighlightMode.traditional;
-        }
-        return FocusHighlightMode.touch;
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
+    if (defaultIsMobile) {
+      if (WidgetsBinding.instance.mouseTracker.mouseIsConnected) {
         return FocusHighlightMode.traditional;
+      }
+      return FocusHighlightMode.touch;
+    } else {
+      return FocusHighlightMode.traditional;
     }
   }
 }

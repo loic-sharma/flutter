@@ -739,8 +739,7 @@ class TextSelectionOverlay {
     );
 
     // The drag start selection is only utilized on Apple platforms.
-    if (defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.macOS) {
+    if (defaultIsDarwin) {
       _dragStartSelection ??= _selection;
     }
 
@@ -803,58 +802,52 @@ class TextSelectionOverlay {
     final TextPosition position = renderObject.getPositionForPoint(handleTargetGlobal);
 
     final TextSelection newSelection;
-    switch (defaultTargetPlatform) {
-      // On Apple platforms, dragging the base handle makes it the extent.
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        assert(_dragStartSelection != null);
-        if (_dragStartSelection!.isCollapsed) {
-          _selectionOverlay.updateMagnifier(
-            _buildMagnifier(
-              currentTextPosition: position,
-              globalGesturePosition: details.globalPosition,
-              renderEditable: renderObject,
-            ),
-          );
-
-          final currentSelection = TextSelection.fromPosition(position);
-          _handleSelectionHandleChanged(currentSelection);
-          return;
-        }
-        // Use this instead of _dragStartSelection.isNormalized because TextRange.isNormalized
-        // always returns true for a TextSelection.
-        final bool dragStartSelectionNormalized =
-            _dragStartSelection!.extentOffset >= _dragStartSelection!.baseOffset;
-        newSelection = TextSelection(
-          baseOffset: dragStartSelectionNormalized
-              ? _dragStartSelection!.baseOffset
-              : _dragStartSelection!.extentOffset,
-          extentOffset: position.offset,
+    if (defaultIsDarwin) {
+      assert(_dragStartSelection != null);
+      if (_dragStartSelection!.isCollapsed) {
+        _selectionOverlay.updateMagnifier(
+          _buildMagnifier(
+            currentTextPosition: position,
+            globalGesturePosition: details.globalPosition,
+            renderEditable: renderObject,
+          ),
         );
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        if (_selection.isCollapsed) {
-          _selectionOverlay.updateMagnifier(
-            _buildMagnifier(
-              currentTextPosition: position,
-              globalGesturePosition: details.globalPosition,
-              renderEditable: renderObject,
-            ),
-          );
 
-          final currentSelection = TextSelection.fromPosition(position);
-          _handleSelectionHandleChanged(currentSelection);
-          return;
-        }
-        newSelection = TextSelection(
-          baseOffset: _selection.baseOffset,
-          extentOffset: position.offset,
+        final currentSelection = TextSelection.fromPosition(position);
+        _handleSelectionHandleChanged(currentSelection);
+        return;
+      }
+      // Use this instead of _dragStartSelection.isNormalized because TextRange.isNormalized
+      // always returns true for a TextSelection.
+      final bool dragStartSelectionNormalized =
+          _dragStartSelection!.extentOffset >= _dragStartSelection!.baseOffset;
+      newSelection = TextSelection(
+        baseOffset: dragStartSelectionNormalized
+            ? _dragStartSelection!.baseOffset
+            : _dragStartSelection!.extentOffset,
+        extentOffset: position.offset,
+      );
+    } else {
+      if (_selection.isCollapsed) {
+        _selectionOverlay.updateMagnifier(
+          _buildMagnifier(
+            currentTextPosition: position,
+            globalGesturePosition: details.globalPosition,
+            renderEditable: renderObject,
+          ),
         );
-        if (newSelection.baseOffset >= newSelection.extentOffset) {
-          return; // Don't allow order swapping.
-        }
+
+        final currentSelection = TextSelection.fromPosition(position);
+        _handleSelectionHandleChanged(currentSelection);
+        return;
+      }
+      newSelection = TextSelection(
+        baseOffset: _selection.baseOffset,
+        extentOffset: position.offset,
+      );
+      if (newSelection.baseOffset >= newSelection.extentOffset) {
+        return; // Don't allow order swapping.
+      }
     }
 
     _handleSelectionHandleChanged(newSelection);
@@ -898,8 +891,7 @@ class TextSelectionOverlay {
     );
 
     // The drag start selection is only utilized on Apple platforms.
-    if (defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.macOS) {
+    if (defaultIsDarwin) {
       _dragStartSelection ??= _selection;
     }
 
@@ -934,58 +926,53 @@ class TextSelectionOverlay {
     final TextPosition position = renderObject.getPositionForPoint(handleTargetGlobal);
 
     final TextSelection newSelection;
-    switch (defaultTargetPlatform) {
-      // On Apple platforms, dragging the base handle makes it the extent.
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        assert(_dragStartSelection != null);
-        if (_dragStartSelection!.isCollapsed) {
-          _selectionOverlay.updateMagnifier(
-            _buildMagnifier(
-              currentTextPosition: position,
-              globalGesturePosition: details.globalPosition,
-              renderEditable: renderObject,
-            ),
-          );
-
-          final currentSelection = TextSelection.fromPosition(position);
-          _handleSelectionHandleChanged(currentSelection);
-          return;
-        }
-        // Use this instead of _dragStartSelection.isNormalized because TextRange.isNormalized
-        // always returns true for a TextSelection.
-        final bool dragStartSelectionNormalized =
-            _dragStartSelection!.extentOffset >= _dragStartSelection!.baseOffset;
-        newSelection = TextSelection(
-          baseOffset: dragStartSelectionNormalized
-              ? _dragStartSelection!.extentOffset
-              : _dragStartSelection!.baseOffset,
-          extentOffset: position.offset,
+    // On Apple platforms, dragging the base handle makes it the extent.
+    if (defaultIsDarwin) {
+      assert(_dragStartSelection != null);
+      if (_dragStartSelection!.isCollapsed) {
+        _selectionOverlay.updateMagnifier(
+          _buildMagnifier(
+            currentTextPosition: position,
+            globalGesturePosition: details.globalPosition,
+            renderEditable: renderObject,
+          ),
         );
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        if (_selection.isCollapsed) {
-          _selectionOverlay.updateMagnifier(
-            _buildMagnifier(
-              currentTextPosition: position,
-              globalGesturePosition: details.globalPosition,
-              renderEditable: renderObject,
-            ),
-          );
 
-          final currentSelection = TextSelection.fromPosition(position);
-          _handleSelectionHandleChanged(currentSelection);
-          return;
-        }
-        newSelection = TextSelection(
-          baseOffset: position.offset,
-          extentOffset: _selection.extentOffset,
+        final currentSelection = TextSelection.fromPosition(position);
+        _handleSelectionHandleChanged(currentSelection);
+        return;
+      }
+      // Use this instead of _dragStartSelection.isNormalized because TextRange.isNormalized
+      // always returns true for a TextSelection.
+      final bool dragStartSelectionNormalized =
+          _dragStartSelection!.extentOffset >= _dragStartSelection!.baseOffset;
+      newSelection = TextSelection(
+        baseOffset: dragStartSelectionNormalized
+            ? _dragStartSelection!.extentOffset
+            : _dragStartSelection!.baseOffset,
+        extentOffset: position.offset,
+      );
+    } else {
+      if (_selection.isCollapsed) {
+        _selectionOverlay.updateMagnifier(
+          _buildMagnifier(
+            currentTextPosition: position,
+            globalGesturePosition: details.globalPosition,
+            renderEditable: renderObject,
+          ),
         );
-        if (newSelection.baseOffset >= newSelection.extentOffset) {
-          return; // Don't allow order swapping.
-        }
+
+        final currentSelection = TextSelection.fromPosition(position);
+        _handleSelectionHandleChanged(currentSelection);
+        return;
+      }
+      newSelection = TextSelection(
+        baseOffset: position.offset,
+        extentOffset: _selection.extentOffset,
+      );
+      if (newSelection.baseOffset >= newSelection.extentOffset) {
+        return; // Don't allow order swapping.
+      }
     }
 
     _selectionOverlay.updateMagnifier(
@@ -1247,9 +1234,7 @@ class SelectionOverlay {
   // the start handle cannot be dragged.
   bool get _canDragStartHandle =>
       !_isDraggingEndHandle ||
-      (defaultTargetPlatform != TargetPlatform.iOS &&
-          defaultTargetPlatform != TargetPlatform.macOS &&
-          !kIsWeb);
+      (!defaultIsDarwin && !kIsWeb);
 
   /// Whether the start handle is visible.
   ///
@@ -1368,9 +1353,7 @@ class SelectionOverlay {
   // the end handle cannot be dragged.
   bool get _canDragEndHandle =>
       !_isDraggingStartHandle ||
-      (defaultTargetPlatform != TargetPlatform.iOS &&
-          defaultTargetPlatform != TargetPlatform.macOS &&
-          !kIsWeb);
+      (!defaultIsDarwin && !kIsWeb);
 
   /// Whether the end handle is visible.
   ///
@@ -2220,6 +2203,7 @@ class TextSelectionGestureDetectorBuilder {
   // Shows the magnifier on supported platforms at the given offset, currently
   // only Android and iOS.
   void _showMagnifierIfSupportedByPlatform(Offset positionToShow) {
+    // TODO: ???
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.iOS:
@@ -2237,6 +2221,7 @@ class TextSelectionGestureDetectorBuilder {
       return;
     }
 
+    // TODO: ???
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.iOS:
@@ -2471,6 +2456,7 @@ class TextSelectionGestureDetectorBuilder {
     // renderEditable.selection is invalid.
     final bool isShiftPressedValid =
         _isShiftPressed && renderEditable.selection?.baseOffset != null;
+    // TODO: ???
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         if (editableText.widget.stylusHandwritingEnabled) {
@@ -2608,6 +2594,7 @@ class TextSelectionGestureDetectorBuilder {
     // renderEditable.selection is invalid.
     final bool isShiftPressedValid =
         _isShiftPressed && renderEditable.selection?.baseOffset != null;
+    // TODO: ???
     switch (defaultTargetPlatform) {
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
@@ -2734,6 +2721,7 @@ class TextSelectionGestureDetectorBuilder {
     if (!delegate.selectionEnabled) {
       return;
     }
+    // TODO: ???
     switch (defaultTargetPlatform) {
       case TargetPlatform.iOS:
       case TargetPlatform.macOS:
@@ -2804,41 +2792,36 @@ class TextSelectionGestureDetectorBuilder {
       Axis.horizontal => Offset(_scrollPosition - _dragStartScrollOffset, 0.0),
       Axis.vertical => Offset(0.0, _scrollPosition - _dragStartScrollOffset),
     };
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        if (_longPressStartedWithoutFocus || renderEditable.readOnly) {
-          renderEditable.selectWordsInRange(
-            from:
-                details.globalPosition -
-                details.offsetFromOrigin -
-                editableOffset -
-                scrollableOffset,
-            to: details.globalPosition,
-            cause: SelectionChangedCause.longPress,
-          );
-        } else {
-          renderEditable.selectPositionAt(
-            from: details.globalPosition,
-            cause: SelectionChangedCause.longPress,
-          );
-          // Update the floating cursor.
-          final cursorPoint = RawFloatingCursorPoint(
-            state: FloatingCursorDragState.Update,
-            offset: details.offsetFromOrigin,
-          );
-          editableText.updateFloatingCursor(cursorPoint);
-        }
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
+    if (defaultIsDarwin) {
+      if (_longPressStartedWithoutFocus || renderEditable.readOnly) {
         renderEditable.selectWordsInRange(
           from:
-              details.globalPosition - details.offsetFromOrigin - editableOffset - scrollableOffset,
+              details.globalPosition -
+              details.offsetFromOrigin -
+              editableOffset -
+              scrollableOffset,
           to: details.globalPosition,
           cause: SelectionChangedCause.longPress,
         );
+      } else {
+        renderEditable.selectPositionAt(
+          from: details.globalPosition,
+          cause: SelectionChangedCause.longPress,
+        );
+        // Update the floating cursor.
+        final cursorPoint = RawFloatingCursorPoint(
+          state: FloatingCursorDragState.Update,
+          offset: details.offsetFromOrigin,
+        );
+        editableText.updateFloatingCursor(cursorPoint);
+      }
+    } else {
+      renderEditable.selectWordsInRange(
+        from:
+            details.globalPosition - details.offsetFromOrigin - editableOffset - scrollableOffset,
+        to: details.globalPosition,
+        cause: SelectionChangedCause.longPress,
+      );
     }
 
     _showMagnifierIfSupportedByPlatform(details.globalPosition);
@@ -2881,24 +2864,19 @@ class TextSelectionGestureDetectorBuilder {
     if (!delegate.selectionEnabled) {
       return;
     }
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        if (!_lastSecondaryTapWasOnSelection || !renderEditable.hasFocus) {
-          renderEditable.selectWord(cause: SelectionChangedCause.tap);
-        }
-        if (shouldShowSelectionToolbar) {
-          editableText.hideToolbar();
-          editableText.showToolbar();
-        }
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        if (!renderEditable.hasFocus) {
-          renderEditable.selectPosition(cause: SelectionChangedCause.tap);
-        }
-        editableText.toggleToolbar();
+    if (defaultIsDarwin) {
+      if (!_lastSecondaryTapWasOnSelection || !renderEditable.hasFocus) {
+        renderEditable.selectWord(cause: SelectionChangedCause.tap);
+      }
+      if (shouldShowSelectionToolbar) {
+        editableText.hideToolbar();
+        editableText.showToolbar();
+      }
+    } else {
+      if (!renderEditable.hasFocus) {
+        renderEditable.selectPosition(cause: SelectionChangedCause.tap);
+      }
+      editableText.toggleToolbar();
     }
   }
 
@@ -3091,17 +3069,13 @@ class TextSelectionGestureDetectorBuilder {
     }
 
     if (_isShiftPressed && renderEditable.selection != null && renderEditable.selection!.isValid) {
-      switch (defaultTargetPlatform) {
-        case TargetPlatform.iOS:
-        case TargetPlatform.macOS:
+      if (defaultIsDarwin) {
           _expandSelection(details.globalPosition, SelectionChangedCause.drag);
-        case TargetPlatform.android:
-        case TargetPlatform.fuchsia:
-        case TargetPlatform.linux:
-        case TargetPlatform.windows:
-          _extendSelection(details.globalPosition, SelectionChangedCause.drag);
+      } else {
+        _extendSelection(details.globalPosition, SelectionChangedCause.drag);
       }
     } else {
+      // TODO: ???
       switch (defaultTargetPlatform) {
         case TargetPlatform.iOS:
           switch (details.kind) {
@@ -3209,6 +3183,7 @@ class TextSelectionGestureDetectorBuilder {
             details.consecutiveTapCount,
           ) ==
           3) {
+        // TODO: ???
         switch (defaultTargetPlatform) {
           case TargetPlatform.android:
           case TargetPlatform.fuchsia:
@@ -3247,6 +3222,7 @@ class TextSelectionGestureDetectorBuilder {
         }
       }
 
+      // TODO: ???
       switch (defaultTargetPlatform) {
         case TargetPlatform.iOS:
           // With a mouse device, a drag should select the range from the origin of the drag
@@ -3308,9 +3284,7 @@ class TextSelectionGestureDetectorBuilder {
       }
     }
 
-    if (_dragStartSelection!.isCollapsed ||
-        (defaultTargetPlatform != TargetPlatform.iOS &&
-            defaultTargetPlatform != TargetPlatform.macOS)) {
+    if (_dragStartSelection!.isCollapsed || !defaultIsDarwin) {
       return _extendSelection(details.globalPosition, SelectionChangedCause.drag);
     }
 
@@ -3563,6 +3537,7 @@ class _TextSelectionGestureDetectorState extends State<TextSelectionGestureDetec
   // This method should be used in all instances when details.consecutiveTapCount
   // would be used.
   static int _getEffectiveConsecutiveTapCount(int rawCount) {
+    // TODO: ???
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.fuchsia:
@@ -3701,50 +3676,45 @@ class _TextSelectionGestureDetectorState extends State<TextSelectionGestureDetec
     if (widget.onDragSelectionStart != null ||
         widget.onDragSelectionUpdate != null ||
         widget.onDragSelectionEnd != null) {
-      switch (defaultTargetPlatform) {
-        case TargetPlatform.android:
-        case TargetPlatform.fuchsia:
-        case TargetPlatform.iOS:
-          gestures[TapAndHorizontalDragGestureRecognizer] =
-              GestureRecognizerFactoryWithHandlers<TapAndHorizontalDragGestureRecognizer>(
-                () => TapAndHorizontalDragGestureRecognizer(debugOwner: this),
-                (TapAndHorizontalDragGestureRecognizer instance) {
-                  instance
-                    // Text selection should start from the position of the first pointer
-                    // down event.
-                    ..dragStartBehavior = DragStartBehavior.down
-                    ..eagerVictoryOnDrag = defaultTargetPlatform != TargetPlatform.iOS
-                    ..onTapTrackStart = _handleTapTrackStart
-                    ..onTapTrackReset = _handleTapTrackReset
-                    ..onTapDown = _handleTapDown
-                    ..onDragStart = _handleDragStart
-                    ..onDragUpdate = _handleDragUpdate
-                    ..onDragEnd = _handleDragEnd
-                    ..onTapUp = _handleTapUp
-                    ..onCancel = _handleTapCancel;
-                },
-              );
-        case TargetPlatform.linux:
-        case TargetPlatform.macOS:
-        case TargetPlatform.windows:
-          gestures[TapAndPanGestureRecognizer] =
-              GestureRecognizerFactoryWithHandlers<TapAndPanGestureRecognizer>(
-                () => TapAndPanGestureRecognizer(debugOwner: this),
-                (TapAndPanGestureRecognizer instance) {
-                  instance
-                    // Text selection should start from the position of the first pointer
-                    // down event.
-                    ..dragStartBehavior = DragStartBehavior.down
-                    ..onTapTrackStart = _handleTapTrackStart
-                    ..onTapTrackReset = _handleTapTrackReset
-                    ..onTapDown = _handleTapDown
-                    ..onDragStart = _handleDragStart
-                    ..onDragUpdate = _handleDragUpdate
-                    ..onDragEnd = _handleDragEnd
-                    ..onTapUp = _handleTapUp
-                    ..onCancel = _handleTapCancel;
-                },
-              );
+      if (defaultIsMobile) {
+        gestures[TapAndHorizontalDragGestureRecognizer] =
+          GestureRecognizerFactoryWithHandlers<TapAndHorizontalDragGestureRecognizer>(
+            () => TapAndHorizontalDragGestureRecognizer(debugOwner: this),
+            (TapAndHorizontalDragGestureRecognizer instance) {
+              instance
+                // Text selection should start from the position of the first pointer
+                // down event.
+                ..dragStartBehavior = DragStartBehavior.down
+                ..eagerVictoryOnDrag = defaultTargetPlatform != TargetPlatform.iOS
+                ..onTapTrackStart = _handleTapTrackStart
+                ..onTapTrackReset = _handleTapTrackReset
+                ..onTapDown = _handleTapDown
+                ..onDragStart = _handleDragStart
+                ..onDragUpdate = _handleDragUpdate
+                ..onDragEnd = _handleDragEnd
+                ..onTapUp = _handleTapUp
+                ..onCancel = _handleTapCancel;
+            },
+          );
+      } else {
+        gestures[TapAndPanGestureRecognizer] =
+          GestureRecognizerFactoryWithHandlers<TapAndPanGestureRecognizer>(
+            () => TapAndPanGestureRecognizer(debugOwner: this),
+            (TapAndPanGestureRecognizer instance) {
+              instance
+                // Text selection should start from the position of the first pointer
+                // down event.
+                ..dragStartBehavior = DragStartBehavior.down
+                ..onTapTrackStart = _handleTapTrackStart
+                ..onTapTrackReset = _handleTapTrackReset
+                ..onTapDown = _handleTapDown
+                ..onDragStart = _handleDragStart
+                ..onDragUpdate = _handleDragUpdate
+                ..onDragEnd = _handleDragEnd
+                ..onTapUp = _handleTapUp
+                ..onCancel = _handleTapCancel;
+            },
+          );
       }
     }
 

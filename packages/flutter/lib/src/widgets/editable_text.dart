@@ -2117,14 +2117,8 @@ class EditableText extends StatefulWidget {
     if (kIsWeb) {
       return true;
     }
-    return switch (defaultTargetPlatform) {
-      TargetPlatform.android => false,
-      TargetPlatform.iOS => false,
-      TargetPlatform.fuchsia => false,
-      TargetPlatform.linux => true,
-      TargetPlatform.macOS => true,
-      TargetPlatform.windows => true,
-    };
+
+    return defaultIsDesktop;
   }
 
   /// Returns the [ContextMenuButtonItem]s representing the buttons in this
@@ -2249,50 +2243,41 @@ class EditableText extends StatefulWidget {
     // The entries with "autofill not working" comments are the iOS text content
     // types that should work with the specified keyboard type but won't trigger
     // (even within a native app). Tested on iOS 13.5.
-    if (!kIsWeb) {
-      switch (defaultTargetPlatform) {
-        case TargetPlatform.iOS:
-        case TargetPlatform.macOS:
-          const iOSKeyboardType = <String, TextInputType>{
-            AutofillHints.addressCity: TextInputType.name,
-            AutofillHints.addressCityAndState: TextInputType.name, // Autofill not working.
-            AutofillHints.addressState: TextInputType.name,
-            AutofillHints.countryName: TextInputType.name,
-            AutofillHints.creditCardNumber: TextInputType.number, // Couldn't test.
-            AutofillHints.email: TextInputType.emailAddress,
-            AutofillHints.familyName: TextInputType.name,
-            AutofillHints.fullStreetAddress: TextInputType.name,
-            AutofillHints.givenName: TextInputType.name,
-            AutofillHints.jobTitle: TextInputType.name, // Autofill not working.
-            AutofillHints.location: TextInputType.name, // Autofill not working.
-            AutofillHints.middleName: TextInputType.name, // Autofill not working.
-            AutofillHints.name: TextInputType.name,
-            AutofillHints.namePrefix: TextInputType.name, // Autofill not working.
-            AutofillHints.nameSuffix: TextInputType.name, // Autofill not working.
-            AutofillHints.newPassword: TextInputType.text,
-            AutofillHints.newUsername: TextInputType.text,
-            AutofillHints.nickname: TextInputType.name, // Autofill not working.
-            AutofillHints.oneTimeCode: TextInputType.number,
-            AutofillHints.organizationName: TextInputType.text, // Autofill not working.
-            AutofillHints.password: TextInputType.text,
-            AutofillHints.postalCode: TextInputType.name,
-            AutofillHints.streetAddressLine1: TextInputType.name,
-            AutofillHints.streetAddressLine2: TextInputType.name, // Autofill not working.
-            AutofillHints.sublocality: TextInputType.name, // Autofill not working.
-            AutofillHints.telephoneNumber: TextInputType.name,
-            AutofillHints.url: TextInputType.url, // Autofill not working.
-            AutofillHints.username: TextInputType.text,
-          };
+    if (!kIsWeb && defaultIsDarwin) {
+      const iOSKeyboardType = <String, TextInputType>{
+        AutofillHints.addressCity: TextInputType.name,
+        AutofillHints.addressCityAndState: TextInputType.name, // Autofill not working.
+        AutofillHints.addressState: TextInputType.name,
+        AutofillHints.countryName: TextInputType.name,
+        AutofillHints.creditCardNumber: TextInputType.number, // Couldn't test.
+        AutofillHints.email: TextInputType.emailAddress,
+        AutofillHints.familyName: TextInputType.name,
+        AutofillHints.fullStreetAddress: TextInputType.name,
+        AutofillHints.givenName: TextInputType.name,
+        AutofillHints.jobTitle: TextInputType.name, // Autofill not working.
+        AutofillHints.location: TextInputType.name, // Autofill not working.
+        AutofillHints.middleName: TextInputType.name, // Autofill not working.
+        AutofillHints.name: TextInputType.name,
+        AutofillHints.namePrefix: TextInputType.name, // Autofill not working.
+        AutofillHints.nameSuffix: TextInputType.name, // Autofill not working.
+        AutofillHints.newPassword: TextInputType.text,
+        AutofillHints.newUsername: TextInputType.text,
+        AutofillHints.nickname: TextInputType.name, // Autofill not working.
+        AutofillHints.oneTimeCode: TextInputType.number,
+        AutofillHints.organizationName: TextInputType.text, // Autofill not working.
+        AutofillHints.password: TextInputType.text,
+        AutofillHints.postalCode: TextInputType.name,
+        AutofillHints.streetAddressLine1: TextInputType.name,
+        AutofillHints.streetAddressLine2: TextInputType.name, // Autofill not working.
+        AutofillHints.sublocality: TextInputType.name, // Autofill not working.
+        AutofillHints.telephoneNumber: TextInputType.name,
+        AutofillHints.url: TextInputType.url, // Autofill not working.
+        AutofillHints.username: TextInputType.text,
+      };
 
-          final TextInputType? keyboardType = iOSKeyboardType[effectiveHint];
-          if (keyboardType != null) {
-            return keyboardType;
-          }
-        case TargetPlatform.android:
-        case TargetPlatform.fuchsia:
-        case TargetPlatform.linux:
-        case TargetPlatform.windows:
-          break;
+      final TextInputType? keyboardType = iOSKeyboardType[effectiveHint];
+      if (keyboardType != null) {
+        return keyboardType;
       }
     }
 
@@ -2719,18 +2704,13 @@ class EditableTextState extends State<EditableText>
 
   @override
   bool get shareEnabled {
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.iOS:
-        return !widget.obscureText &&
-            !textEditingValue.selection.isCollapsed &&
-            textEditingValue.selection.textInside(textEditingValue.text).trim() != '';
-      case TargetPlatform.macOS:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        return false;
+    if (!defaultIsMobile || defaultTargetPlatform == .fuchsia) {
+      return false;
     }
+
+    return !widget.obscureText &&
+        !textEditingValue.selection.isCollapsed &&
+        textEditingValue.selection.textInside(textEditingValue.text).trim() != '';
   }
 
   @override
@@ -2776,6 +2756,7 @@ class EditableTextState extends State<EditableText>
       bringIntoView(textEditingValue.selection.extent);
       hideToolbar(false);
 
+      // TODO: ????
       switch (defaultTargetPlatform) {
         case TargetPlatform.iOS:
         case TargetPlatform.macOS:
@@ -2912,25 +2893,11 @@ class EditableTextState extends State<EditableText>
     );
 
     if (cause == SelectionChangedCause.toolbar) {
-      switch (defaultTargetPlatform) {
-        case TargetPlatform.android:
-        case TargetPlatform.iOS:
-        case TargetPlatform.fuchsia:
-          break;
-        case TargetPlatform.macOS:
-        case TargetPlatform.linux:
-        case TargetPlatform.windows:
-          hideToolbar();
+      if (defaultIsDesktop) {
+        hideToolbar();
       }
-      switch (defaultTargetPlatform) {
-        case TargetPlatform.android:
-        case TargetPlatform.fuchsia:
-        case TargetPlatform.linux:
-        case TargetPlatform.windows:
-          bringIntoView(textEditingValue.selection.extent);
-        case TargetPlatform.macOS:
-        case TargetPlatform.iOS:
-          break;
+      if (!defaultIsDarwin) {
+        bringIntoView(textEditingValue.selection.extent);
       }
     }
   }
@@ -3398,8 +3365,7 @@ class EditableTextState extends State<EditableText>
       }, debugLabel: 'EditableText.updateStyle');
     }
 
-    if (defaultTargetPlatform != TargetPlatform.iOS &&
-        defaultTargetPlatform != TargetPlatform.android) {
+    if (defaultIsMobile && defaultTargetPlatform != .fuchsia) {
       return;
     }
 
@@ -3419,6 +3385,9 @@ class EditableTextState extends State<EditableText>
       }
     }
 
+    // TODO: THis seems like a bug. We should do this on desktop too?
+    // Actually, this seems OK. Only iOS and Android support fade on scroll and
+    // use the scroll notification observer.
     if (_listeningToScrollNotificationObserver) {
       // Only update subscription when we have previously subscribed to the
       // scroll notification observer. We only subscribe to the scroll
@@ -4264,13 +4233,8 @@ class EditableTextState extends State<EditableText>
     }
   }
 
-  final bool _platformSupportsFadeOnScroll = switch (defaultTargetPlatform) {
-    TargetPlatform.android || TargetPlatform.iOS => true,
-    TargetPlatform.fuchsia ||
-    TargetPlatform.linux ||
-    TargetPlatform.macOS ||
-    TargetPlatform.windows => false,
-  };
+  // TODO: ????
+  final bool _platformSupportsFadeOnScroll = defaultIsMobile && defaultTargetPlatform != .fuchsia;
 
   bool _isInternalScrollableNotification(BuildContext? notificationContext) {
     final ScrollableState? scrollableState = notificationContext
@@ -4783,23 +4747,18 @@ class EditableTextState extends State<EditableText>
     TextSelection newSelection,
     SelectionChangedCause? cause,
   ) {
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
+    if (defaultIsDarwin) {
         if (cause == SelectionChangedCause.longPress || cause == SelectionChangedCause.drag) {
           bringIntoView(newSelection.extent);
         }
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.android:
-        if (cause == SelectionChangedCause.drag) {
-          if (oldSelection.baseOffset != newSelection.baseOffset) {
-            bringIntoView(newSelection.base);
-          } else if (oldSelection.extentOffset != newSelection.extentOffset) {
-            bringIntoView(newSelection.extent);
-          }
+    } else {
+      if (cause == SelectionChangedCause.drag) {
+        if (oldSelection.baseOffset != newSelection.baseOffset) {
+          bringIntoView(newSelection.base);
+        } else if (oldSelection.extentOffset != newSelection.extentOffset) {
+          bringIntoView(newSelection.extent);
         }
+      }
     }
   }
 
@@ -5869,6 +5828,7 @@ class EditableTextState extends State<EditableText>
                       return true;
                     }
 
+                    // TODO: ????
                     switch (defaultTargetPlatform) {
                       case TargetPlatform.iOS:
                       case TargetPlatform.macOS:
@@ -6029,14 +5989,9 @@ class EditableTextState extends State<EditableText>
       String text = _value.text;
       text = widget.obscuringCharacter * text.length;
       // Reveal the latest character in an obscured field only on mobile.
-      const mobilePlatforms = <TargetPlatform>{
-        TargetPlatform.android,
-        TargetPlatform.fuchsia,
-        TargetPlatform.iOS,
-      };
       final bool brieflyShowPassword =
           WidgetsBinding.instance.platformDispatcher.brieflyShowPassword &&
-          mobilePlatforms.contains(defaultTargetPlatform);
+          defaultIsMobile;
       if (brieflyShowPassword) {
         final int? o = _obscureShowCharTicksPending > 0 ? _obscureLatestCharIndex : null;
         if (o != null && o >= 0 && o < text.length) {
@@ -6879,29 +6834,24 @@ class _EditableTextTapOutsideAction extends ContextAction<EditableTextTapOutside
   @override
   void invoke(EditableTextTapOutsideIntent intent, [BuildContext? context]) {
     // The focus dropping behavior is only present on desktop platforms.
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.iOS:
-      case TargetPlatform.fuchsia:
-        // On mobile platforms, we don't unfocus on touch events unless they're
-        // in the web browser, but we do unfocus for all other kinds of events.
-        switch (intent.pointerDownEvent.kind) {
-          case ui.PointerDeviceKind.touch:
-            if (kIsWeb) {
-              intent.focusNode.unfocus();
-            }
-          case ui.PointerDeviceKind.mouse:
-          case ui.PointerDeviceKind.stylus:
-          case ui.PointerDeviceKind.invertedStylus:
-          case ui.PointerDeviceKind.unknown:
+    if (defaultIsDesktop) {
+      intent.focusNode.unfocus();
+    } else if (defaultIsMobile) {
+      // On mobile platforms, we don't unfocus on touch events unless they're
+      // in the web browser, but we do unfocus for all other kinds of events.
+      switch (intent.pointerDownEvent.kind) {
+        case ui.PointerDeviceKind.touch:
+          if (kIsWeb) {
             intent.focusNode.unfocus();
-          case ui.PointerDeviceKind.trackpad:
-            throw UnimplementedError('Unexpected pointer down event for trackpad');
-        }
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        intent.focusNode.unfocus();
+          }
+        case ui.PointerDeviceKind.mouse:
+        case ui.PointerDeviceKind.stylus:
+        case ui.PointerDeviceKind.invertedStylus:
+        case ui.PointerDeviceKind.unknown:
+          intent.focusNode.unfocus();
+        case ui.PointerDeviceKind.trackpad:
+          throw UnimplementedError('Unexpected pointer down event for trackpad');
+      }
     }
   }
 }

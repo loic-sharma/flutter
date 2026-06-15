@@ -771,13 +771,9 @@ class AlertDialog extends StatelessWidget {
         ? _DialogDefaultsM3(context)
         : _DialogDefaultsM2(context);
 
-    final String? label = switch (defaultTargetPlatform) {
-      TargetPlatform.iOS || TargetPlatform.macOS => semanticLabel,
-      TargetPlatform.android ||
-      TargetPlatform.fuchsia ||
-      TargetPlatform.linux ||
-      TargetPlatform.windows => semanticLabel ?? MaterialLocalizations.of(context).alertDialogLabel,
-    };
+    final String? label = defaultIsDarwin
+        ? semanticLabel
+        : semanticLabel ?? MaterialLocalizations.of(context).alertDialogLabel;
 
     // The paddingScaleFactor is used to adjust the padding of Dialog's
     // children.
@@ -1000,23 +996,16 @@ class _AdaptiveAlertDialog extends AlertDialog {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    switch (theme.platform) {
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        break;
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        return CupertinoAlertDialog(
-          title: title,
-          content: content,
-          actions: actions ?? <Widget>[],
-          scrollController: scrollController,
-          actionScrollController: actionScrollController,
-          insetAnimationDuration: insetAnimationDuration,
-          insetAnimationCurve: insetAnimationCurve,
-        );
+    if (theme.isDarwin) {
+      return CupertinoAlertDialog(
+        title: title,
+        content: content,
+        actions: actions ?? <Widget>[],
+        scrollController: scrollController,
+        actionScrollController: actionScrollController,
+        insetAnimationDuration: insetAnimationDuration,
+        insetAnimationCurve: insetAnimationCurve,
+      );
     }
     return super.build(context);
   }
@@ -1283,15 +1272,8 @@ class SimpleDialog extends StatelessWidget {
         : _DialogDefaultsM2(context);
 
     String? label = semanticLabel;
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.macOS:
-      case TargetPlatform.iOS:
-        break;
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        label ??= MaterialLocalizations.of(context).dialogLabel;
+    if (!defaultIsDarwin) {
+      label ??= MaterialLocalizations.of(context).dialogLabel;
     }
 
     // The paddingScaleFactor is used to adjust the padding of Dialog
@@ -1719,38 +1701,32 @@ Future<T?> showAdaptiveDialog<T>({
   AnimationStyle? animationStyle,
 }) {
   final ThemeData theme = Theme.of(context);
-  switch (theme.platform) {
-    case TargetPlatform.android:
-    case TargetPlatform.fuchsia:
-    case TargetPlatform.linux:
-    case TargetPlatform.windows:
-      return showDialog<T>(
-        context: context,
-        builder: builder,
-        barrierDismissible: barrierDismissible ?? true,
-        barrierColor: barrierColor,
-        barrierLabel: barrierLabel,
-        useSafeArea: useSafeArea,
-        useRootNavigator: useRootNavigator,
-        routeSettings: routeSettings,
-        anchorPoint: anchorPoint,
-        traversalEdgeBehavior: traversalEdgeBehavior,
-        requestFocus: requestFocus,
-        animationStyle: animationStyle,
-      );
-    case TargetPlatform.iOS:
-    case TargetPlatform.macOS:
-      return showCupertinoDialog<T>(
-        context: context,
-        builder: builder,
-        barrierDismissible: barrierDismissible ?? false,
-        barrierLabel: barrierLabel,
-        useRootNavigator: useRootNavigator,
-        anchorPoint: anchorPoint,
-        routeSettings: routeSettings,
-        requestFocus: requestFocus,
-      );
+  if (theme.isDarwin) {
+    return showCupertinoDialog<T>(
+      context: context,
+      builder: builder,
+      barrierDismissible: barrierDismissible ?? false,
+      barrierLabel: barrierLabel,
+      useRootNavigator: useRootNavigator,
+      anchorPoint: anchorPoint,
+      routeSettings: routeSettings,
+      requestFocus: requestFocus,
+    );
   }
+  return showDialog<T>(
+    context: context,
+    builder: builder,
+    barrierDismissible: barrierDismissible ?? true,
+    barrierColor: barrierColor,
+    barrierLabel: barrierLabel,
+    useSafeArea: useSafeArea,
+    useRootNavigator: useRootNavigator,
+    routeSettings: routeSettings,
+    anchorPoint: anchorPoint,
+    traversalEdgeBehavior: traversalEdgeBehavior,
+    requestFocus: requestFocus,
+    animationStyle: animationStyle,
+  );
 }
 
 bool _debugIsActive(BuildContext context) {

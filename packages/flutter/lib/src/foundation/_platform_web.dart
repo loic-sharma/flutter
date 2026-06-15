@@ -58,3 +58,43 @@ platform.TargetPlatform _operatingSystemToTargetPlatform(ui_web.OperatingSystem 
     ui_web.OperatingSystem.unknown => platform.TargetPlatform.android,
   };
 }
+
+/// The web implementation of [platform.defaultIsDesktop].
+bool get defaultIsDesktop {
+  if (platform.debugDefaultIsDesktopOverride != null) {
+    return platform.debugDefaultIsDesktopOverride!;
+  }
+  if (const bool.hasEnvironment('flutter.is_desktop')) {
+    return const bool.fromEnvironment('flutter.is_desktop');
+  }
+  final platform.TargetPlatform tp = defaultTargetPlatform;
+  return tp == platform.TargetPlatform.linux ||
+      tp == platform.TargetPlatform.macOS ||
+      tp == platform.TargetPlatform.windows;
+}
+
+/// The web implementation of [platform.defaultIsMobile].
+bool get defaultIsMobile {
+  if (platform.debugDefaultIsMobileOverride != null) {
+    return platform.debugDefaultIsMobileOverride!;
+  }
+  if (const bool.hasEnvironment('flutter.is_mobile')) {
+    return const bool.fromEnvironment('flutter.is_mobile');
+  }
+  final platform.TargetPlatform tp = defaultTargetPlatform;
+  return tp == platform.TargetPlatform.android ||
+      tp == platform.TargetPlatform.iOS ||
+      tp == platform.TargetPlatform.fuchsia;
+}
+
+/// The web implementation of [platform.defaultIsDarwin].
+bool get defaultIsDarwin {
+  if (platform.debugDefaultIsDarwinOverride != null) {
+    return platform.debugDefaultIsDarwinOverride!;
+  }
+  if (const bool.hasEnvironment('flutter.is_darwin')) {
+    return const bool.fromEnvironment('flutter.is_darwin');
+  }
+  final platform.TargetPlatform tp = defaultTargetPlatform;
+  return tp == platform.TargetPlatform.iOS || tp == platform.TargetPlatform.macOS;
+}
