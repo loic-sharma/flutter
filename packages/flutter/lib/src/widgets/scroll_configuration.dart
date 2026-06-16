@@ -256,6 +256,15 @@ class ScrollBehavior {
     }
   }
 
+  /// Whether the scrollbar thumb can be dragged into overscroll.
+  bool allowThumbOverscrollDrag(BuildContext context) {
+    return switch (getPlatform(context)) {
+      TargetPlatform.android || TargetPlatform.iOS => true,
+      TargetPlatform.fuchsia || TargetPlatform.linux => false,
+      TargetPlatform.macOS || TargetPlatform.windows => false,
+    };
+  }
+
   /// Called whenever a [ScrollConfiguration] is rebuilt with a new
   /// [ScrollBehavior] of the same [runtimeType].
   ///

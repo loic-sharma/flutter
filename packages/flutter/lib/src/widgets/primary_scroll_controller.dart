@@ -18,6 +18,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
 import 'framework.dart';
+import 'media_query.dart';
 import 'scroll_configuration.dart';
 import 'scroll_controller.dart';
 
@@ -63,6 +64,7 @@ class PrimaryScrollController extends InheritedWidget {
     super.key,
     required ScrollController this.controller,
     this.automaticallyInheritForPlatforms = _kMobilePlatforms,
+    this.inheritanceBehavior = PrimaryScrollControllerInheritanceBehavior.automatic,
     this.scrollDirection = Axis.vertical,
     required super.child,
   });
@@ -70,6 +72,7 @@ class PrimaryScrollController extends InheritedWidget {
   /// Creates a subtree without an associated [ScrollController].
   const PrimaryScrollController.none({super.key, required super.child})
     : automaticallyInheritForPlatforms = const <TargetPlatform>{},
+      inheritanceBehavior = PrimaryScrollControllerInheritanceBehavior.never,
       scrollDirection = null,
       controller = null;
 
@@ -110,6 +113,8 @@ class PrimaryScrollController extends InheritedWidget {
   /// controller. Defaults to [TargetPlatformVariant.mobile].
   final Set<TargetPlatform> automaticallyInheritForPlatforms;
 
+  final PrimaryScrollControllerInheritanceBehavior inheritanceBehavior;
+
   /// Returns true if this PrimaryScrollController is configured to be
   /// automatically inherited for the current [TargetPlatform] and the given
   /// [Axis].
@@ -125,15 +130,18 @@ class PrimaryScrollController extends InheritedWidget {
   static bool shouldInherit(BuildContext context, Axis scrollDirection) {
     final PrimaryScrollController? result = context
         .findAncestorWidgetOfExactType<PrimaryScrollController>();
-    if (result == null) {
+    if (result == null || result.scrollDirection != scrollDirection) {
       return false;
     }
 
+    final bool isMobile = MediaQuery.maybeIsMobileOf(context) ?? false;
     final TargetPlatform platform = ScrollConfiguration.of(context).getPlatform(context);
-    if (result.automaticallyInheritForPlatforms.contains(platform)) {
-      return result.scrollDirection == scrollDirection;
-    }
-    return false;
+
+    return switch (result.inheritanceBehavior) {
+       PrimaryScrollControllerInheritanceBehavior.never => false,
+       PrimaryScrollControllerInheritanceBehavior.automatic => isMobile || result.automaticallyInheritForPlatforms.contains(platform),
+       PrimaryScrollControllerInheritanceBehavior.always => true,
+    };
   }
 
   /// Returns the [ScrollController] most closely associated with the given
@@ -203,4 +211,20 @@ class PrimaryScrollController extends InheritedWidget {
       ),
     );
   }
+}
+
+enum PrimaryScrollControllerInheritanceBehavior {
+  /// The PrimaryScrollController will be inherited by ScrollViews in the subtree
+  /// that have a scroll direction of [Axis.vertical] on mobile platforms.
+  ///
+  /// This is the default behavior.
+  automatic,
+
+  /// The PrimaryScrollController will be inherited by ScrollViews in the subtree
+  /// that have a scroll direction of [Axis.vertical] on all platforms.
+  always,
+
+  /// The PrimaryScrollController will not be inherited by any ScrollViews in the
+  /// subtree.
+  never,
 }

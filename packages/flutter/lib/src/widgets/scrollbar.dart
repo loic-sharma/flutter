@@ -1683,20 +1683,12 @@ class RawScrollbarState<T extends RawScrollbar> extends State<T> with TickerProv
 
       // The physics may allow overscroll when actually *scrolling*, but
       // dragging on the scrollbar does not always allow us to enter overscroll.
-      switch (ScrollConfiguration.of(context).getPlatform(context)) {
-        case TargetPlatform.fuchsia:
-        case TargetPlatform.linux:
-        case TargetPlatform.macOS:
-        case TargetPlatform.windows:
-          newPosition = clampDouble(
-            newPosition,
-            position.minScrollExtent,
-            position.maxScrollExtent,
-          );
-        case TargetPlatform.iOS:
-        case TargetPlatform.android:
-        // We can only drag the scrollbar into overscroll on mobile
-        // platforms, and only then if the physics allow it.
+      if (!ScrollConfiguration.of(context).allowThumbOverscrollDrag(context)) {
+        newPosition = clampDouble(
+          newPosition,
+          position.minScrollExtent,
+          position.maxScrollExtent,
+        );
       }
       final bool isReversed = axisDirectionIsReversed(position.axisDirection);
       return isReversed ? newPosition - position.pixels : position.pixels - newPosition;
@@ -1818,11 +1810,8 @@ class RawScrollbarState<T extends RawScrollbar> extends State<T> with TickerProv
     // On mobile platforms flinging the scrollbar thumb causes a ballistic
     // scroll, just like it does via a touch drag. Likewise for desktops when
     // dragging on the trackpad or with a stylus.
-    final TargetPlatform platform = ScrollConfiguration.of(context).getPlatform(context);
-    final Velocity adjustedVelocity = switch (platform) {
-      TargetPlatform.iOS || TargetPlatform.android => -velocity,
-      _ => Velocity.zero,
-    };
+    final bool allowThumbOverscrollDrag = ScrollConfiguration.of(context).allowThumbOverscrollDrag(context);
+    final Velocity adjustedVelocity = allowThumbOverscrollDrag ? -velocity : Velocity.zero;
     final renderBox = _scrollbarPainterKey.currentContext!.findRenderObject()! as RenderBox;
     final details = DragEndDetails(
       localPosition: localPosition,
