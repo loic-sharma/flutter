@@ -10,6 +10,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 
 import 'actions.dart';
+import 'binding.dart';
 import 'focus_traversal.dart';
 import 'framework.dart';
 import 'scrollable_helpers.dart';
@@ -959,8 +960,12 @@ class DefaultTextEditingShortcuts extends StatelessWidget {
       };
 
   static Map<ShortcutActivator, Intent> get _shortcuts {
-    // TODO: ???
     // Allow out-of-tree platforms to provide their own default shortcuts.
+    final overrides = WidgetsBinding.instance.platformConfiguration.textEditingShortcuts;
+    if (overrides != null) {
+      return overrides;
+    }
+
     return switch (defaultTargetPlatform) {
       TargetPlatform.android => _androidShortcuts,
       TargetPlatform.fuchsia => _fuchsiaShortcuts,
@@ -972,6 +977,11 @@ class DefaultTextEditingShortcuts extends StatelessWidget {
   }
 
   Map<ShortcutActivator, Intent>? _getDisablingShortcut() {
+    final overrides = WidgetsBinding.instance.platformConfiguration.textEditingDisablingShortcuts;
+    if (overrides != null) {
+      return overrides;
+    }
+
     if (kIsWeb) {
       switch (defaultTargetPlatform) {
         case TargetPlatform.linux:

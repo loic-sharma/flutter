@@ -354,7 +354,7 @@ class NestedScrollView extends StatefulWidget {
         child: PrimaryScrollController(
           // The inner scroll view should always inherit this
           // PrimaryScrollController, on every platform.
-          automaticallyInheritForPlatforms: TargetPlatform.values.toSet(),
+          inheritanceBehavior: .always,
           // `PrimaryScrollController.scrollDirection` is not set, and so it is
           // restricted to the default Axis.vertical.
           // Ideally the inner and outer views would have the same

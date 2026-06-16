@@ -11,6 +11,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import 'basic.dart';
+import 'binding.dart';
 import 'debug.dart';
 import 'framework.dart';
 import 'gesture_detector.dart';
@@ -207,18 +208,7 @@ class ModalBarrier extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     assert(!dismissible || semanticsLabel == null || debugCheckHasDirectionality(context));
-    final bool platformSupportsDismissingBarrier;
-    // TODO: ????
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        platformSupportsDismissingBarrier = false;
-      case TargetPlatform.android:
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        platformSupportsDismissingBarrier = true;
-    }
+    final bool platformSupportsDismissingBarrier = WidgetsBinding.instance.platformConfiguration.allowsModalDissmissal;
     final bool semanticsDismissible = dismissible && platformSupportsDismissingBarrier;
     final bool modalBarrierSemanticsDismissible =
         barrierSemanticsDismissible ?? semanticsDismissible;

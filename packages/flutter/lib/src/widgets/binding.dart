@@ -38,6 +38,7 @@ import 'package:flutter/services.dart';
 import '../foundation/_features.dart';
 import '_accessibility_evaluations.dart';
 import '_window.dart';
+import 'actions.dart';
 import 'app.dart';
 import 'debug.dart';
 import 'focus_manager.dart';
@@ -45,6 +46,7 @@ import 'framework.dart';
 import 'platform_menu_bar.dart';
 import 'router.dart';
 import 'service_extensions.dart';
+import 'shortcuts.dart';
 import 'view.dart';
 import 'widget_inspector.dart';
 
@@ -483,6 +485,7 @@ mixin WidgetsBinding
       FlutterErrorDetails.propertiesTransformers.add(debugTransformDebugCreator);
       return true;
     }());
+    platformConfiguration = PlatformConfiguration();
     platformMenuDelegate = DefaultPlatformMenuDelegate();
     _windowingOwner = createDefaultWindowingOwner();
   }
@@ -2156,7 +2159,17 @@ class WidgetsFlutterBinding extends BindingBase
   }
 }
 
-/// TODO(loic-sharma): Docs.
 class PlatformConfiguration {
+  // If null, the default text editing shortcuts will be used.
+  Map<ShortcutActivator, Intent>? get textEditingShortcuts => null;
 
+  // If null, the default text editing disabling shortcuts will be used.
+  Map<ShortcutActivator, Intent>? get textEditingDisablingShortcuts => null;
+
+  bool get allowsModalDissmissal {
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.fuchsia || TargetPlatform.linux || TargetPlatform.windows => true,
+      TargetPlatform.android || TargetPlatform.iOS || TargetPlatform.macOS => false,
+    };
+  }
 }
