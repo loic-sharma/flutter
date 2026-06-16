@@ -324,6 +324,14 @@ class _WrappedScrollBehavior implements ScrollBehavior {
   }
 
   @override
+  bool allowThumbOverscrollDrag(BuildContext context) {
+    if (overscroll) {
+      return delegate.allowThumbOverscrollDrag(context);
+    }
+    return false;
+  }
+
+  @override
   Widget buildOverscrollIndicator(BuildContext context, Widget child, ScrollableDetails details) {
     if (overscroll) {
       return delegate.buildOverscrollIndicator(context, child, details);

@@ -7,8 +7,71 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
+import 'actions.dart';
 import 'framework.dart';
 import 'gesture_detector.dart';
+
+class FeedbackConfiguration extends InheritedWidget {
+  const FeedbackConfiguration({super.key, required this.behavior, required super.child});
+
+  final FeedbackBehavior behavior;
+
+  static FeedbackBehavior of(BuildContext context) {
+    final FeedbackConfiguration? configuration = context
+        .dependOnInheritedWidgetOfExactType<FeedbackConfiguration>();
+    return configuration?.behavior ?? const FeedbackBehavior();
+  }
+
+  @override
+  bool updateShouldNotify(FeedbackConfiguration oldWidget) {
+    return behavior.runtimeType != oldWidget.behavior.runtimeType ||
+        (behavior != oldWidget.behavior && behavior.shouldNotify(oldWidget.behavior));
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties.add(DiagnosticsProperty<FeedbackBehavior>('behavior', behavior));
+  }
+}
+
+class FeedbackBehavior {
+  const FeedbackBehavior();
+
+  Future<void> tap(BuildContext context) {
+    context.findRenderObject()!.sendSemanticsEvent(const TapSemanticEvent());
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.fuchsia:
+        return SystemSound.play(SystemSoundType.click);
+      case TargetPlatform.iOS:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return Future<void>.value();
+    }
+  }
+
+  Future<void> longPress(BuildContext context) {
+    context.findRenderObject()!.sendSemanticsEvent(const LongPressSemanticsEvent());
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.fuchsia:
+        return HapticFeedback.vibrate();
+      case TargetPlatform.iOS:
+        return Future.wait(<Future<void>>[
+          SystemSound.play(SystemSoundType.click),
+          HapticFeedback.heavyImpact(),
+        ]);
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return Future<void>.value();
+    }
+  }
+
+  bool shouldNotify(FeedbackBehavior oldBehavior) => false;
+}
 
 /// Provides platform-specific acoustic and/or haptic feedback for certain
 /// actions.
@@ -89,18 +152,7 @@ abstract final class Feedback {
   ///  * [wrapForTap] to trigger platform-specific feedback before executing a
   ///    [GestureTapCallback].
   static Future<void> forTap(BuildContext context) async {
-    context.findRenderObject()!.sendSemanticsEvent(const TapSemanticEvent());
-    // TODO: ???
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-        return SystemSound.play(SystemSoundType.click);
-      case TargetPlatform.iOS:
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        return Future<void>.value();
-    }
+      await FeedbackConfiguration.of(context).tap(context);
   }
 
   /// Wraps a [GestureTapCallback] to provide platform specific feedback for a
@@ -135,22 +187,7 @@ abstract final class Feedback {
   ///  * [wrapForLongPress] to trigger platform-specific feedback before
   ///    executing a [GestureLongPressCallback].
   static Future<void> forLongPress(BuildContext context) {
-    context.findRenderObject()!.sendSemanticsEvent(const LongPressSemanticsEvent());
-    // TODO: ???
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-        return HapticFeedback.vibrate();
-      case TargetPlatform.iOS:
-        return Future.wait(<Future<void>>[
-          SystemSound.play(SystemSoundType.click),
-          HapticFeedback.heavyImpact(),
-        ]);
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        return Future<void>.value();
-    }
+    return FeedbackConfiguration.of(context).longPress(context);
   }
 
   /// Wraps a [GestureLongPressCallback] to provide platform specific feedback

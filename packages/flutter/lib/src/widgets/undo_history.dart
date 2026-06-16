@@ -147,10 +147,6 @@ class UndoHistoryState<T> extends State<UndoHistory<T>> with UndoManagerClient {
   void _updateState() {
     _effectiveController.value = UndoHistoryValue(canUndo: canUndo, canRedo: canRedo);
 
-    if (defaultTargetPlatform != TargetPlatform.iOS) {
-      return;
-    }
-
     if (UndoManager.client == this) {
       UndoManager.setUndoState(canUndo: canUndo, canRedo: canRedo);
     }
