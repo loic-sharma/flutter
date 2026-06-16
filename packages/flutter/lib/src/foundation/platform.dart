@@ -51,6 +51,8 @@ import 'constants.dart';
 TargetPlatform get defaultTargetPlatform => platform.defaultTargetPlatform;
 
 /// Whether the current platform is a desktop platform (e.g. Linux, macOS, Windows).
+// TODO: Maybe this should be a DeviceKind { desktop, mobile, etc. } instead of a boolean?
+// TODO: Maybe there should be a Device class with a defaultDevice constant?
 @pragma('vm:platform-const-if', !kDebugMode)
 bool get defaultIsDesktop => platform.defaultIsDesktop;
 

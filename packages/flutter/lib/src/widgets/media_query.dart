@@ -132,6 +132,15 @@ enum _MediaQueryAspect {
 
   /// Specifies the aspect corresponding to [MediaQueryData.displayCornerRadii].
   displayCornerRadii,
+
+  /// Specifies the aspect corresponding to [MediaQueryData.isMobile].
+  isMobile,
+
+  /// Specifies the aspect corresponding to [MediaQueryData.isDesktop].
+  isDesktop,
+
+  /// Specifies the aspect corresponding to [MediaQueryData.isDarwin].
+  isDarwin,
 }
 
 /// Information about a piece of media (e.g., a window).
@@ -238,6 +247,9 @@ class MediaQueryData {
     this.wordSpacingOverride,
     this.paragraphSpacingOverride,
     this.displayCornerRadii,
+    this.isMobile = false,
+    this.isDesktop = false,
+    this.isDarwin = false,
   }) : _textScaleFactor = textScaleFactor,
        _textScaler = textScaler,
        assert(
@@ -345,7 +357,10 @@ class MediaQueryData {
       paragraphSpacingOverride =
           platformData?.paragraphSpacingOverride ??
           view.platformDispatcher.paragraphSpacingOverride,
-      displayCornerRadii = _displayCornerRadiiFromView(view);
+      displayCornerRadii = _displayCornerRadiiFromView(view),
+      isMobile = platformData?.isMobile ?? defaultIsMobile,
+      isDesktop = platformData?.isDesktop ?? defaultIsDesktop,
+      isDarwin = platformData?.isDarwin ?? defaultIsDarwin;
 
   static TextScaler _textScalerFromView(ui.FlutterView view, MediaQueryData? platformData) {
     return platformData?.textScaler ?? SystemTextScaler._(view.platformDispatcher);
@@ -772,6 +787,10 @@ class MediaQueryData {
   ///    radii in physical pixels.
   final BorderRadius? displayCornerRadii;
 
+  final bool isMobile;
+  final bool isDesktop;
+  final bool isDarwin;
+
   /// The orientation of the media (e.g., whether the device is in landscape or
   /// portrait mode).
   Orientation get orientation {
@@ -810,6 +829,9 @@ class MediaQueryData {
     DeviceGestureSettings? gestureSettings,
     List<ui.DisplayFeature>? displayFeatures,
     bool? supportsShowingSystemContextMenu,
+    bool? isMobile,
+    bool? isDesktop,
+    bool? isDarwin,
   }) {
     assert(textScaleFactor == null || textScaler == null);
     if (textScaleFactor != null) {
@@ -842,6 +864,9 @@ class MediaQueryData {
       wordSpacingOverride: wordSpacingOverride,
       paragraphSpacingOverride: paragraphSpacingOverride,
       displayCornerRadii: displayCornerRadii,
+      isMobile: isMobile ?? this.isMobile,
+      isDesktop: isDesktop ?? this.isDesktop,
+      isDarwin: isDarwin ?? this.isDarwin,
     );
   }
 
@@ -889,6 +914,9 @@ class MediaQueryData {
       wordSpacingOverride: wordSpacingOverride,
       paragraphSpacingOverride: paragraphSpacingOverride,
       displayCornerRadii: displayCornerRadii,
+      isMobile: isMobile,
+      isDesktop: isDesktop,
+      isDarwin: isDarwin,
     );
   }
 
@@ -924,6 +952,9 @@ class MediaQueryData {
       wordSpacingOverride: wordSpacingOverride,
       paragraphSpacingOverride: paragraphSpacingOverride,
       displayCornerRadii: displayCornerRadii,
+      isMobile: isMobile,
+      isDesktop: isDesktop,
+      isDarwin: isDarwin,
     );
   }
 
@@ -1127,7 +1158,10 @@ class MediaQueryData {
         other.letterSpacingOverride == letterSpacingOverride &&
         other.wordSpacingOverride == wordSpacingOverride &&
         other.paragraphSpacingOverride == paragraphSpacingOverride &&
-        other.displayCornerRadii == displayCornerRadii;
+        other.displayCornerRadii == displayCornerRadii &&
+        other.isMobile == isMobile &&
+        other.isDesktop == isDesktop &&
+        other.isDarwin == isDarwin;
   }
 
   @override
@@ -1156,6 +1190,9 @@ class MediaQueryData {
       wordSpacingOverride,
       paragraphSpacingOverride,
       displayCornerRadii,
+      isMobile,
+      isDesktop,
+      isDarwin,
     ),
   );
 
@@ -1186,6 +1223,9 @@ class MediaQueryData {
       'wordSpacingOverride: $wordSpacingOverride',
       'paragraphSpacingOverride: $paragraphSpacingOverride',
       'displayCornerRadii: $displayCornerRadii',
+      'isMobile: $isMobile',
+      'isDesktop: $isDesktop',
+      'isDarwin: $isDarwin',
     ];
     return '${objectRuntimeType(this, 'MediaQueryData')}(${properties.join(', ')})';
   }
@@ -2188,6 +2228,66 @@ class MediaQuery extends InheritedModel<_MediaQueryAspect> {
   static BorderRadius? maybeDisplayCornerRadiiOf(BuildContext context) =>
       _maybeOf(context, _MediaQueryAspect.displayCornerRadii)?.displayCornerRadii;
 
+  /// Returns [MediaQueryData.isMobile] for the nearest [MediaQuery] ancestor or
+  /// throws an exception, if no such ancestor exists.
+  ///
+  /// Use of this method will cause the given [context] to rebuild any time that
+  /// the [MediaQueryData.isMobile] property of the ancestor [MediaQuery] changes.
+  ///
+  /// {@macro flutter.widgets.media_query.MediaQuery.dontUseOf}
+  static bool isMobileOf(BuildContext context) => _of(context, _MediaQueryAspect.isMobile).isMobile;
+
+  /// Returns [MediaQueryData.isMobile] for the nearest [MediaQuery]
+  /// ancestor or null, if no such ancestor exists.
+  ///
+  /// Use of this method will cause the given [context] to rebuild any time that
+  /// the [MediaQueryData.isMobile] property of the ancestor [MediaQuery]
+  /// changes.
+  ///
+  /// {@macro flutter.widgets.media_query.MediaQuery.dontUseMaybeOf}
+  static bool? maybeIsMobileOf(BuildContext context) =>
+      _maybeOf(context, _MediaQueryAspect.isMobile)?.isMobile;
+
+  /// Returns [MediaQueryData.isDesktop] for the nearest [MediaQuery] ancestor or
+  /// throws an exception, if no such ancestor exists.
+  ///
+  /// Use of this method will cause the given [context] to rebuild any time that
+  /// the [MediaQueryData.isDesktop] property of the ancestor [MediaQuery] changes.
+  ///
+  /// {@macro flutter.widgets.media_query.MediaQuery.dontUseOf}
+  static bool isDesktopOf(BuildContext context) => _of(context, _MediaQueryAspect.isDesktop).isDesktop;
+
+  /// Returns [MediaQueryData.isDesktop] for the nearest [MediaQuery]
+  /// ancestor or null, if no such ancestor exists.
+  ///
+  /// Use of this method will cause the given [context] to rebuild any time that
+  /// the [MediaQueryData.isDesktop] property of the ancestor [MediaQuery]
+  /// changes.
+  ///
+  /// {@macro flutter.widgets.media_query.MediaQuery.dontUseMaybeOf}
+  static bool? maybeIsDesktopOf(BuildContext context) =>
+      _maybeOf(context, _MediaQueryAspect.isDesktop)?.isDesktop;
+
+  /// Returns [MediaQueryData.isDarwin] for the nearest [MediaQuery] ancestor or
+  /// throws an exception, if no such ancestor exists.
+  ///
+  /// Use of this method will cause the given [context] to rebuild any time that
+  /// the [MediaQueryData.isDarwin] property of the ancestor [MediaQuery] changes.
+  ///
+  /// {@macro flutter.widgets.media_query.MediaQuery.dontUseOf}
+  static bool isDarwinOf(BuildContext context) => _of(context, _MediaQueryAspect.isDarwin).isDarwin;
+
+  /// Returns [MediaQueryData.isDarwin] for the nearest [MediaQuery]
+  /// ancestor or null, if no such ancestor exists.
+  ///
+  /// Use of this method will cause the given [context] to rebuild any time that
+  /// the [MediaQueryData.isDarwin] property of the ancestor [MediaQuery]
+  /// changes.
+  ///
+  /// {@macro flutter.widgets.media_query.MediaQuery.dontUseMaybeOf}
+  static bool? maybeIsDarwinOf(BuildContext context) =>
+      _maybeOf(context, _MediaQueryAspect.isDarwin)?.isDarwin;
+
   @override
   bool updateShouldNotify(MediaQuery oldWidget) => data != oldWidget.data;
 
@@ -2251,6 +2351,9 @@ class MediaQuery extends InheritedModel<_MediaQueryAspect> {
               data.paragraphSpacingOverride != oldWidget.data.paragraphSpacingOverride,
             _MediaQueryAspect.displayCornerRadii =>
               data.displayCornerRadii != oldWidget.data.displayCornerRadii,
+            _MediaQueryAspect.isMobile => data.isMobile != oldWidget.data.isMobile,
+            _MediaQueryAspect.isDesktop => data.isDesktop != oldWidget.data.isDesktop,
+            _MediaQueryAspect.isDarwin => data.isDarwin != oldWidget.data.isDarwin,
           },
     );
   }
