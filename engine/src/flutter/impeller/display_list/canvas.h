@@ -120,7 +120,6 @@ class LazyRenderingConfig {
 namespace testing {
 FML_TEST_CLASS(AiksTest,
                SaveLayerUsesRoundedUpRenderTargetButLogicalRestoreSize);
-FML_TEST_CLASS(AiksTest, SaveLayerDoesNotRoundUpWithImageFilter);
 }  // namespace testing
 
 class Canvas {
@@ -294,7 +293,6 @@ class Canvas {
  private:
   FML_FRIEND_TEST(testing::AiksTest,
                   SaveLayerUsesRoundedUpRenderTargetButLogicalRestoreSize);
-  FML_FRIEND_TEST(testing::AiksTest, SaveLayerDoesNotRoundUpWithImageFilter);
 
   RenderPass& GetCurrentRenderPass() const;
 
