@@ -404,6 +404,143 @@ TEST_F(EmbedderTest, MergedPlatformUIThread) {
   kill_latch.Wait();
 }
 
+// A synchronous platform message from Dart is delivered to the embedder's
+// synchronous handler on the (merged) platform thread, and the handler's reply
+// is returned to Dart synchronously.
+TEST_F(EmbedderTest, CanSendSynchronousPlatformMessage) {
+  auto& context = GetEmbedderContext<EmbedderTestContextSoftware>();
+  auto task_runner = CreateNewThread("test_thread");
+  UniqueEngine engine;
+
+  EmbedderTestTaskRunner test_task_runner(task_runner, [&](FlutterTask task) {
+    if (!engine.is_valid()) {
+      return;
+    }
+    FlutterEngineRunTask(engine.get(), &task);
+  });
+
+  fml::AutoResetWaitableEvent message_latch;
+  std::string reported_reply;
+  std::string received_channel;
+  std::vector<uint8_t> received_request;
+
+  // Dart reports the reply it received synchronously via SignalNativeMessage.
+  context.AddNativeCallback(
+      "SignalNativeMessage",
+      CREATE_NATIVE_ENTRY(([&](Dart_NativeArguments args) {
+        reported_reply = tonic::DartConverter<std::string>::FromDart(
+            Dart_GetNativeArgument(args, 0));
+        message_latch.Signal();
+      })));
+
+  task_runner->PostTask([&]() {
+    EmbedderConfigBuilder builder(context);
+    const auto task_runner_description =
+        test_task_runner.GetFlutterTaskRunnerDescription();
+    builder.SetSurface(DlISize(1, 1));
+    builder.SetUITaskRunner(&task_runner_description);
+    builder.SetPlatformTaskRunner(&task_runner_description);
+    builder.SetDartEntrypoint("sendSynchronousPlatformMessage");
+    builder.SetSynchronousPlatformMessageCallback(
+        [&](const FlutterSynchronousPlatformMessage* message)
+            -> std::vector<uint8_t> {
+          // Runs on the platform thread, which is the UI thread when merged.
+          EXPECT_TRUE(task_runner->RunsTasksOnCurrentThread());
+          received_channel = message->channel;
+          received_request.assign(message->message,
+                                  message->message + message->message_size);
+          return {9, 8, 7};
+        });
+    engine = builder.LaunchEngine();
+    ASSERT_TRUE(engine.is_valid());
+  });
+
+  message_latch.Wait();
+
+  EXPECT_EQ(received_channel, "test/sync");
+  EXPECT_EQ(received_request, (std::vector<uint8_t>{1, 2, 3}));
+  EXPECT_EQ(reported_reply, "9,8,7");
+
+  fml::AutoResetWaitableEvent kill_latch;
+  task_runner->PostTask([&] {
+    engine.reset();
+    task_runner->PostTask([&kill_latch] { kill_latch.Signal(); });
+  });
+  kill_latch.Wait();
+}
+
+// The embedder can send a synchronous platform message to Dart and receive the
+// reply produced by a ChannelBuffers synchronous listener, all on the merged
+// platform/UI thread.
+TEST_F(EmbedderTest, CanSendSynchronousPlatformMessageToDart) {
+  auto& context = GetEmbedderContext<EmbedderTestContextSoftware>();
+  auto task_runner = CreateNewThread("test_thread");
+  UniqueEngine engine;
+
+  EmbedderTestTaskRunner test_task_runner(task_runner, [&](FlutterTask task) {
+    if (!engine.is_valid()) {
+      return;
+    }
+    FlutterEngineRunTask(engine.get(), &task);
+  });
+
+  // Signaled by Dart once the synchronous listener is registered.
+  fml::AutoResetWaitableEvent ready_latch;
+  context.AddNativeCallback(
+      "SignalNativeTest", CREATE_NATIVE_ENTRY(([&](Dart_NativeArguments args) {
+        ready_latch.Signal();
+      })));
+
+  task_runner->PostTask([&]() {
+    EmbedderConfigBuilder builder(context);
+    const auto task_runner_description =
+        test_task_runner.GetFlutterTaskRunnerDescription();
+    builder.SetSurface(DlISize(1, 1));
+    builder.SetUITaskRunner(&task_runner_description);
+    builder.SetPlatformTaskRunner(&task_runner_description);
+    builder.SetDartEntrypoint("registerSynchronousPlatformMessageHandler");
+    engine = builder.LaunchEngine();
+    ASSERT_TRUE(engine.is_valid());
+  });
+  ready_latch.Wait();
+
+  // Send the synchronous message from the platform thread and capture the
+  // reply.
+  fml::AutoResetWaitableEvent done_latch;
+  bool send_succeeded = false;
+  std::vector<uint8_t> reply_bytes;
+  task_runner->PostTask([&]() {
+    const std::vector<uint8_t> request = {1, 2, 3};
+    FlutterSynchronousPlatformMessage message = {
+        sizeof(FlutterSynchronousPlatformMessage),
+        "test/sync",
+        request.data(),
+        request.size(),
+    };
+    const uint8_t* reply = nullptr;
+    size_t reply_size = 0;
+    FlutterEngineResult result = FlutterEngineSendSynchronousPlatformMessage(
+        engine.get(), &message, &reply, &reply_size);
+    send_succeeded = (result == kSuccess);
+    if (send_succeeded) {
+      reply_bytes.assign(reply, reply + reply_size);
+      FlutterEngineReleaseSyncReply(engine.get(), reply);
+    }
+    done_latch.Signal();
+  });
+  done_latch.Wait();
+
+  EXPECT_TRUE(send_succeeded);
+  EXPECT_EQ(reply_bytes, (std::vector<uint8_t>{4, 5, 6, 7}));
+
+  fml::AutoResetWaitableEvent kill_latch;
+  task_runner->PostTask([&] {
+    engine.reset();
+    task_runner->PostTask([&kill_latch] { kill_latch.Signal(); });
+  });
+  kill_latch.Wait();
+}
+
 TEST_F(EmbedderTest, UITaskRunnerFlushesMicrotasks) {
   auto& context = GetEmbedderContext<EmbedderTestContextSoftware>();
   auto ui_task_runner = CreateNewThread("test_ui_thread");

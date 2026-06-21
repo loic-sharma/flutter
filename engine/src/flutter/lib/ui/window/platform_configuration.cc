@@ -74,6 +74,10 @@ void PlatformConfiguration::DidCreateIsolate() {
   dispatch_platform_message_.Set(
       tonic::DartState::Current(),
       Dart_GetField(library, tonic::ToDart("_dispatchPlatformMessage")));
+  dispatch_synchronous_platform_message_.Set(
+      tonic::DartState::Current(),
+      Dart_GetField(library,
+                    tonic::ToDart("_dispatchSynchronousPlatformMessage")));
   dispatch_pointer_data_packet_.Set(
       tonic::DartState::Current(),
       Dart_GetField(library, tonic::ToDart("_dispatchPointerDataPacket")));
@@ -382,6 +386,37 @@ void PlatformConfiguration::DispatchPlatformMessage(
                          tonic::ToDart(response_id)}));
 }
 
+std::optional<std::vector<uint8_t>>
+PlatformConfiguration::DispatchSynchronousPlatformMessage(
+    std::unique_ptr<PlatformMessage> message) {
+  std::shared_ptr<tonic::DartState> dart_state =
+      dispatch_synchronous_platform_message_.dart_state().lock();
+  if (!dart_state) {
+    return std::nullopt;
+  }
+  tonic::DartState::Scope scope(dart_state);
+  Dart_Handle data_handle =
+      (message->hasData()) ? ToByteData(message->data()) : Dart_Null();
+  if (Dart_IsError(data_handle)) {
+    return std::nullopt;
+  }
+
+  Dart_Handle reply =
+      tonic::DartInvoke(dispatch_synchronous_platform_message_.Get(),
+                        {tonic::ToDart(message->channel()), data_handle});
+  if (Dart_IsError(reply)) {
+    tonic::CheckAndHandleError(reply);
+    return std::nullopt;
+  }
+  if (Dart_IsNull(reply)) {
+    return std::nullopt;
+  }
+
+  tonic::DartByteData reply_data(reply);
+  const uint8_t* bytes = static_cast<const uint8_t*>(reply_data.data());
+  return std::vector<uint8_t>(bytes, bytes + reply_data.length_in_bytes());
+}
+
 void PlatformConfiguration::DispatchPointerDataPacket(
     const PointerDataPacket& packet) {
   std::shared_ptr<tonic::DartState> dart_state =
@@ -633,6 +668,61 @@ Dart_Handle PlatformConfigurationNativeApi::SendPortPlatformMessage(
           name);
 
   return HandlePlatformMessage(dart_state, name, data_handle, response);
+}
+
+std::optional<std::vector<uint8_t>>
+PlatformConfigurationClient::HandleSynchronousPlatformMessage(
+    std::unique_ptr<PlatformMessage> message) {
+  // Default: no synchronous handler. Embedders that support synchronous
+  // platform channels override this.
+  return std::nullopt;
+}
+
+Dart_Handle PlatformConfigurationNativeApi::SendSynchronousPlatformMessage(
+    const std::string& name,
+    Dart_Handle data_handle) {
+  UIDartState* dart_state = UIDartState::Current();
+
+  // Synchronous platform messages are only supported on the root isolate. Other
+  // isolates do not have a PlatformConfiguration and never share the platform
+  // thread.
+  if (!dart_state->platform_configuration()) {
+    return tonic::ToDart(
+        "Synchronous platform messages are only supported on the root "
+        "isolate.");
+  }
+
+  // The handler runs on the calling thread, so the UI and platform threads must
+  // be merged. If they are not, fail rather than risk a deadlock.
+  const TaskRunners& task_runners = dart_state->GetTaskRunners();
+  if (task_runners.GetUITaskRunner() != task_runners.GetPlatformTaskRunner()) {
+    return tonic::ToDart(
+        "Synchronous platform messages require the engine to run with merged "
+        "UI and platform threads.");
+  }
+
+  std::unique_ptr<PlatformMessage> message;
+  if (Dart_IsNull(data_handle)) {
+    message = std::make_unique<PlatformMessage>(name, nullptr);
+  } else {
+    tonic::DartByteData data(data_handle);
+    const uint8_t* buffer = static_cast<const uint8_t*>(data.data());
+    message = std::make_unique<PlatformMessage>(
+        name, fml::MallocMapping::Copy(buffer, data.length_in_bytes()),
+        nullptr);
+  }
+
+  std::optional<std::vector<uint8_t>> reply =
+      dart_state->platform_configuration()
+          ->client()
+          ->HandleSynchronousPlatformMessage(std::move(message));
+
+  // No synchronous handler registered, or a null reply: surface null, which the
+  // framework turns into a MissingPluginException for method channels.
+  if (!reply.has_value() || reply->empty()) {
+    return Dart_Null();
+  }
+  return tonic::DartByteData::Create(reply->data(), reply->size());
 }
 
 void PlatformConfigurationNativeApi::RequestViewFocusChange(int64_t view_id,

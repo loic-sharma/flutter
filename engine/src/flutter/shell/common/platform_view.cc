@@ -30,6 +30,13 @@ void PlatformView::DispatchPlatformMessage(
   delegate_.OnPlatformViewDispatchPlatformMessage(std::move(message));
 }
 
+std::optional<std::vector<uint8_t>>
+PlatformView::DispatchSynchronousPlatformMessage(
+    std::unique_ptr<PlatformMessage> message) {
+  return delegate_.OnPlatformViewDispatchSynchronousPlatformMessage(
+      std::move(message));
+}
+
 void PlatformView::DispatchPointerDataPacket(
     std::unique_ptr<PointerDataPacket> packet) {
   delegate_.OnPlatformViewDispatchPointerDataPacket(std::move(packet));
@@ -150,6 +157,12 @@ void PlatformView::HandlePlatformMessage(
   if (auto response = message->response()) {
     response->CompleteEmpty();
   }
+}
+
+std::optional<std::vector<uint8_t>>
+PlatformView::HandleSynchronousPlatformMessage(
+    std::unique_ptr<PlatformMessage> message) {
+  return std::nullopt;
 }
 
 void PlatformView::OnPreEngineRestart() const {}

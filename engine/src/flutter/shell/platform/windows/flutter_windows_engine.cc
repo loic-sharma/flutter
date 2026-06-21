@@ -402,6 +402,13 @@ bool FlutterWindowsEngine::Run(std::string_view entrypoint) {
     auto host = static_cast<FlutterWindowsEngine*>(user_data);
     return host->HandlePlatformMessage(engine_message);
   };
+  args.synchronous_platform_message_callback =
+      [](const FlutterSynchronousPlatformMessage* message,
+         FlutterSynchronousReply reply, void* reply_user_data,
+         void* user_data) -> void {
+    auto host = static_cast<FlutterWindowsEngine*>(user_data);
+    host->HandleSynchronousPlatformMessage(message, reply, reply_user_data);
+  };
   args.vsync_callback = [](void* user_data, intptr_t baton) -> void {
     auto host = static_cast<FlutterWindowsEngine*>(user_data);
     host->OnVsync(baton);
@@ -844,6 +851,55 @@ void FlutterWindowsEngine::HandlePlatformMessage(
   auto message = ConvertToDesktopMessage(*engine_message);
 
   message_dispatcher_->HandleMessage(message, [this] {}, [this] {});
+}
+
+bool FlutterWindowsEngine::SendSynchronousPlatformMessage(
+    const char* channel,
+    const uint8_t* message,
+    const size_t message_size,
+    const uint8_t** reply_out,
+    size_t* reply_size_out) {
+  FlutterSynchronousPlatformMessage platform_message = {
+      sizeof(FlutterSynchronousPlatformMessage),
+      channel,
+      message,
+      message_size,
+  };
+  FlutterEngineResult result = embedder_api_.SendSynchronousPlatformMessage(
+      engine_, &platform_message, reply_out, reply_size_out);
+  if (result == kThreadMergeRequired) {
+    FML_LOG(ERROR) << "Synchronous platform messages require the engine to run "
+                      "with merged UI and platform threads.";
+  }
+  return result == kSuccess;
+}
+
+void FlutterWindowsEngine::ReleaseSynchronousReply(const uint8_t* reply) {
+  embedder_api_.ReleaseSyncReply(engine_, reply);
+}
+
+void FlutterWindowsEngine::HandleSynchronousPlatformMessage(
+    const FlutterSynchronousPlatformMessage* message,
+    FlutterSynchronousReply reply,
+    void* reply_user_data) {
+  if (message->struct_size != sizeof(FlutterSynchronousPlatformMessage)) {
+    FML_LOG(ERROR) << "Invalid synchronous message size received. Expected: "
+                   << sizeof(FlutterSynchronousPlatformMessage)
+                   << " but received " << message->struct_size;
+    reply(nullptr, 0, reply_user_data);
+    return;
+  }
+
+  FlutterDesktopSynchronousMessage desktop_message = {
+      sizeof(FlutterDesktopSynchronousMessage),
+      message->channel,
+      message->message,
+      message->message_size,
+  };
+  // The dispatcher invokes the registered sync handler inline and forwards its
+  // reply to |reply|. If no handler is registered it replies with null.
+  message_dispatcher_->HandleSyncMessage(desktop_message, reply,
+                                         reply_user_data);
 }
 
 void FlutterWindowsEngine::ReloadSystemFonts() {

@@ -35,7 +35,27 @@ class TestBinaryMessenger : public BinaryMessenger {
     last_message_handler_ = handler;
   }
 
+  std::vector<uint8_t> SendSync(const std::string& channel,
+                                const uint8_t* message,
+                                size_t message_size) const override {
+    send_sync_called_ = true;
+    last_message_ = std::vector<uint8_t>(message, message + message_size);
+    return sync_reply_;
+  }
+
+  void SetSyncMessageHandler(const std::string& channel,
+                             SyncBinaryMessageHandler handler) override {
+    last_sync_message_handler_channel_ = channel;
+    last_sync_message_handler_ = handler;
+  }
+
   bool send_called() { return send_called_; }
+
+  bool send_sync_called() { return send_sync_called_; }
+
+  void set_sync_reply(std::vector<uint8_t> reply) {
+    sync_reply_ = std::move(reply);
+  }
 
   BinaryReply last_reply_handler() { return last_reply_handler_; }
 
@@ -45,13 +65,25 @@ class TestBinaryMessenger : public BinaryMessenger {
 
   BinaryMessageHandler last_message_handler() { return last_message_handler_; }
 
+  std::string last_sync_message_handler_channel() {
+    return last_sync_message_handler_channel_;
+  }
+
+  SyncBinaryMessageHandler last_sync_message_handler() {
+    return last_sync_message_handler_;
+  }
+
   std::vector<uint8_t> last_message() { return last_message_; }
 
  private:
   mutable bool send_called_ = false;
+  mutable bool send_sync_called_ = false;
   mutable BinaryReply last_reply_handler_;
+  mutable std::vector<uint8_t> sync_reply_;
   std::string last_message_handler_channel_;
   BinaryMessageHandler last_message_handler_;
+  std::string last_sync_message_handler_channel_;
+  SyncBinaryMessageHandler last_sync_message_handler_;
   mutable std::vector<uint8_t> last_message_;
 };
 
@@ -140,6 +172,100 @@ TEST(MethodChannelTest, InvokeWithResponse) {
       StandardMethodCodec::GetInstance().EncodeSuccessEnvelope(&reply_value);
   messenger.last_reply_handler()(encoded_reply->data(), encoded_reply->size());
   EXPECT_TRUE(received_reply);
+}
+
+// Tests that InvokeMethodSync sends a synchronous message and dispatches the
+// decoded success result.
+TEST(MethodChannelTest, InvokeMethodSyncSuccess) {
+  TestBinaryMessenger messenger;
+  const StandardMethodCodec& codec = StandardMethodCodec::GetInstance();
+  MethodChannel channel(&messenger, "some_channel", &codec);
+
+  // Configure the messenger to reply with a success envelope wrapping "bar".
+  const EncodableValue reply_value("bar");
+  std::unique_ptr<std::vector<uint8_t>> envelope =
+      codec.EncodeSuccessEnvelope(&reply_value);
+  messenger.set_sync_reply(*envelope);
+
+  bool received_reply = false;
+  MethodResultFunctions<> result(
+      [&received_reply](const EncodableValue* success_value) {
+        received_reply = true;
+        EXPECT_EQ(std::get<std::string>(*success_value), "bar");
+      },
+      nullptr, nullptr);
+  channel.InvokeMethodSync("foo", nullptr, &result);
+
+  EXPECT_TRUE(messenger.send_sync_called());
+  EXPECT_TRUE(received_reply);
+}
+
+// Tests that InvokeMethodSync reports NotImplemented when the synchronous reply
+// is empty (no synchronous handler on the Dart side).
+TEST(MethodChannelTest, InvokeMethodSyncNotImplemented) {
+  TestBinaryMessenger messenger;
+  MethodChannel channel(&messenger, "some_channel",
+                        &StandardMethodCodec::GetInstance());
+
+  bool not_implemented = false;
+  MethodResultFunctions<> result(
+      nullptr, nullptr, [&not_implemented]() { not_implemented = true; });
+  channel.InvokeMethodSync("foo", nullptr, &result);
+
+  EXPECT_TRUE(messenger.send_sync_called());
+  EXPECT_TRUE(not_implemented);
+}
+
+// Tests that SetMethodCallHandlerSync registers a synchronous handler that
+// decodes the call and returns the encoded reply.
+TEST(MethodChannelTest, SyncRegistration) {
+  TestBinaryMessenger messenger;
+  const std::string channel_name("some_channel");
+  const StandardMethodCodec& codec = StandardMethodCodec::GetInstance();
+  MethodChannel channel(&messenger, channel_name, &codec);
+
+  bool callback_called = false;
+  const std::string method_name("hello");
+  channel.SetMethodCallHandlerSync(
+      [&callback_called, method_name](const auto& call, auto result) {
+        callback_called = true;
+        EXPECT_EQ(call.method_name(), method_name);
+        EXPECT_NE(result, nullptr);
+        result->Success(EncodableValue("ok"));
+      });
+  EXPECT_EQ(messenger.last_sync_message_handler_channel(), channel_name);
+  ASSERT_NE(messenger.last_sync_message_handler(), nullptr);
+
+  MethodCall<> call(method_name, nullptr);
+  std::unique_ptr<std::vector<uint8_t>> message = codec.EncodeMethodCall(call);
+  std::vector<uint8_t> reply =
+      messenger.last_sync_message_handler()(message->data(), message->size());
+  EXPECT_TRUE(callback_called);
+
+  // The returned reply should decode as a success envelope wrapping "ok".
+  bool decoded = false;
+  MethodResultFunctions<> decode_result(
+      [&decoded](const EncodableValue* value) {
+        decoded = true;
+        EXPECT_EQ(std::get<std::string>(*value), "ok");
+      },
+      nullptr, nullptr);
+  codec.DecodeAndProcessResponseEnvelope(reply.data(), reply.size(),
+                                         &decode_result);
+  EXPECT_TRUE(decoded);
+}
+
+// Tests that SetMethodCallHandlerSync with a null handler unregisters it.
+TEST(MethodChannelTest, SyncUnregistration) {
+  TestBinaryMessenger messenger;
+  MethodChannel channel(&messenger, "some_channel",
+                        &StandardMethodCodec::GetInstance());
+
+  channel.SetMethodCallHandlerSync([](const auto& call, auto result) {});
+  EXPECT_NE(messenger.last_sync_message_handler(), nullptr);
+
+  channel.SetMethodCallHandlerSync(nullptr);
+  EXPECT_EQ(messenger.last_sync_message_handler(), nullptr);
 }
 
 TEST(MethodChannelTest, InvokeNotImplemented) {

@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <functional>
 #include <string>
+#include <vector>
 
 namespace flutter {
 
@@ -23,6 +24,15 @@ typedef std::function<void(const uint8_t* reply, size_t reply_size)>
 typedef std::function<
     void(const uint8_t* message, size_t message_size, BinaryReply reply)>
     BinaryMessageHandler;
+
+// A synchronous message handler callback.
+//
+// Used for receiving messages from Flutter and returning the reply
+// synchronously. Runs on the platform thread; must return promptly without
+// blocking. Return the reply bytes (an empty vector is a valid empty reply).
+typedef std::function<std::vector<uint8_t>(const uint8_t* message,
+                                           size_t message_size)>
+    SyncBinaryMessageHandler;
 
 // A protocol for a class that handles communication of binary data on named
 // channels to and from the Flutter engine.
@@ -46,6 +56,30 @@ class BinaryMessenger {
   // existing handler.
   virtual void SetMessageHandler(const std::string& channel,
                                  BinaryMessageHandler handler) = 0;
+
+  // Sends a binary message to the Flutter engine on the specified channel and
+  // blocks until the engine returns the reply.
+  //
+  // Only supported when the engine runs with merged UI and platform threads
+  // (the default unless the embedder opted out). Must be called on the platform
+  // thread. On failure (threads not merged, or no synchronous handler is
+  // registered on the Flutter side) logs an error and returns an empty reply.
+  //
+  // The default implementation reports that synchronous messages are not
+  // supported and returns an empty reply.
+  virtual std::vector<uint8_t> SendSync(const std::string& channel,
+                                        const uint8_t* message,
+                                        size_t message_size) const {
+    return {};
+  }
+
+  // Registers a synchronous handler for incoming binary messages from the
+  // Flutter side on the specified channel.
+  //
+  // Replaces any existing synchronous handler. Provide a null handler to
+  // unregister. The default implementation does nothing.
+  virtual void SetSyncMessageHandler(const std::string& channel,
+                                     SyncBinaryMessageHandler handler) {}
 };
 
 }  // namespace flutter

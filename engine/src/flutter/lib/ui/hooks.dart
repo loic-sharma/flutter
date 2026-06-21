@@ -370,6 +370,11 @@ void _dispatchPlatformMessage(String name, ByteData? data, int responseId) {
 }
 
 @pragma('vm:entry-point')
+ByteData? _dispatchSynchronousPlatformMessage(String name, ByteData? data) {
+  return PlatformDispatcher.instance._dispatchSynchronousPlatformMessage(name, data);
+}
+
+@pragma('vm:entry-point')
 void _dispatchPointerDataPacket(ByteData packet) {
   PlatformDispatcher.instance._dispatchPointerDataPacket(packet);
 }

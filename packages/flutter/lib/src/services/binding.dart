@@ -651,6 +651,13 @@ class _DefaultBinaryMessenger extends BinaryMessenger {
   }
 
   @override
+  ByteData? sendSync(String channel, ByteData? message) {
+    // ui.PlatformDispatcher.instance is accessed directly for the same reason as
+    // in [send] above.
+    return ui.PlatformDispatcher.instance.sendSynchronousPlatformMessage(channel, message);
+  }
+
+  @override
   void setMessageHandler(String channel, MessageHandler? handler) {
     if (handler == null) {
       ui.channelBuffers.clearListener(channel);
@@ -673,6 +680,29 @@ class _DefaultBinaryMessenger extends BinaryMessenger {
           );
         } finally {
           callback(response);
+        }
+      });
+    }
+  }
+
+  @override
+  void setMessageHandlerSync(String channel, SyncMessageHandler? handler) {
+    if (handler == null) {
+      ui.channelBuffers.clearSyncListener(channel);
+    } else {
+      ui.channelBuffers.setSyncListener(channel, (ByteData? data) {
+        try {
+          return handler(data);
+        } catch (exception, stack) {
+          FlutterError.reportError(
+            FlutterErrorDetails(
+              exception: exception,
+              stack: stack,
+              library: 'services library',
+              context: ErrorDescription('during a synchronous platform message callback'),
+            ),
+          );
+          return null;
         }
       });
     }

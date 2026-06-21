@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -131,6 +132,27 @@ class PlatformConfigurationClient {
   ///
   virtual void HandlePlatformMessage(
       std::unique_ptr<PlatformMessage> message) = 0;
+
+  //--------------------------------------------------------------------------
+  /// @brief      Synchronously dispatches a platform message and returns the
+  ///             platform's reply.
+  ///
+  ///             This is only valid when the UI and platform threads are
+  ///             merged, which the caller must verify before invoking. Because
+  ///             the threads are merged, the engine can deliver the message to
+  ///             the platform handler and collect its reply on the current
+  ///             thread, without posting to the platform task runner.
+  ///
+  /// @param[in]  message  The message from the Flutter application.
+  ///
+  /// @return     The reply bytes, or std::nullopt if no synchronous handler is
+  ///             registered for the channel.
+  ///
+  // Default (defined out-of-line because PlatformMessage is incomplete here):
+  // no embedder support. Overridden by embedders that implement synchronous
+  // platform channels.
+  virtual std::optional<std::vector<uint8_t>> HandleSynchronousPlatformMessage(
+      std::unique_ptr<PlatformMessage> message);
 
   //--------------------------------------------------------------------------
   /// @brief      Returns the current collection of fonts available on the
@@ -458,6 +480,20 @@ class PlatformConfiguration final {
   void DispatchPlatformMessage(std::unique_ptr<PlatformMessage> message);
 
   //----------------------------------------------------------------------------
+  /// @brief      Synchronously dispatches a platform message to the framework
+  ///             and returns its reply. Invoked by the engine when the platform
+  ///             sends a synchronous message; only valid when the UI and
+  ///             platform threads are merged.
+  ///
+  /// @param[in]  message  The message from the platform.
+  ///
+  /// @return     The reply bytes, or std::nullopt if the framework has no
+  ///             synchronous listener for the channel.
+  ///
+  std::optional<std::vector<uint8_t>> DispatchSynchronousPlatformMessage(
+      std::unique_ptr<PlatformMessage> message);
+
+  //----------------------------------------------------------------------------
   /// @brief      Notifies the PlatformConfiguration that the client has sent
   ///             it pointer events. This call originates in the platform view
   ///             and has been forwarded through the engine to here.
@@ -599,6 +635,7 @@ class PlatformConfiguration final {
   tonic::DartPersistentValue update_semantics_enabled_;
   tonic::DartPersistentValue update_accessibility_features_;
   tonic::DartPersistentValue dispatch_platform_message_;
+  tonic::DartPersistentValue dispatch_synchronous_platform_message_;
   tonic::DartPersistentValue dispatch_pointer_data_packet_;
   tonic::DartPersistentValue hit_test_;
   tonic::DartPersistentValue dispatch_semantics_action_;
@@ -678,6 +715,14 @@ class PlatformConfigurationNativeApi {
                                              Dart_Handle identifier,
                                              Dart_Handle send_port,
                                              Dart_Handle data_handle);
+
+  // Sends a synchronous platform message and returns the reply directly.
+  //
+  // Returns either the reply (a ByteData or null) on success, or a Dart String
+  // describing the error (not the root isolate, threads not merged, or no
+  // handler) on failure. The Dart side distinguishes the two by runtime type.
+  static Dart_Handle SendSynchronousPlatformMessage(const std::string& name,
+                                                    Dart_Handle data_handle);
 
   static void RespondToPlatformMessage(int response_id,
                                        const tonic::DartByteData& data);

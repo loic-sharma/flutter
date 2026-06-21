@@ -74,6 +74,11 @@ typedef enum {
   kInvalidLibraryVersion,
   kInvalidArguments,
   kInternalInconsistency,
+  // Returned when a synchronous platform message API is used but the engine's
+  // UI and platform threads are not merged. Synchronous platform messages
+  // require merged threads, which is the default everywhere except desktop
+  // apps that have explicitly opted out of thread merging.
+  kThreadMergeRequired,
 } FlutterEngineResult;
 
 typedef enum {
@@ -1505,6 +1510,35 @@ typedef void (*FlutterPlatformMessageCallback)(
     const FlutterPlatformMessage* /* message*/,
     void* /* user data */);
 
+typedef struct {
+  /// The size of this struct.
+  /// Must be sizeof(FlutterSynchronousPlatformMessage).
+  size_t struct_size;
+  const char* channel;
+  const uint8_t* message;
+  size_t message_size;
+} FlutterSynchronousPlatformMessage;
+
+/// Supplied by the engine to a `FlutterSynchronousPlatformMessageCallback` so
+/// the handler can return its reply. The handler must call this exactly once,
+/// synchronously, before returning. The engine copies the bytes, so ownership
+/// of `reply` stays with the handler. If the handler returns without calling
+/// this, the reply is treated as null. Passing `reply == nullptr` (with
+/// `reply_size == 0`) sends a null reply.
+typedef void (*FlutterSynchronousReply)(const uint8_t* /* reply */,
+                                        size_t /* reply_size */,
+                                        void* /* reply_user_data */);
+
+/// Invoked when Flutter sends a synchronous platform message. Because
+/// synchronous platform messages require merged UI and platform threads, this
+/// is always invoked on the platform thread, and the handler must produce the
+/// reply before returning by calling `reply`.
+typedef void (*FlutterSynchronousPlatformMessageCallback)(
+    const FlutterSynchronousPlatformMessage* /* message */,
+    FlutterSynchronousReply /* reply */,
+    void* /* reply_user_data */,
+    void* /* user data */);
+
 typedef void (*FlutterDataCallback)(const uint8_t* /* data */,
                                     size_t /* size */,
                                     void* /* user data */);
@@ -2822,6 +2856,21 @@ typedef struct {
   /// If true, the engine will decode images in wide gamut color spaces
   /// (Display P3) when supported. If false, images are decoded to sRGB.
   bool enable_wide_gamut;
+
+  /// The callback invoked by the engine when the Dart application sends a
+  /// synchronous platform message (see
+  /// `PlatformDispatcher.sendSynchronousPlatformMessage`). The handler runs
+  /// synchronously on the platform thread and must produce its reply before
+  /// returning by invoking the supplied `FlutterSynchronousReply`.
+  ///
+  /// Synchronous platform messages require the engine to run with merged UI and
+  /// platform threads; if the threads are not merged this callback is never
+  /// invoked and the Dart-side call fails with `kThreadMergeRequired`.
+  ///
+  /// May be null, in which case all synchronous platform messages receive a
+  /// null reply.
+  FlutterSynchronousPlatformMessageCallback
+      synchronous_platform_message_callback;
 } FlutterProjectArgs;
 
 typedef struct {
@@ -3098,6 +3147,51 @@ FLUTTER_EXPORT
 FlutterEngineResult FlutterEngineSendPlatformMessage(
     FLUTTER_API_SYMBOL(FlutterEngine) engine,
     const FlutterPlatformMessage* message);
+
+//------------------------------------------------------------------------------
+/// @brief      Sends a synchronous platform message to the running Flutter
+///             application and blocks until it produces a reply.
+///
+///             This must be called on the platform thread, and the engine must
+///             be running with merged UI and platform threads. If the threads
+///             are not merged, this returns `kThreadMergeRequired` without
+///             invoking any Dart code.
+///
+///             On success, `*reply_out` points to an engine-owned buffer of
+///             `*reply_size_out` bytes (which may be null/0 if the Dart handler
+///             replied with null). The caller must release it with
+///             `FlutterEngineReleaseSyncReply`.
+///
+/// @param[in]  engine          A running engine instance.
+/// @param[in]  message         The synchronous message.
+/// @param[out] reply_out       Set to an engine-owned reply buffer on success.
+/// @param[out] reply_size_out  Set to the size of `*reply_out` on success.
+///
+/// @return     The result of the call. `kThreadMergeRequired` if the threads
+///             are not merged; `kInternalInconsistency` if the Dart application
+///             has no synchronous handler registered for the channel.
+///
+FLUTTER_EXPORT
+FlutterEngineResult FlutterEngineSendSynchronousPlatformMessage(
+    FLUTTER_API_SYMBOL(FlutterEngine) engine,
+    const FlutterSynchronousPlatformMessage* message,
+    const uint8_t** reply_out,
+    size_t* reply_size_out);
+
+//------------------------------------------------------------------------------
+/// @brief      Releases a reply buffer returned by
+///             `FlutterEngineSendSynchronousPlatformMessage`.
+///
+/// @param[in]  engine  A running engine instance.
+/// @param[in]  reply   The buffer previously returned in `reply_out`. May be
+///                     null, in which case this is a no-op.
+///
+/// @return     The result of the call.
+///
+FLUTTER_EXPORT
+FlutterEngineResult FlutterEngineReleaseSyncReply(
+    FLUTTER_API_SYMBOL(FlutterEngine) engine,
+    const uint8_t* reply);
 
 //------------------------------------------------------------------------------
 /// @brief     Creates a platform message response handle that allows the
@@ -3680,6 +3774,14 @@ typedef FlutterEngineResult (*FlutterEngineSendPlatformMessageResponseFnPtr)(
     const FlutterPlatformMessageResponseHandle* handle,
     const uint8_t* data,
     size_t data_length);
+typedef FlutterEngineResult (*FlutterEngineSendSynchronousPlatformMessageFnPtr)(
+    FLUTTER_API_SYMBOL(FlutterEngine) engine,
+    const FlutterSynchronousPlatformMessage* message,
+    const uint8_t** reply_out,
+    size_t* reply_size_out);
+typedef FlutterEngineResult (*FlutterEngineReleaseSyncReplyFnPtr)(
+    FLUTTER_API_SYMBOL(FlutterEngine) engine,
+    const uint8_t* reply);
 typedef FlutterEngineResult (*FlutterEngineRegisterExternalTextureFnPtr)(
     FLUTTER_API_SYMBOL(FlutterEngine) engine,
     int64_t texture_identifier);
@@ -3808,6 +3910,9 @@ typedef struct {
   FlutterEngineRemoveViewFnPtr RemoveView;
   FlutterEngineSendViewFocusEventFnPtr SendViewFocusEvent;
   FlutterEngineSendSemanticsActionFnPtr SendSemanticsAction;
+  FlutterEngineSendSynchronousPlatformMessageFnPtr
+      SendSynchronousPlatformMessage;
+  FlutterEngineReleaseSyncReplyFnPtr ReleaseSyncReply;
 } FlutterEngineProcTable;
 
 //------------------------------------------------------------------------------

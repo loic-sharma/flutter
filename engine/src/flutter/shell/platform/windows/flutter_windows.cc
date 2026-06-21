@@ -417,6 +417,46 @@ void FlutterDesktopMessengerSetCallback(FlutterDesktopMessengerRef messenger,
       ->SetMessageCallback(channel, callback, user_data);
 }
 
+bool FlutterDesktopMessengerSendSync(FlutterDesktopMessengerRef messenger,
+                                     const char* channel,
+                                     const uint8_t* message,
+                                     const size_t message_size,
+                                     const uint8_t** reply_out,
+                                     size_t* reply_size_out) {
+  FML_DCHECK(FlutterDesktopMessengerIsAvailable(messenger))
+      << "Messenger must reference a running engine to send a message";
+
+  return flutter::FlutterDesktopMessenger::FromRef(messenger)
+      ->GetEngine()
+      ->SendSynchronousPlatformMessage(channel, message, message_size,
+                                       reply_out, reply_size_out);
+}
+
+void FlutterDesktopMessengerReleaseSyncReply(
+    FlutterDesktopMessengerRef messenger,
+    const uint8_t* reply) {
+  FML_DCHECK(FlutterDesktopMessengerIsAvailable(messenger))
+      << "Messenger must reference a running engine to release a reply";
+
+  flutter::FlutterDesktopMessenger::FromRef(messenger)
+      ->GetEngine()
+      ->ReleaseSynchronousReply(reply);
+}
+
+void FlutterDesktopMessengerSetSyncCallback(
+    FlutterDesktopMessengerRef messenger,
+    const char* channel,
+    FlutterDesktopSyncMessageCallback callback,
+    void* user_data) {
+  FML_DCHECK(FlutterDesktopMessengerIsAvailable(messenger))
+      << "Messenger must reference a running engine to set a callback";
+
+  flutter::FlutterDesktopMessenger::FromRef(messenger)
+      ->GetEngine()
+      ->message_dispatcher()
+      ->SetSyncMessageCallback(channel, callback, user_data);
+}
+
 FlutterDesktopMessengerRef FlutterDesktopMessengerAddRef(
     FlutterDesktopMessengerRef messenger) {
   return flutter::FlutterDesktopMessenger::FromRef(messenger)

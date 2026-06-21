@@ -7,8 +7,10 @@
 
 #include <flutter_messenger.h>
 
+#include <cstdint>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "include/flutter/binary_messenger.h"
 
@@ -36,6 +38,15 @@ class BinaryMessengerImpl : public BinaryMessenger {
   void SetMessageHandler(const std::string& channel,
                          BinaryMessageHandler handler) override;
 
+  // |flutter::BinaryMessenger|
+  std::vector<uint8_t> SendSync(const std::string& channel,
+                                const uint8_t* message,
+                                size_t message_size) const override;
+
+  // |flutter::BinaryMessenger|
+  void SetSyncMessageHandler(const std::string& channel,
+                             SyncBinaryMessageHandler handler) override;
+
  private:
   // Handle for interacting with the C API.
   FlutterDesktopMessengerRef messenger_;
@@ -43,6 +54,10 @@ class BinaryMessengerImpl : public BinaryMessenger {
   // A map from channel names to the BinaryMessageHandler that should be called
   // for incoming messages on that channel.
   std::map<std::string, BinaryMessageHandler> handlers_;
+
+  // A map from channel names to the SyncBinaryMessageHandler that should be
+  // called for incoming synchronous messages on that channel.
+  std::map<std::string, SyncBinaryMessageHandler> sync_handlers_;
 };
 
 }  // namespace flutter

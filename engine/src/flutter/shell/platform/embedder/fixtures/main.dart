@@ -75,6 +75,39 @@ void mergedPlatformUIThread() {
 }
 
 @pragma('vm:entry-point')
+void sendSynchronousPlatformMessage() {
+  final request = ByteData(3);
+  request.setUint8(0, 1);
+  request.setUint8(1, 2);
+  request.setUint8(2, 3);
+  final ByteData? reply = PlatformDispatcher.instance.sendSynchronousPlatformMessage(
+    'test/sync',
+    request,
+  );
+  if (reply == null) {
+    signalNativeMessage('null');
+    return;
+  }
+  final bytes = reply.buffer.asUint8List(reply.offsetInBytes, reply.lengthInBytes);
+  signalNativeMessage(bytes.join(','));
+}
+
+@pragma('vm:entry-point')
+void registerSynchronousPlatformMessageHandler() {
+  channelBuffers.setSyncListener('test/sync', (ByteData? data) {
+    // Reply to the platform with a fixed payload.
+    final reply = ByteData(4);
+    reply.setUint8(0, 4);
+    reply.setUint8(1, 5);
+    reply.setUint8(2, 6);
+    reply.setUint8(3, 7);
+    return reply;
+  });
+  // Tell native the listener is registered and it's safe to send.
+  signalNativeTest();
+}
+
+@pragma('vm:entry-point')
 void uiTaskRunnerFlushesMicrotasks() {
   // Microtasks are always flushed at the beginning of the frame, hence the delay.
   Future.delayed(const Duration(milliseconds: 50), () {

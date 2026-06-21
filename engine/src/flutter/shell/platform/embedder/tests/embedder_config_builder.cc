@@ -24,6 +24,14 @@ EmbedderConfigBuilder::EmbedderConfigBuilder(
             ->PlatformMessageCallback(message);
       };
 
+  project_args_.synchronous_platform_message_callback =
+      [](const FlutterSynchronousPlatformMessage* message,
+         FlutterSynchronousReply reply, void* reply_user_data, void* context) {
+        reinterpret_cast<EmbedderTestContext*>(context)
+            ->SynchronousPlatformMessageCallback(message, reply,
+                                                 reply_user_data);
+      };
+
   custom_task_runners_.struct_size = sizeof(FlutterCustomTaskRunners);
 
   // The first argument is always the executable name. Don't make tests have to
@@ -198,6 +206,12 @@ void EmbedderConfigBuilder::SetRenderTaskRunner(
 void EmbedderConfigBuilder::SetPlatformMessageCallback(
     const std::function<void(const FlutterPlatformMessage*)>& callback) {
   context_.SetPlatformMessageCallback(callback);
+}
+
+void EmbedderConfigBuilder::SetSynchronousPlatformMessageCallback(
+    const std::function<std::vector<uint8_t>(
+        const FlutterSynchronousPlatformMessage*)>& callback) {
+  context_.SetSynchronousPlatformMessageCallback(callback);
 }
 
 void EmbedderConfigBuilder::SetViewFocusChangeRequestCallback(

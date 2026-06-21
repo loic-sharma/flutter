@@ -52,6 +52,20 @@ class IncomingMessageDispatcher {
                           FlutterDesktopMessageCallback callback,
                           void* user_data);
 
+  // Routes a synchronous |message| to the registered synchronous handler for
+  // its channel, forwarding the handler's reply to |reply|. If no synchronous
+  // handler is registered, replies with null.
+  void HandleSyncMessage(const FlutterDesktopSynchronousMessage& message,
+                         FlutterDesktopSyncReply reply,
+                         void* reply_user_data);
+
+  // Registers a synchronous message callback for the specified channel.
+  //
+  // Replaces any existing callback. Pass a null callback to unregister.
+  void SetSyncMessageCallback(const std::string& channel,
+                              FlutterDesktopSyncMessageCallback callback,
+                              void* user_data);
+
   // Enables input blocking on the given channel name.
   //
   // If set, then the parent window should disable input callbacks
@@ -67,6 +81,11 @@ class IncomingMessageDispatcher {
   // data to pass to it.
   std::map<std::string, std::pair<FlutterDesktopMessageCallback, void*>>
       callbacks_;
+
+  // A map from channel names to the FlutterDesktopSyncMessageCallback that
+  // should be called for incoming synchronous messages on that channel.
+  std::map<std::string, std::pair<FlutterDesktopSyncMessageCallback, void*>>
+      sync_callbacks_;
 
   // Channel names for which input blocking should be enabled during the call to
   // that channel's handler.

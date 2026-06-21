@@ -32,6 +32,16 @@ typedef DrainChannelCallback =
 ///  * [PlatformMessageResponseCallback], the type used for replies.
 typedef ChannelCallback = void Function(ByteData? data, PlatformMessageResponseCallback callback);
 
+/// Signature for [ChannelBuffers.setSyncListener]'s `callback` argument.
+///
+/// The argument is the data sent synchronously by the platform. The return
+/// value is the reply, which is delivered synchronously back to the platform.
+///
+/// Synchronous listeners run on the platform thread (which is the UI thread when
+/// the engine runs with merged threads) and must return promptly without
+/// awaiting.
+typedef SyncChannelCallback = ByteData? Function(ByteData? data);
+
 /// The data and logic required to store and invoke a callback.
 ///
 /// This tracks (and applies) the [Zone].
@@ -327,6 +337,11 @@ class ChannelBuffers {
   /// A mapping between a channel name and its associated [_Channel].
   final Map<String, _Channel> _channels = <String, _Channel>{};
 
+  // Synchronous listeners are kept separate from the buffered (asynchronous)
+  // channels above: synchronous messages are never buffered, they are either
+  // handled immediately or fail.
+  final Map<String, SyncChannelCallback> _syncListeners = <String, SyncChannelCallback>{};
+
   /// Adds a message (`data`) to the named channel buffer (`name`).
   ///
   /// The `callback` argument is a closure that, when called, will send messages
@@ -396,6 +411,40 @@ class ChannelBuffers {
       channel.clearListener();
       sendChannelUpdate(name, listening: false);
     }
+  }
+
+  /// Sets the synchronous listener for the specified channel.
+  ///
+  /// Unlike [setListener], the callback is invoked synchronously and its return
+  /// value is sent back to the platform as the reply. Synchronous messages are
+  /// never buffered. Only one synchronous listener may be set per channel;
+  /// setting a new one replaces the previous.
+  ///
+  /// This is only meaningful when the engine runs with merged UI and platform
+  /// threads, and may only be used from the root isolate.
+  void setSyncListener(String name, SyncChannelCallback callback) {
+    assert(
+      !name.contains(String.fromCharCode(0)),
+      'Channel names must not contain U+0000 NULL characters.',
+    );
+    _syncListeners[name] = callback;
+  }
+
+  /// Clears the synchronous listener for the specified channel.
+  void clearSyncListener(String name) {
+    _syncListeners.remove(name);
+  }
+
+  /// Invokes the synchronous listener for [name] and returns its reply, or null
+  /// if no synchronous listener is registered for the channel.
+  ///
+  /// Called by the engine when the platform sends a synchronous message.
+  ByteData? handleSyncMessage(String name, ByteData? data) {
+    final SyncChannelCallback? callback = _syncListeners[name];
+    if (callback == null) {
+      return null;
+    }
+    return callback(data);
   }
 
   @Native<Void Function(Handle, Bool)>(symbol: 'PlatformConfigurationNativeApi::SendChannelUpdate')

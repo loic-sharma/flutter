@@ -84,8 +84,21 @@ class _ProfiledBinaryMessenger implements BinaryMessenger {
       sendWithPostfix(channel, '', message);
 
   @override
+  ByteData? sendSync(String channel, ByteData? message) {
+    _debugRecordUpStream(channelTypeName, channel, codecTypeName, message);
+    final ByteData? result = proxy.sendSync(channel, message);
+    _debugRecordDownStream(channelTypeName, channel, codecTypeName, result);
+    return result;
+  }
+
+  @override
   void setMessageHandler(String channel, MessageHandler? handler) {
     proxy.setMessageHandler(channel, handler);
+  }
+
+  @override
+  void setMessageHandlerSync(String channel, SyncMessageHandler? handler) {
+    proxy.setMessageHandlerSync(channel, handler);
   }
 }
 
@@ -241,6 +254,18 @@ class BasicMessageChannel<T> {
     return codec.decodeMessage(await binaryMessenger.send(name, codec.encodeMessage(message)));
   }
 
+  /// Synchronously sends the specified [message] to the platform plugins on this
+  /// channel and blocks until the response is received.
+  ///
+  /// Returns the received response, which may be null.
+  ///
+  /// Synchronous platform messages are only supported on the root isolate and
+  /// when the engine runs with merged UI and platform threads. See
+  /// [BinaryMessenger.sendSync].
+  T? sendSync(T message) {
+    return codec.decodeMessage(binaryMessenger.sendSync(name, codec.encodeMessage(message)));
+  }
+
   /// Sets a callback for receiving messages from the platform plugins on this
   /// channel. Messages may be null.
   ///
@@ -256,6 +281,25 @@ class BasicMessageChannel<T> {
     } else {
       binaryMessenger.setMessageHandler(name, (ByteData? message) async {
         return codec.encodeMessage(await handler(codec.decodeMessage(message)));
+      });
+    }
+  }
+
+  /// Sets a synchronous callback for receiving messages from the platform
+  /// plugins on this channel.
+  ///
+  /// Unlike [setMessageHandler], the handler is invoked synchronously and must
+  /// return the reply directly, without awaiting. To remove the handler, pass
+  /// null.
+  ///
+  /// Only supported on the root isolate and when the engine runs with merged UI
+  /// and platform threads.
+  void setMessageHandlerSync(T Function(T? message)? handler) {
+    if (handler == null) {
+      binaryMessenger.setMessageHandlerSync(name, null);
+    } else {
+      binaryMessenger.setMessageHandlerSync(name, (ByteData? message) {
+        return codec.encodeMessage(handler(codec.decodeMessage(message)));
       });
     }
   }
@@ -357,6 +401,23 @@ class MethodChannel {
             input,
           )
         : await binaryMessenger.send(name, input);
+    if (result == null) {
+      if (missingOk) {
+        return null;
+      }
+      throw MissingPluginException('No implementation found for method $method on channel $name');
+    }
+    return codec.decodeEnvelope(result) as T?;
+  }
+
+  /// Backend implementation of [invokeMethodSync].
+  ///
+  /// This is the synchronous counterpart of [_invokeMethod]; it blocks until the
+  /// platform handler returns rather than awaiting a [Future].
+  @optionalTypeArgs
+  T? _invokeMethodSync<T>(String method, {required bool missingOk, dynamic arguments}) {
+    final ByteData input = codec.encodeMethodCall(MethodCall(method, arguments));
+    final ByteData? result = binaryMessenger.sendSync(name, input);
     if (result == null) {
       if (missingOk) {
         return null;
@@ -539,6 +600,28 @@ class MethodChannel {
     return _invokeMethod<T>(method, missingOk: false, arguments: arguments);
   }
 
+  /// Synchronously invokes a [method] on this channel with the specified
+  /// [arguments], blocking until the platform returns the result.
+  ///
+  /// This is the synchronous counterpart of [invokeMethod]. It returns one of:
+  ///
+  /// * a result (possibly null), on successful invocation;
+  /// * throws a [PlatformException], if the invocation failed in the platform
+  ///   plugin;
+  /// * throws a [MissingPluginException], if the method has not been implemented
+  ///   by a synchronous platform handler.
+  ///
+  /// Synchronous platform channels are only supported on the root isolate and
+  /// when the engine runs with merged UI and platform threads (the default
+  /// except on desktop apps that opted out). See [BinaryMessenger.sendSync].
+  ///
+  /// Because this blocks the calling thread, it should only be used for cheap,
+  /// non-blocking platform operations.
+  @optionalTypeArgs
+  T? invokeMethodSync<T>(String method, [dynamic arguments]) {
+    return _invokeMethodSync<T>(method, missingOk: false, arguments: arguments);
+  }
+
   /// An implementation of [invokeMethod] that can return typed lists.
   ///
   /// Dart generics are reified, meaning that an untyped `List<dynamic>` cannot
@@ -614,6 +697,49 @@ class MethodChannel {
     }
   }
 
+  /// Sets a synchronous callback for receiving method calls on this channel.
+  ///
+  /// Unlike [setMethodCallHandler], the handler is invoked synchronously on the
+  /// platform thread and must return its result directly, without awaiting. To
+  /// remove the handler, pass null.
+  ///
+  /// The handler's return value is sent back to the platform plugin caller
+  /// wrapped in a success envelope. If the handler throws a [PlatformException],
+  /// an error envelope is sent instead; a [MissingPluginException] results in an
+  /// empty reply; any other exception results in an error envelope.
+  ///
+  /// Only supported on the root isolate and when the engine runs with merged UI
+  /// and platform threads.
+  void setMethodCallHandlerSync(Object? Function(MethodCall call)? handler) {
+    assert(
+      _binaryMessenger != null || BindingBase.debugBindingType() != null,
+      'Cannot set the method call handler before the binary messenger has been initialized. '
+      'This happens when you call setMethodCallHandlerSync() before the WidgetsFlutterBinding '
+      'has been initialized. You can fix this by either calling WidgetsFlutterBinding.ensureInitialized() '
+      'before this or by passing a custom BinaryMessenger instance to MethodChannel().',
+    );
+    binaryMessenger.setMessageHandlerSync(
+      name,
+      handler == null ? null : (ByteData? message) => _handleAsMethodCallSync(message, handler),
+    );
+  }
+
+  ByteData? _handleAsMethodCallSync(
+    ByteData? message,
+    Object? Function(MethodCall call) handler,
+  ) {
+    final MethodCall call = codec.decodeMethodCall(message);
+    try {
+      return codec.encodeSuccessEnvelope(handler(call));
+    } on PlatformException catch (e) {
+      return codec.encodeErrorEnvelope(code: e.code, message: e.message, details: e.details);
+    } on MissingPluginException {
+      return null;
+    } catch (error) {
+      return codec.encodeErrorEnvelope(code: 'error', message: error.toString());
+    }
+  }
+
   // Looking for setMockMethodCallHandler or checkMethodCallHandler?
   // See this shim package: packages/flutter_test/lib/src/deprecated.dart
 }
@@ -631,6 +757,11 @@ class OptionalMethodChannel extends MethodChannel {
   @override
   Future<T?> invokeMethod<T>(String method, [dynamic arguments]) async {
     return super._invokeMethod<T>(method, missingOk: true, arguments: arguments);
+  }
+
+  @override
+  T? invokeMethodSync<T>(String method, [dynamic arguments]) {
+    return super._invokeMethodSync<T>(method, missingOk: true, arguments: arguments);
   }
 }
 

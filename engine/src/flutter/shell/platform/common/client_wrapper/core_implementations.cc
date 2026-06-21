@@ -76,6 +76,24 @@ void ForwardToHandler(FlutterDesktopMessengerRef messenger,
   message_handler(message->message, message->message_size,
                   std::move(reply_handler));
 }
+
+// Adapts a registered SyncBinaryMessageHandler to the C sync callback ABI.
+//
+// The handler runs synchronously on the platform thread, so unlike
+// ForwardToHandler no messenger locking is needed: the engine is necessarily
+// alive for the duration of the call.
+void ForwardToSyncHandler(FlutterDesktopMessengerRef messenger,
+                          const FlutterDesktopSynchronousMessage* message,
+                          FlutterDesktopSyncReply reply,
+                          void* reply_user_data,
+                          void* user_data) {
+  const SyncBinaryMessageHandler& handler =
+      *static_cast<SyncBinaryMessageHandler*>(user_data);
+  std::vector<uint8_t> response =
+      handler(message->message, message->message_size);
+  reply(response.empty() ? nullptr : response.data(), response.size(),
+        reply_user_data);
+}
 }  // namespace
 
 BinaryMessengerImpl::BinaryMessengerImpl(
@@ -127,6 +145,43 @@ void BinaryMessengerImpl::SetMessageHandler(const std::string& channel,
   // Set an adaptor callback that will invoke the handler.
   FlutterDesktopMessengerSetCallback(messenger_, channel.c_str(),
                                      ForwardToHandler, message_handler);
+}
+
+std::vector<uint8_t> BinaryMessengerImpl::SendSync(const std::string& channel,
+                                                   const uint8_t* message,
+                                                   size_t message_size) const {
+  const uint8_t* reply = nullptr;
+  size_t reply_size = 0;
+  bool result = FlutterDesktopMessengerSendSync(
+      messenger_, channel.c_str(), message, message_size, &reply, &reply_size);
+  if (!result) {
+    // Exceptions are disabled in the engine build, so report and return empty.
+    std::cerr << "Error: Synchronous message on channel '" << channel
+              << "' failed. The engine must run with merged UI and platform "
+                 "threads and the Flutter side must register a synchronous "
+                 "handler."
+              << std::endl;
+    return {};
+  }
+  std::vector<uint8_t> response(reply, reply + reply_size);
+  FlutterDesktopMessengerReleaseSyncReply(messenger_, reply);
+  return response;
+}
+
+void BinaryMessengerImpl::SetSyncMessageHandler(
+    const std::string& channel,
+    SyncBinaryMessageHandler handler) {
+  if (!handler) {
+    sync_handlers_.erase(channel);
+    FlutterDesktopMessengerSetSyncCallback(messenger_, channel.c_str(), nullptr,
+                                           nullptr);
+    return;
+  }
+  // Save the handler, to keep it alive.
+  sync_handlers_[channel] = std::move(handler);
+  SyncBinaryMessageHandler* sync_handler = &sync_handlers_[channel];
+  FlutterDesktopMessengerSetSyncCallback(messenger_, channel.c_str(),
+                                         ForwardToSyncHandler, sync_handler);
 }
 
 // ========== engine_method_result.h ==========

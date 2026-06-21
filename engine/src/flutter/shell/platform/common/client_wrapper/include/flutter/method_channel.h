@@ -6,7 +6,9 @@
 #define FLUTTER_SHELL_PLATFORM_COMMON_CLIENT_WRAPPER_INCLUDE_FLUTTER_METHOD_CHANNEL_H_
 
 #include <iostream>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "basic_message_channel.h"
 #include "binary_messenger.h"
@@ -89,6 +91,39 @@ class MethodChannel {
                      std::move(reply_handler));
   }
 
+  // Sends a method call synchronously on this channel, blocking until the
+  // engine replies, and dispatches the outcome to |result|.
+  //
+  // Exactly one method on |result| is called synchronously before this returns:
+  // Success or Error if the engine replied, or NotImplemented if the Dart side
+  // had no synchronous handler for this channel. |result| must outlive the
+  // call.
+  //
+  // Synchronous method calls are only supported when the engine runs with
+  // merged UI and platform threads (the default unless the embedder opted out),
+  // and must be made on the platform thread. See |BinaryMessenger::SendSync|.
+  void InvokeMethodSync(const std::string& method,
+                        std::unique_ptr<T> arguments,
+                        MethodResult<T>* result) {
+    MethodCall<T> method_call(method, std::move(arguments));
+    std::unique_ptr<std::vector<uint8_t>> message =
+        codec_->EncodeMethodCall(method_call);
+    std::vector<uint8_t> response =
+        messenger_->SendSync(name_, message->data(), message->size());
+    if (response.empty()) {
+      result->NotImplemented();
+      return;
+    }
+    bool decoded = codec_->DecodeAndProcessResponseEnvelope(
+        response.data(), response.size(), result);
+    if (!decoded) {
+      std::cerr << "Unable to decode reply to synchronous method invocation on "
+                   "channel "
+                << name_ << std::endl;
+      result->NotImplemented();
+    }
+  }
+
   // Registers a handler that should be called any time a method call is
   // received on this channel. A null handler will remove any previous handler.
   //
@@ -121,6 +156,51 @@ class MethodChannel {
       handler(*method_call, std::move(result));
     };
     messenger_->SetMessageHandler(name_, std::move(binary_handler));
+  }
+
+  // Registers a handler that is called synchronously whenever a synchronous
+  // method call is received on this channel. A null handler removes any
+  // previous synchronous handler.
+  //
+  // The handler must call exactly one method on |result| before returning; the
+  // reply is sent back to the engine synchronously. Unlike
+  // |SetMethodCallHandler|, it is not valid to retain |result| and respond
+  // later.
+  //
+  // Only supported when the engine runs with merged UI and platform threads.
+  void SetMethodCallHandlerSync(const MethodCallHandler<T>& handler) const {
+    if (!handler) {
+      messenger_->SetSyncMessageHandler(name_, nullptr);
+      return;
+    }
+    const auto* codec = codec_;
+    std::string channel_name = name_;
+    SyncBinaryMessageHandler sync_handler =
+        [handler, codec, channel_name](
+            const uint8_t* message,
+            size_t message_size) -> std::vector<uint8_t> {
+      // Capture the encoded reply produced synchronously by the handler.
+      auto response = std::make_shared<std::vector<uint8_t>>();
+      BinaryReply capture = [response](const uint8_t* reply,
+                                       size_t reply_size) {
+        if (reply != nullptr && reply_size > 0) {
+          response->assign(reply, reply + reply_size);
+        }
+      };
+      auto result =
+          std::make_unique<EngineMethodResult<T>>(std::move(capture), codec);
+      std::unique_ptr<MethodCall<T>> method_call =
+          codec->DecodeMethodCall(message, message_size);
+      if (!method_call) {
+        std::cerr << "Unable to construct method call from message on channel "
+                  << channel_name << std::endl;
+        result->NotImplemented();
+      } else {
+        handler(*method_call, std::move(result));
+      }
+      return *response;
+    };
+    messenger_->SetSyncMessageHandler(name_, std::move(sync_handler));
   }
 
   // Adjusts the number of messages that will get buffered when sending messages

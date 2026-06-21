@@ -6,7 +6,9 @@
 #define FLUTTER_SHELL_COMMON_ENGINE_H_
 
 #include <memory>
+#include <optional>
 #include <string>
+#include <vector>
 
 #include "flutter/assets/asset_manager.h"
 #include "flutter/common/task_runners.h"
@@ -196,6 +198,21 @@ class Engine final : public RuntimeDelegate, PointerDataDispatcher::Delegate {
     ///
     virtual void OnEngineHandlePlatformMessage(
         std::unique_ptr<PlatformMessage> message) = 0;
+
+    //--------------------------------------------------------------------------
+    /// @brief      Synchronously dispatches a platform message and returns the
+    ///             reply. Only invoked when the UI and platform threads are
+    ///             merged, so the delegate may handle it on the current thread.
+    ///
+    /// @param[in]  message  The message from the Flutter application.
+    ///
+    /// @return     The reply, or std::nullopt if no synchronous handler exists.
+    ///
+    virtual std::optional<std::vector<uint8_t>>
+    OnEngineHandleSynchronousPlatformMessage(
+        std::unique_ptr<PlatformMessage> message) {
+      return std::nullopt;
+    }
 
     //--------------------------------------------------------------------------
     /// @brief      Notifies the delegate that the root isolate of the
@@ -809,6 +826,19 @@ class Engine final : public RuntimeDelegate, PointerDataDispatcher::Delegate {
   void DispatchPlatformMessage(std::unique_ptr<PlatformMessage> message);
 
   //----------------------------------------------------------------------------
+  /// @brief      Synchronously dispatches a platform message to the running
+  ///             isolate and returns the reply. Only valid when the UI and
+  ///             platform threads are merged.
+  ///
+  /// @param[in]  message  The message from the platform.
+  ///
+  /// @return     The reply, or std::nullopt if there is no synchronous
+  /// listener.
+  ///
+  std::optional<std::vector<uint8_t>> DispatchSynchronousPlatformMessage(
+      std::unique_ptr<PlatformMessage> message);
+
+  //----------------------------------------------------------------------------
   /// @brief      Notifies the engine that the embedder has sent it a pointer
   ///             data packet. A pointer data packet may contain multiple
   ///             input events. This call originates in the platform view and
@@ -1055,6 +1085,10 @@ class Engine final : public RuntimeDelegate, PointerDataDispatcher::Delegate {
 
   // |RuntimeDelegate|
   void HandlePlatformMessage(std::unique_ptr<PlatformMessage> message) override;
+
+  // |RuntimeDelegate|
+  std::optional<std::vector<uint8_t>> HandleSynchronousPlatformMessage(
+      std::unique_ptr<PlatformMessage> message) override;
 
   // |RuntimeDelegate|
   void OnRootIsolateCreated() override;

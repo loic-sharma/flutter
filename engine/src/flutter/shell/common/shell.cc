@@ -1207,6 +1207,21 @@ void Shell::OnPlatformViewDispatchPlatformMessage(
 }
 
 // |PlatformView::Delegate|
+std::optional<std::vector<uint8_t>>
+Shell::OnPlatformViewDispatchSynchronousPlatformMessage(
+    std::unique_ptr<PlatformMessage> message) {
+  FML_DCHECK(is_set_up_);
+  // Synchronous platform messages require merged UI and platform threads, so
+  // the calling (platform) thread is also the UI thread. Dispatch directly to
+  // the engine on this thread and return the reply.
+  FML_DCHECK(task_runners_.GetUITaskRunner()->RunsTasksOnCurrentThread());
+  if (weak_engine_) {
+    return weak_engine_->DispatchSynchronousPlatformMessage(std::move(message));
+  }
+  return std::nullopt;
+}
+
+// |PlatformView::Delegate|
 void Shell::OnPlatformViewDispatchPointerDataPacket(
     std::unique_ptr<PointerDataPacket> packet) {
   TRACE_EVENT0_WITH_FLOW_IDS(
@@ -1550,6 +1565,17 @@ void Shell::OnEngineHandlePlatformMessage(
           }
         }));
   }
+}
+
+std::optional<std::vector<uint8_t>>
+Shell::OnEngineHandleSynchronousPlatformMessage(
+    std::unique_ptr<PlatformMessage> message) {
+  FML_DCHECK(is_set_up_);
+  // Synchronous platform messages are only sent when the UI and platform
+  // threads are merged, so the calling (UI) thread is also the platform thread.
+  // Dispatch directly to the platform view instead of posting a task.
+  FML_DCHECK(task_runners_.GetPlatformTaskRunner()->RunsTasksOnCurrentThread());
+  return platform_view_->HandleSynchronousPlatformMessage(std::move(message));
 }
 
 void Shell::OnEngineChannelUpdate(std::string name, bool listening) {

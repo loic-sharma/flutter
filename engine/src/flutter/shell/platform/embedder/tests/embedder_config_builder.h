@@ -83,6 +83,10 @@ class EmbedderConfigBuilder {
   void SetPlatformMessageCallback(
       const std::function<void(const FlutterPlatformMessage*)>& callback);
 
+  void SetSynchronousPlatformMessageCallback(
+      const std::function<std::vector<uint8_t>(
+          const FlutterSynchronousPlatformMessage*)>& callback);
+
   void SetViewFocusChangeRequestCallback(
       const std::function<void(const FlutterViewFocusChangeRequest*)>&
           callback);

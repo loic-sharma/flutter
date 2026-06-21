@@ -359,6 +359,18 @@ bool RuntimeController::DispatchPlatformMessage(
   return false;
 }
 
+std::optional<std::vector<uint8_t>>
+RuntimeController::DispatchSynchronousPlatformMessage(
+    std::unique_ptr<PlatformMessage> message) {
+  if (auto* platform_configuration = GetPlatformConfigurationIfAvailable()) {
+    TRACE_EVENT0("flutter",
+                 "RuntimeController::DispatchSynchronousPlatformMessage");
+    return platform_configuration->DispatchSynchronousPlatformMessage(
+        std::move(message));
+  }
+  return std::nullopt;
+}
+
 bool RuntimeController::DispatchPointerDataPacket(
     const PointerDataPacket& packet) {
   if (auto* platform_configuration = GetPlatformConfigurationIfAvailable()) {
@@ -467,6 +479,13 @@ void RuntimeController::SetSemanticsTreeEnabled(bool enabled) {
 void RuntimeController::HandlePlatformMessage(
     std::unique_ptr<PlatformMessage> message) {
   client_.HandlePlatformMessage(std::move(message));
+}
+
+// |PlatformConfigurationClient|
+std::optional<std::vector<uint8_t>>
+RuntimeController::HandleSynchronousPlatformMessage(
+    std::unique_ptr<PlatformMessage> message) {
+  return client_.HandleSynchronousPlatformMessage(std::move(message));
 }
 
 // |PlatformConfigurationClient|

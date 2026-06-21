@@ -6,7 +6,10 @@
 #define FLUTTER_SHELL_PLATFORM_EMBEDDER_EMBEDDER_ENGINE_H_
 
 #include <memory>
+#include <optional>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "flutter/fml/macros.h"
 #include "flutter/shell/common/shell.h"
@@ -57,6 +60,15 @@ class EmbedderEngine {
       std::unique_ptr<flutter::PointerDataPacket> packet);
 
   bool SendPlatformMessage(std::unique_ptr<PlatformMessage> message);
+
+  // Sends a synchronous platform message to the running root isolate and
+  // returns the reply. Requires merged UI and platform threads and must be
+  // called on the platform thread. Returns std::nullopt if the isolate has no
+  // synchronous listener registered for the channel.
+  std::optional<std::vector<uint8_t>> SendSynchronousPlatformMessage(
+      const std::string& channel,
+      const uint8_t* message,
+      size_t message_size);
 
   bool RegisterTexture(int64_t texture);
 

@@ -140,6 +140,19 @@ void PlatformViewEmbedder::HandlePlatformMessage(
 }
 
 // |PlatformView|
+std::optional<std::vector<uint8_t>>
+PlatformViewEmbedder::HandleSynchronousPlatformMessage(
+    std::unique_ptr<flutter::PlatformMessage> message) {
+  if (!message ||
+      platform_dispatch_table_.synchronous_platform_message_callback ==
+          nullptr) {
+    return std::nullopt;
+  }
+  return platform_dispatch_table_.synchronous_platform_message_callback(
+      std::move(message));
+}
+
+// |PlatformView|
 std::unique_ptr<Surface> PlatformViewEmbedder::CreateRenderingSurface() {
   if (embedder_surface_ == nullptr) {
     FML_LOG(ERROR) << "Embedder surface was null.";

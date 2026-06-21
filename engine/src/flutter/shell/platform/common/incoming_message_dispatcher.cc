@@ -51,6 +51,37 @@ void IncomingMessageDispatcher::SetMessageCallback(
   callbacks_[channel] = std::make_pair(callback, user_data);
 }
 
+void IncomingMessageDispatcher::HandleSyncMessage(
+    const FlutterDesktopSynchronousMessage& message,
+    FlutterDesktopSyncReply reply,
+    void* reply_user_data) {
+  std::string channel(message.channel);
+
+  auto callback_iterator = sync_callbacks_.find(channel);
+  // If there's no synchronous handler for the channel, reply with null. The
+  // Dart side surfaces this as a missing-plugin error.
+  if (callback_iterator == sync_callbacks_.end()) {
+    reply(nullptr, 0, reply_user_data);
+    return;
+  }
+  auto& callback_info = callback_iterator->second;
+  const FlutterDesktopSyncMessageCallback& message_callback =
+      callback_info.first;
+  message_callback(messenger_, &message, reply, reply_user_data,
+                   callback_info.second);
+}
+
+void IncomingMessageDispatcher::SetSyncMessageCallback(
+    const std::string& channel,
+    FlutterDesktopSyncMessageCallback callback,
+    void* user_data) {
+  if (!callback) {
+    sync_callbacks_.erase(channel);
+    return;
+  }
+  sync_callbacks_[channel] = std::make_pair(callback, user_data);
+}
+
 void IncomingMessageDispatcher::EnableInputBlockingForChannel(
     const std::string& channel) {
   input_blocking_channels_.insert(channel);

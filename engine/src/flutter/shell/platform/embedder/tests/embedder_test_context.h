@@ -93,6 +93,12 @@ class EmbedderTestContext {
   void SetPlatformMessageCallback(
       const std::function<void(const FlutterPlatformMessage*)>& callback);
 
+  // Sets the callback invoked for synchronous platform messages from Dart. The
+  // callback returns the reply bytes (an empty vector produces a null reply).
+  void SetSynchronousPlatformMessageCallback(
+      const std::function<std::vector<uint8_t>(
+          const FlutterSynchronousPlatformMessage*)>& callback);
+
   void SetLogMessageCallback(const LogMessageCallback& log_message_callback);
 
   void SetChannelUpdateCallback(const ChannelUpdateCallback& callback);
@@ -141,6 +147,8 @@ class EmbedderTestContext {
   ChannelUpdateCallback channel_update_callback_;
   ViewFocusChangeRequestCallback view_focus_change_request_callback_;
   std::function<void(const FlutterPlatformMessage*)> platform_message_callback_;
+  std::function<std::vector<uint8_t>(const FlutterSynchronousPlatformMessage*)>
+      synchronous_platform_message_callback_;
   LogMessageCallback log_message_callback_;
   std::unique_ptr<EmbedderTestCompositor> compositor_;
   NextSceneCallback next_scene_callback_;
@@ -182,6 +190,11 @@ class EmbedderTestContext {
   FlutterTransformation GetRootSurfaceTransformation();
 
   void PlatformMessageCallback(const FlutterPlatformMessage* message);
+
+  void SynchronousPlatformMessageCallback(
+      const FlutterSynchronousPlatformMessage* message,
+      FlutterSynchronousReply reply,
+      void* reply_user_data);
 
   void FireRootSurfacePresentCallbackIfPresent(
       const std::function<sk_sp<SkImage>(void)>& image_callback);

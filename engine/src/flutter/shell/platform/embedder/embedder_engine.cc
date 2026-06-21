@@ -185,6 +185,35 @@ bool EmbedderEngine::SendPlatformMessage(
   return true;
 }
 
+std::optional<std::vector<uint8_t>>
+EmbedderEngine::SendSynchronousPlatformMessage(const std::string& channel,
+                                               const uint8_t* message,
+                                               size_t message_size) {
+  if (!IsValid()) {
+    return std::nullopt;
+  }
+
+  auto platform_view = shell_->GetPlatformView();
+  if (!platform_view) {
+    return std::nullopt;
+  }
+
+  std::unique_ptr<PlatformMessage> platform_message;
+  if (message_size == 0) {
+    platform_message = std::make_unique<PlatformMessage>(channel, nullptr);
+  } else {
+    platform_message = std::make_unique<PlatformMessage>(
+        channel, fml::MallocMapping::Copy(message, message_size), nullptr);
+  }
+
+  // The merged-thread requirement is enforced by the caller
+  // (FlutterEngineSendSynchronousPlatformMessage). Because the threads are
+  // merged, this dispatches to the UI isolate synchronously on the current
+  // thread and returns the reply.
+  return platform_view->DispatchSynchronousPlatformMessage(
+      std::move(platform_message));
+}
+
 bool EmbedderEngine::RegisterTexture(int64_t texture) {
   if (!IsValid()) {
     return false;

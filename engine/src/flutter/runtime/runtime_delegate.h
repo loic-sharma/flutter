@@ -6,6 +6,7 @@
 #define FLUTTER_RUNTIME_RUNTIME_DELEGATE_H_
 
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include "flutter/assets/asset_manager.h"
@@ -42,6 +43,14 @@ class RuntimeDelegate {
 
   virtual void HandlePlatformMessage(
       std::unique_ptr<PlatformMessage> message) = 0;
+
+  // Synchronously handles a platform message and returns the reply, or
+  // std::nullopt if there is no synchronous handler. Only invoked when the UI
+  // and platform threads are merged. The default drops the message.
+  virtual std::optional<std::vector<uint8_t>> HandleSynchronousPlatformMessage(
+      std::unique_ptr<PlatformMessage> message) {
+    return std::nullopt;
+  }
 
   virtual FontCollection& GetFontCollection() = 0;
 

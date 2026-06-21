@@ -377,6 +377,15 @@ void Engine::DispatchPlatformMessage(std::unique_ptr<PlatformMessage> message) {
   FML_DLOG(WARNING) << "Dropping platform message on channel: " << channel;
 }
 
+std::optional<std::vector<uint8_t>> Engine::DispatchSynchronousPlatformMessage(
+    std::unique_ptr<PlatformMessage> message) {
+  if (!runtime_controller_->IsRootIsolateRunning()) {
+    return std::nullopt;
+  }
+  return runtime_controller_->DispatchSynchronousPlatformMessage(
+      std::move(message));
+}
+
 bool Engine::HandleLifecyclePlatformMessage(PlatformMessage* message) {
   const auto& data = message->data();
   std::string state(reinterpret_cast<const char*>(data.GetMapping()),
@@ -551,6 +560,12 @@ void Engine::HandlePlatformMessage(std::unique_ptr<PlatformMessage> message) {
   } else {
     delegate_.OnEngineHandlePlatformMessage(std::move(message));
   }
+}
+
+std::optional<std::vector<uint8_t>> Engine::HandleSynchronousPlatformMessage(
+    std::unique_ptr<PlatformMessage> message) {
+  // The asset channel is handled asynchronously and has no synchronous form.
+  return delegate_.OnEngineHandleSynchronousPlatformMessage(std::move(message));
 }
 
 void Engine::OnRootIsolateCreated() {

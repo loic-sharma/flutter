@@ -6,6 +6,8 @@
 #define FLUTTER_SHELL_PLATFORM_EMBEDDER_PLATFORM_VIEW_EMBEDDER_H_
 
 #include <functional>
+#include <optional>
+#include <vector>
 
 #include "flow/embedded_views.h"
 #include "flutter/fml/macros.h"
@@ -41,6 +43,12 @@ class PlatformViewEmbedder final : public PlatformView {
                          flutter::CustomAccessibilityActionUpdates actions)>;
   using PlatformMessageResponseCallback =
       std::function<void(std::unique_ptr<PlatformMessage>)>;
+  // Synchronously handles a platform message and returns the reply, or
+  // std::nullopt if no synchronous handler is registered for the channel. Only
+  // invoked when the UI and platform threads are merged.
+  using SynchronousPlatformMessageCallback =
+      std::function<std::optional<std::vector<uint8_t>>(
+          std::unique_ptr<PlatformMessage>)>;
   using ComputePlatformResolvedLocaleCallback =
       std::function<std::unique_ptr<std::vector<std::string>>(
           const std::vector<std::string>& supported_locale_data)>;
@@ -52,7 +60,9 @@ class PlatformViewEmbedder final : public PlatformView {
   struct PlatformDispatchTable {
     UpdateSemanticsCallback update_semantics_callback;  // optional
     PlatformMessageResponseCallback
-        platform_message_response_callback;             // optional
+        platform_message_response_callback;  // optional
+    SynchronousPlatformMessageCallback
+        synchronous_platform_message_callback;          // optional
     VsyncWaiterEmbedder::VsyncCallback vsync_callback;  // optional
     ComputePlatformResolvedLocaleCallback
         compute_platform_resolved_locale_callback;
@@ -111,6 +121,10 @@ class PlatformViewEmbedder final : public PlatformView {
 
   // |PlatformView|
   void HandlePlatformMessage(std::unique_ptr<PlatformMessage> message) override;
+
+  // |PlatformView|
+  std::optional<std::vector<uint8_t>> HandleSynchronousPlatformMessage(
+      std::unique_ptr<PlatformMessage> message) override;
 
   // |PlatformView|
   std::shared_ptr<PlatformMessageHandler> GetPlatformMessageHandler()

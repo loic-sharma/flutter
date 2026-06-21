@@ -65,6 +65,24 @@ class StubFlutterApi {
                                     FlutterDesktopMessageCallback callback,
                                     void* user_data) {}
 
+  // Called for FlutterDesktopMessengerSendSync.
+  virtual bool MessengerSendSync(const char* channel,
+                                 const uint8_t* message,
+                                 const size_t message_size,
+                                 const uint8_t** reply_out,
+                                 size_t* reply_size_out) {
+    return false;
+  }
+
+  // Called for FlutterDesktopMessengerReleaseSyncReply.
+  virtual void MessengerReleaseSyncReply(const uint8_t* reply) {}
+
+  // Called for FlutterDesktopMessengerSetSyncCallback.
+  virtual void MessengerSetSyncCallback(
+      const char* channel,
+      FlutterDesktopSyncMessageCallback callback,
+      void* user_data) {}
+
   // Called for FlutterDesktopTextureRegistrarRegisterExternalTexture.
   virtual int64_t TextureRegistrarRegisterExternalTexture(
       const FlutterDesktopTextureInfo* info) {

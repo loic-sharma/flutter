@@ -6,6 +6,7 @@
 #define FLUTTER_RUNTIME_RUNTIME_CONTROLLER_H_
 
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include "assets/native_assets.h"
@@ -468,6 +469,19 @@ class RuntimeController : public PlatformConfigurationClient,
       std::unique_ptr<PlatformMessage> message);
 
   //----------------------------------------------------------------------------
+  /// @brief      Synchronously dispatches a platform message to the running
+  ///             isolate and returns its reply. Only valid when the UI and
+  ///             platform threads are merged.
+  ///
+  /// @param[in]  message  The message from the platform.
+  ///
+  /// @return     The reply, or std::nullopt if there is no synchronous
+  /// listener.
+  ///
+  virtual std::optional<std::vector<uint8_t>>
+  DispatchSynchronousPlatformMessage(std::unique_ptr<PlatformMessage> message);
+
+  //----------------------------------------------------------------------------
   /// @brief      Dispatch the specified pointer data message to the running
   ///             root isolate.
   ///
@@ -784,6 +798,10 @@ class RuntimeController : public PlatformConfigurationClient,
 
   // |PlatformConfigurationClient|
   void HandlePlatformMessage(std::unique_ptr<PlatformMessage> message) override;
+
+  // |PlatformConfigurationClient|
+  std::optional<std::vector<uint8_t>> HandleSynchronousPlatformMessage(
+      std::unique_ptr<PlatformMessage> message) override;
 
   // |PlatformConfigurationClient|
   FontCollection& GetFontCollection() override;

@@ -7,6 +7,7 @@
 
 #include "flutter/fml/logging.h"
 #include "flutter/fml/macros.h"
+#include "flutter/shell/platform/common/public/flutter_messenger.h"
 #include "flutter/shell/platform/embedder/embedder.h"
 #include "flutter/shell/platform/embedder/test_utils/proc_table_replacement.h"
 #include "flutter/shell/platform/windows/flutter_windows_view.h"
@@ -1804,6 +1805,149 @@ TEST_F(FlutterWindowsEngineTest, UpdateSemanticsMultiView) {
   auto tree2 = accessibility_bridge2->GetTree();
   EXPECT_NE(tree1->GetFromId(view1->view_id() + 1), nullptr);
   EXPECT_NE(tree2->GetFromId(view2->view_id() + 1), nullptr);
+}
+
+// Synchronous platform messages forward the channel and payload to the embedder
+// API and return the reply on success.
+TEST_F(FlutterWindowsEngineTest, SendSynchronousPlatformMessageReturnsReply) {
+  FlutterWindowsEngineBuilder builder{GetContext()};
+  std::unique_ptr<FlutterWindowsEngine> engine = builder.Build();
+  EngineModifier modifier(engine.get());
+
+  static constexpr uint8_t kReply[] = {1, 2, 3, 4};
+  std::string sent_channel;
+  std::vector<uint8_t> sent_message;
+  modifier.embedder_api().SendSynchronousPlatformMessage = MOCK_ENGINE_PROC(
+      SendSynchronousPlatformMessage,
+      ([&](auto engine, const FlutterSynchronousPlatformMessage* message,
+           const uint8_t** reply_out, size_t* reply_size_out) {
+        EXPECT_EQ(message->struct_size,
+                  sizeof(FlutterSynchronousPlatformMessage));
+        sent_channel = message->channel;
+        sent_message.assign(message->message,
+                            message->message + message->message_size);
+        *reply_out = kReply;
+        *reply_size_out = sizeof(kReply);
+        return kSuccess;
+      }));
+
+  const std::vector<uint8_t> message = {10, 20, 30};
+  const uint8_t* reply = nullptr;
+  size_t reply_size = 0;
+  bool result = engine->SendSynchronousPlatformMessage(
+      "test/channel", message.data(), message.size(), &reply, &reply_size);
+
+  EXPECT_TRUE(result);
+  EXPECT_EQ(sent_channel, "test/channel");
+  EXPECT_EQ(sent_message, message);
+  ASSERT_EQ(reply_size, sizeof(kReply));
+  EXPECT_EQ(std::vector<uint8_t>(reply, reply + reply_size),
+            std::vector<uint8_t>(kReply, kReply + sizeof(kReply)));
+}
+
+// When the engine does not run with merged threads the embedder API returns
+// kThreadMergeRequired and the send reports failure.
+TEST_F(FlutterWindowsEngineTest,
+       SendSynchronousPlatformMessageFailsWithoutMergedThreads) {
+  FlutterWindowsEngineBuilder builder{GetContext()};
+  std::unique_ptr<FlutterWindowsEngine> engine = builder.Build();
+  EngineModifier modifier(engine.get());
+
+  modifier.embedder_api().SendSynchronousPlatformMessage = MOCK_ENGINE_PROC(
+      SendSynchronousPlatformMessage,
+      ([&](auto engine, auto message, auto reply_out, auto reply_size_out) {
+        return kThreadMergeRequired;
+      }));
+
+  const std::vector<uint8_t> message = {1};
+  const uint8_t* reply = nullptr;
+  size_t reply_size = 0;
+  EXPECT_FALSE(engine->SendSynchronousPlatformMessage(
+      "test/channel", message.data(), message.size(), &reply, &reply_size));
+}
+
+// A synchronous message from Dart is routed to the registered handler and its
+// reply is returned to the caller.
+TEST_F(FlutterWindowsEngineTest,
+       HandleSynchronousPlatformMessageInvokesHandler) {
+  FlutterWindowsEngineBuilder builder{GetContext()};
+  std::unique_ptr<FlutterWindowsEngine> engine = builder.Build();
+
+  static constexpr uint8_t kHandlerReply[] = {7, 8, 9};
+  struct Captured {
+    std::string channel;
+    std::vector<uint8_t> message;
+  } captured;
+
+  engine->message_dispatcher()->SetSyncMessageCallback(
+      "test/sync",
+      [](FlutterDesktopMessengerRef messenger,
+         const FlutterDesktopSynchronousMessage* message,
+         FlutterDesktopSyncReply reply, void* reply_user_data,
+         void* user_data) {
+        auto* captured = static_cast<Captured*>(user_data);
+        captured->channel = message->channel;
+        captured->message.assign(message->message,
+                                 message->message + message->message_size);
+        reply(kHandlerReply, sizeof(kHandlerReply), reply_user_data);
+      },
+      &captured);
+
+  const std::vector<uint8_t> message = {1, 2};
+  FlutterSynchronousPlatformMessage sync_message = {
+      sizeof(FlutterSynchronousPlatformMessage),
+      "test/sync",
+      message.data(),
+      message.size(),
+  };
+
+  std::vector<uint8_t> reply;
+  engine->HandleSynchronousPlatformMessage(
+      &sync_message,
+      [](const uint8_t* data, size_t size, void* reply_user_data) {
+        static_cast<std::vector<uint8_t>*>(reply_user_data)
+            ->assign(data, data + size);
+      },
+      &reply);
+
+  EXPECT_EQ(captured.channel, "test/sync");
+  EXPECT_EQ(captured.message, message);
+  EXPECT_EQ(reply, std::vector<uint8_t>(kHandlerReply,
+                                        kHandlerReply + sizeof(kHandlerReply)));
+}
+
+// With no synchronous handler registered, the message receives a null reply.
+TEST_F(FlutterWindowsEngineTest,
+       HandleSynchronousPlatformMessageWithoutHandlerRepliesNull) {
+  FlutterWindowsEngineBuilder builder{GetContext()};
+  std::unique_ptr<FlutterWindowsEngine> engine = builder.Build();
+
+  FlutterSynchronousPlatformMessage sync_message = {
+      sizeof(FlutterSynchronousPlatformMessage),
+      "unregistered/channel",
+      nullptr,
+      0,
+  };
+
+  struct Reply {
+    bool called = false;
+    const uint8_t* data = nullptr;
+    size_t size = 0;
+  } reply;
+
+  engine->HandleSynchronousPlatformMessage(
+      &sync_message,
+      [](const uint8_t* data, size_t size, void* reply_user_data) {
+        auto* reply = static_cast<Reply*>(reply_user_data);
+        reply->called = true;
+        reply->data = data;
+        reply->size = size;
+      },
+      &reply);
+
+  EXPECT_TRUE(reply.called);
+  EXPECT_EQ(reply.data, nullptr);
+  EXPECT_EQ(reply.size, 0u);
 }
 
 }  // namespace testing

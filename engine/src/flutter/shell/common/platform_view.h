@@ -7,6 +7,8 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
+#include <vector>
 
 #include "flutter/common/graphics/texture.h"
 #include "flutter/common/task_runners.h"
@@ -169,6 +171,22 @@ class PlatformView {
     ///
     virtual void OnPlatformViewDispatchPlatformMessage(
         std::unique_ptr<PlatformMessage> message) = 0;
+
+    //--------------------------------------------------------------------------
+    /// @brief      Synchronously dispatches a platform message to the framework
+    ///             and returns the reply. Only invoked when the UI and platform
+    ///             threads are merged. The default drops the message.
+    ///
+    /// @param[in]  message  The message from the platform.
+    ///
+    /// @return     The reply, or std::nullopt if there is no synchronous
+    ///             listener registered for the channel.
+    ///
+    virtual std::optional<std::vector<uint8_t>>
+    OnPlatformViewDispatchSynchronousPlatformMessage(
+        std::unique_ptr<PlatformMessage> message) {
+      return std::nullopt;
+    }
 
     //--------------------------------------------------------------------------
     /// @brief      Notifies the delegate that the platform view has encountered
@@ -450,6 +468,19 @@ class PlatformView {
   void DispatchPlatformMessage(std::unique_ptr<PlatformMessage> message);
 
   //----------------------------------------------------------------------------
+  /// @brief      Used by embedders to synchronously deliver a platform message
+  ///             to the framework and return the reply. Only valid when the UI
+  ///             and platform threads are merged.
+  ///
+  /// @param[in]  message  The message from the platform.
+  ///
+  /// @return     The reply, or std::nullopt if there is no synchronous
+  /// listener.
+  ///
+  std::optional<std::vector<uint8_t>> DispatchSynchronousPlatformMessage(
+      std::unique_ptr<PlatformMessage> message);
+
+  //----------------------------------------------------------------------------
   /// @brief      Overridden by embedders to perform actions in response to
   ///             platform messages sent from the framework to the embedder.
   ///             Default implementation of this method simply returns an empty
@@ -464,6 +495,21 @@ class PlatformView {
   /// @param[in]  message  The message
   ///
   virtual void HandlePlatformMessage(std::unique_ptr<PlatformMessage> message);
+
+  //----------------------------------------------------------------------------
+  /// @brief      Overridden by embedders to synchronously handle a platform
+  ///             message sent from the framework and return the reply.
+  ///
+  ///             Only invoked when the UI and platform threads are merged, so
+  ///             the implementation runs on the platform thread. The default
+  ///             implementation returns std::nullopt (no synchronous handler).
+  ///
+  /// @param[in]  message  The message.
+  ///
+  /// @return     The reply, or std::nullopt if there is no synchronous handler.
+  ///
+  virtual std::optional<std::vector<uint8_t>> HandleSynchronousPlatformMessage(
+      std::unique_ptr<PlatformMessage> message);
 
   //----------------------------------------------------------------------------
   /// @brief      Used by embedders to dispatch an accessibility action to a

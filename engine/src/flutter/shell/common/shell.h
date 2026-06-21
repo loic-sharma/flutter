@@ -7,8 +7,10 @@
 
 #include <functional>
 #include <mutex>
+#include <optional>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 #include "flutter/assets/directory_asset_bundle.h"
 #include "flutter/common/graphics/texture.h"
@@ -605,6 +607,11 @@ class Shell final : public PlatformView::Delegate,
       std::unique_ptr<PlatformMessage> message) override;
 
   // |PlatformView::Delegate|
+  std::optional<std::vector<uint8_t>>
+  OnPlatformViewDispatchSynchronousPlatformMessage(
+      std::unique_ptr<PlatformMessage> message) override;
+
+  // |PlatformView::Delegate|
   void OnPlatformViewDispatchPointerDataPacket(
       std::unique_ptr<PointerDataPacket> packet) override;
 
@@ -687,6 +694,10 @@ class Shell final : public PlatformView::Delegate,
 
   // |Engine::Delegate|
   void OnEngineHandlePlatformMessage(
+      std::unique_ptr<PlatformMessage> message) override;
+
+  // |Engine::Delegate|
+  std::optional<std::vector<uint8_t>> OnEngineHandleSynchronousPlatformMessage(
       std::unique_ptr<PlatformMessage> message) override;
 
   void HandleEngineSkiaMessage(std::unique_ptr<PlatformMessage> message);

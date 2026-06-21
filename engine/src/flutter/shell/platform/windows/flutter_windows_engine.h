@@ -219,9 +219,32 @@ class FlutterWindowsEngine {
       const uint8_t* data,
       size_t data_length);
 
+  // Sends a synchronous message to the engine and blocks until it replies.
+  //
+  // On success returns true and sets |*reply_out|/|*reply_size_out| to an
+  // engine-owned buffer the caller must free with |ReleaseSynchronousReply|.
+  // Returns false if the engine is not running with merged threads or the
+  // Flutter side has no synchronous handler for |channel|.
+  bool SendSynchronousPlatformMessage(const char* channel,
+                                      const uint8_t* message,
+                                      const size_t message_size,
+                                      const uint8_t** reply_out,
+                                      size_t* reply_size_out);
+
+  // Frees a reply buffer returned by |SendSynchronousPlatformMessage|.
+  void ReleaseSynchronousReply(const uint8_t* reply);
+
   // Callback passed to Flutter engine for notifying window of platform
   // messages.
   void HandlePlatformMessage(const FlutterPlatformMessage*);
+
+  // Callback passed to the Flutter engine for handling synchronous platform
+  // messages from Dart. Invoked on the platform thread; must produce the reply
+  // before returning by calling |reply|.
+  void HandleSynchronousPlatformMessage(
+      const FlutterSynchronousPlatformMessage* message,
+      FlutterSynchronousReply reply,
+      void* reply_user_data);
 
   // Informs the engine that the system font list has changed.
   void ReloadSystemFonts();

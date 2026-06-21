@@ -60,7 +60,7 @@ bool FlutterWindow::OnCreate() {
   flutter::MethodChannel<> channel(
       flutter_controller_->engine()->messenger(), "samples.flutter.io/battery",
       &flutter::StandardMethodCodec::GetInstance());
-  channel.SetMethodCallHandler(
+  channel.SetMethodCallHandlerSync(
       [](const flutter::MethodCall<>& call,
          std::unique_ptr<flutter::MethodResult<>> result) {
         if (call.method_name() == "getBatteryLevel") {

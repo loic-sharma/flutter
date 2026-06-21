@@ -168,6 +168,24 @@ void EmbedderTestContext::PlatformMessageCallback(
   }
 }
 
+void EmbedderTestContext::SetSynchronousPlatformMessageCallback(
+    const std::function<std::vector<uint8_t>(
+        const FlutterSynchronousPlatformMessage*)>& callback) {
+  synchronous_platform_message_callback_ = callback;
+}
+
+void EmbedderTestContext::SynchronousPlatformMessageCallback(
+    const FlutterSynchronousPlatformMessage* message,
+    FlutterSynchronousReply reply,
+    void* reply_user_data) {
+  std::vector<uint8_t> response;
+  if (synchronous_platform_message_callback_) {
+    response = synchronous_platform_message_callback_(message);
+  }
+  reply(response.empty() ? nullptr : response.data(), response.size(),
+        reply_user_data);
+}
+
 void EmbedderTestContext::SetLogMessageCallback(
     const LogMessageCallback& callback) {
   log_message_callback_ = callback;

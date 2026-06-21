@@ -5,9 +5,11 @@
 #define FML_USED_ON_EMBEDDER
 #define RAPIDJSON_HAS_STDSTRING 1
 
+#include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -2205,6 +2207,34 @@ FlutterEngineResult FlutterEngineInitialize(size_t version,
         };
   }
 
+  flutter::PlatformViewEmbedder::SynchronousPlatformMessageCallback
+      synchronous_platform_message_callback = nullptr;
+  if (SAFE_ACCESS(args, synchronous_platform_message_callback, nullptr) !=
+      nullptr) {
+    synchronous_platform_message_callback =
+        [ptr = args->synchronous_platform_message_callback,
+         user_data](std::unique_ptr<flutter::PlatformMessage> message)
+        -> std::optional<std::vector<uint8_t>> {
+      const FlutterSynchronousPlatformMessage incoming_message = {
+          sizeof(FlutterSynchronousPlatformMessage),  // struct_size
+          message->channel().c_str(),                 // channel
+          message->data().GetMapping(),               // message
+          message->data().GetSize(),                  // message_size
+      };
+      // The handler invokes |reply| synchronously before returning. Capture the
+      // bytes into |result|.
+      std::optional<std::vector<uint8_t>> result;
+      FlutterSynchronousReply reply = [](const uint8_t* data, size_t size,
+                                         void* reply_user_data) {
+        auto* out =
+            static_cast<std::optional<std::vector<uint8_t>>*>(reply_user_data);
+        *out = std::vector<uint8_t>(data, data + size);
+      };
+      ptr(&incoming_message, reply, &result, user_data);
+      return result;
+    };
+  }
+
   flutter::VsyncWaiterEmbedder::VsyncCallback vsync_callback = nullptr;
   if (SAFE_ACCESS(args, vsync_callback, nullptr) != nullptr) {
     vsync_callback = [ptr = args->vsync_callback, user_data](intptr_t baton) {
@@ -2309,6 +2339,7 @@ FlutterEngineResult FlutterEngineInitialize(size_t version,
       {
           update_semantics_callback,                  //
           platform_message_response_callback,         //
+          synchronous_platform_message_callback,      //
           vsync_callback,                             //
           compute_platform_resolved_locale_callback,  //
           on_pre_engine_restart_callback,             //
@@ -3147,6 +3178,72 @@ FlutterEngineResult FlutterEngineSendPlatformMessageResponse(
   return kSuccess;
 }
 
+FlutterEngineResult FlutterEngineSendSynchronousPlatformMessage(
+    FLUTTER_API_SYMBOL(FlutterEngine) engine,
+    const FlutterSynchronousPlatformMessage* flutter_message,
+    const uint8_t** reply_out,
+    size_t* reply_size_out) {
+  if (engine == nullptr) {
+    return LOG_EMBEDDER_ERROR(kInvalidArguments, "Invalid engine handle.");
+  }
+  if (flutter_message == nullptr ||
+      SAFE_ACCESS(flutter_message, channel, nullptr) == nullptr) {
+    return LOG_EMBEDDER_ERROR(kInvalidArguments, "Invalid message argument.");
+  }
+  if (reply_out == nullptr || reply_size_out == nullptr) {
+    return LOG_EMBEDDER_ERROR(kInvalidArguments,
+                              "Invalid reply out-parameters.");
+  }
+
+  auto embedder_engine = reinterpret_cast<flutter::EmbedderEngine*>(engine);
+
+  // Synchronous messages require merged UI and platform threads, and must be
+  // sent from the platform thread.
+  const flutter::TaskRunners& task_runners = embedder_engine->GetTaskRunners();
+  if (task_runners.GetUITaskRunner() != task_runners.GetPlatformTaskRunner()) {
+    return LOG_EMBEDDER_ERROR(
+        kThreadMergeRequired,
+        "Synchronous platform messages require merged threads.");
+  }
+
+  size_t message_size = SAFE_ACCESS(flutter_message, message_size, 0);
+  const uint8_t* message_data = SAFE_ACCESS(flutter_message, message, nullptr);
+
+  std::optional<std::vector<uint8_t>> reply =
+      embedder_engine->SendSynchronousPlatformMessage(
+          flutter_message->channel, message_data, message_size);
+  if (!reply.has_value()) {
+    return LOG_EMBEDDER_ERROR(
+        kInternalInconsistency,
+        "No synchronous handler is registered for the channel.");
+  }
+
+  // Hand ownership of an engine-allocated buffer to the caller. Released by
+  // FlutterEngineReleaseSyncReply.
+  if (reply->empty()) {
+    *reply_out = nullptr;
+    *reply_size_out = 0;
+  } else {
+    uint8_t* buffer = new uint8_t[reply->size()];
+    std::copy(reply->begin(), reply->end(), buffer);
+    *reply_out = buffer;
+    *reply_size_out = reply->size();
+  }
+  return kSuccess;
+}
+
+FlutterEngineResult FlutterEngineReleaseSyncReply(
+    FLUTTER_API_SYMBOL(FlutterEngine) engine,
+    const uint8_t* reply) {
+  if (engine == nullptr) {
+    return LOG_EMBEDDER_ERROR(kInvalidArguments, "Invalid engine handle.");
+  }
+  // Matches the new[] in FlutterEngineSendSynchronousPlatformMessage. A null
+  // reply (Dart replied with null) is a no-op.
+  delete[] reply;
+  return kSuccess;
+}
+
 FlutterEngineResult __FlutterEngineFlushPendingTasksNow() {
   fml::MessageLoop::GetCurrent().RunExpiredTasksNow();
   return kSuccess;
@@ -3765,6 +3862,9 @@ FlutterEngineResult FlutterEngineGetProcAddresses(
            FlutterPlatformMessageReleaseResponseHandle);
   SET_PROC(SendPlatformMessageResponse,
            FlutterEngineSendPlatformMessageResponse);
+  SET_PROC(SendSynchronousPlatformMessage,
+           FlutterEngineSendSynchronousPlatformMessage);
+  SET_PROC(ReleaseSyncReply, FlutterEngineReleaseSyncReply);
   SET_PROC(RegisterExternalTexture, FlutterEngineRegisterExternalTexture);
   SET_PROC(UnregisterExternalTexture, FlutterEngineUnregisterExternalTexture);
   SET_PROC(MarkExternalTextureFrameAvailable,

@@ -95,6 +95,39 @@ void FlutterDesktopMessengerSetCallback(FlutterDesktopMessengerRef messenger,
   }
 }
 
+bool FlutterDesktopMessengerSendSync(FlutterDesktopMessengerRef messenger,
+                                     const char* channel,
+                                     const uint8_t* message,
+                                     const size_t message_size,
+                                     const uint8_t** reply_out,
+                                     size_t* reply_size_out) {
+  bool result = false;
+  if (s_stub_implementation) {
+    result = s_stub_implementation->MessengerSendSync(
+        channel, message, message_size, reply_out, reply_size_out);
+  }
+  return result;
+}
+
+void FlutterDesktopMessengerReleaseSyncReply(
+    FlutterDesktopMessengerRef messenger,
+    const uint8_t* reply) {
+  if (s_stub_implementation) {
+    s_stub_implementation->MessengerReleaseSyncReply(reply);
+  }
+}
+
+void FlutterDesktopMessengerSetSyncCallback(
+    FlutterDesktopMessengerRef messenger,
+    const char* channel,
+    FlutterDesktopSyncMessageCallback callback,
+    void* user_data) {
+  if (s_stub_implementation) {
+    s_stub_implementation->MessengerSetSyncCallback(channel, callback,
+                                                    user_data);
+  }
+}
+
 FlutterDesktopMessengerRef FlutterDesktopMessengerAddRef(
     FlutterDesktopMessengerRef messenger) {
   assert(false);  // not implemented

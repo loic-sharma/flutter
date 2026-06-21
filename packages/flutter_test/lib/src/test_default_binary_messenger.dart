@@ -45,6 +45,7 @@ typedef AllMessagesHandler =
 /// [handlePlatformMessage].
 ///
 /// Listeners for these messages are configured using [setMessageHandler].
+// TODO(loic-sharma): Update this to support synchronous messages.
 class TestDefaultBinaryMessenger extends BinaryMessenger {
   /// Creates a [TestDefaultBinaryMessenger] instance.
   TestDefaultBinaryMessenger(

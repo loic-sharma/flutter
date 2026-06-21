@@ -51,6 +51,39 @@ typedef void (*FlutterDesktopMessageCallback)(
     const FlutterDesktopMessage* /* message*/,
     void* /* user data */);
 
+// A synchronous binary message received from Flutter.
+//
+// Unlike FlutterDesktopMessage, there is no response handle: the handler
+// returns its reply synchronously via the |reply| callback.
+typedef struct {
+  // Size of this struct as created by Flutter.
+  size_t struct_size;
+  // The name of the channel used for this message.
+  const char* channel;
+  // The raw message data.
+  const uint8_t* message;
+  // The length of |message|.
+  size_t message_size;
+} FlutterDesktopSynchronousMessage;
+
+// Supplied to a FlutterDesktopSyncMessageCallback so it can return its reply.
+// Must be called exactly once, synchronously, before the handler returns. The
+// engine copies the bytes. Pass null/0 to reply with null.
+typedef void (*FlutterDesktopSyncReply)(const uint8_t* /* reply */,
+                                        size_t /* reply_size */,
+                                        void* /* reply_user_data */);
+
+// Function pointer type for synchronous message handler registration.
+//
+// Invoked on the platform thread; the handler must produce the reply before
+// returning by calling |reply| with |reply_user_data|.
+typedef void (*FlutterDesktopSyncMessageCallback)(
+    FlutterDesktopMessengerRef /* messenger */,
+    const FlutterDesktopSynchronousMessage* /* message */,
+    FlutterDesktopSyncReply /* reply */,
+    void* /* reply_user_data */,
+    void* /* user data */);
+
 // Sends a binary message to the Flutter side on the specified channel.
 FLUTTER_EXPORT bool FlutterDesktopMessengerSend(
     FlutterDesktopMessengerRef messenger,
@@ -76,6 +109,40 @@ FLUTTER_EXPORT void FlutterDesktopMessengerSendResponse(
     const FlutterDesktopMessageResponseHandle* handle,
     const uint8_t* data,
     size_t data_length);
+
+// Sends a synchronous binary message to the Flutter side on the specified
+// channel, blocking until Flutter produces a reply.
+//
+// On success, returns true and sets |*reply_out| to a buffer of
+// |*reply_size_out| bytes that the caller must free with
+// FlutterDesktopMessengerReleaseSyncReply (the buffer may be null/0 if Flutter
+// replied with null). Returns false if the engine does not have merged UI and
+// platform threads, if there is no synchronous handler registered on the
+// Flutter side, or if called off the platform thread.
+FLUTTER_EXPORT bool FlutterDesktopMessengerSendSync(
+    FlutterDesktopMessengerRef messenger,
+    const char* channel,
+    const uint8_t* message,
+    const size_t message_size,
+    const uint8_t** reply_out,
+    size_t* reply_size_out);
+
+// Frees a reply buffer returned by FlutterDesktopMessengerSendSync.
+FLUTTER_EXPORT void FlutterDesktopMessengerReleaseSyncReply(
+    FlutterDesktopMessengerRef messenger,
+    const uint8_t* reply);
+
+// Registers a synchronous callback for incoming messages from the Flutter side
+// on the specified channel.
+//
+// Replaces any existing synchronous callback. Provide a null handler to
+// unregister. Synchronous and asynchronous handlers for a channel are
+// independent.
+FLUTTER_EXPORT void FlutterDesktopMessengerSetSyncCallback(
+    FlutterDesktopMessengerRef messenger,
+    const char* channel,
+    FlutterDesktopSyncMessageCallback callback,
+    void* user_data);
 
 // Registers a callback function for incoming binary messages from the Flutter
 // side on the specified channel.

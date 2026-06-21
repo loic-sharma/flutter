@@ -683,6 +683,39 @@ class PlatformDispatcher {
     ByteData? data,
   );
 
+  /// Sends a message to a platform-specific plugin and synchronously returns its
+  /// reply.
+  ///
+  /// Unlike [sendPlatformMessage], this blocks the calling thread until the
+  /// platform's synchronous handler for [name] runs and returns a reply. The
+  /// handler runs on the platform thread, which is why this is only supported
+  /// when the engine is configured with merged UI and platform threads. Merged
+  /// threads are the default everywhere except desktop embedders (Linux, macOS,
+  /// Windows) that have explicitly opted out of thread merging.
+  ///
+  /// This may only be called from the root isolate. Calling it from a background
+  /// isolate throws, because background isolates do not share the platform
+  /// thread.
+  ///
+  /// Throws an [Exception] if the threads are not merged, if called off the root
+  /// isolate, or if the platform reports an error. Returns the reply, or null if
+  /// the platform has no synchronous handler for [name].
+  ByteData? sendSynchronousPlatformMessage(String name, ByteData? data) {
+    final Object? result = __sendSynchronousPlatformMessage(name, data);
+    if (result is String) {
+      throw Exception(result);
+    }
+    return result as ByteData?;
+  }
+
+  // Returns either the reply (a ByteData or null) on success, or a String error
+  // message on failure (no merged threads, not the root isolate, or a handler
+  // error). The two cases are distinguished by the runtime type of the result.
+  @Native<Handle Function(Handle, Handle)>(
+    symbol: 'PlatformConfigurationNativeApi::SendSynchronousPlatformMessage',
+  )
+  external static Object? __sendSynchronousPlatformMessage(String name, ByteData? data);
+
   /// Sends a message to a platform-specific plugin via a [SendPort].
   ///
   /// This operates similarly to [sendPlatformMessage] but is used when sending
@@ -826,6 +859,12 @@ class PlatformDispatcher {
         _respondToPlatformMessage(responseId, responseData);
       });
     }
+  }
+
+  // Called from the engine, via hooks.dart, when the platform sends a
+  // synchronous platform message. Returns the reply synchronously.
+  ByteData? _dispatchSynchronousPlatformMessage(String name, ByteData? data) {
+    return channelBuffers.handleSyncMessage(name, data);
   }
 
   /// Set the debug name associated with this platform dispatcher's root
