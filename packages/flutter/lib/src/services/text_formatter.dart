@@ -570,6 +570,7 @@ class LengthLimitingTextInputFormatter extends TextInputFormatter {
 
     assert(maxLength > 0);
 
+    // TODO(loic-sharma): Allow out-of-tree platforms to specify their own default max length enforcement.
     switch (maxLengthEnforcement ?? getDefaultMaxLengthEnforcement()) {
       case MaxLengthEnforcement.none:
         return newValue;

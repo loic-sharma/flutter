@@ -1154,6 +1154,7 @@ class _TextFieldState extends State<TextField>
   FocusNode? _focusNode;
   FocusNode get _effectiveFocusNode => widget.focusNode ?? (_focusNode ??= FocusNode());
 
+  // TODO(loic-sharma): Use an inherited widget instead of a static global?
   MaxLengthEnforcement get _effectiveMaxLengthEnforcement =>
       widget.maxLengthEnforcement ??
       LengthLimitingTextInputFormatter.getDefaultMaxLengthEnforcement(Theme.of(context).platform);
