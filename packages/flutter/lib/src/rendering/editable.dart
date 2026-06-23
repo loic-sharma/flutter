@@ -1829,33 +1829,28 @@ class RenderEditable extends RenderBox
     caretRect = Offset(caretX, caretRect.top) & caretRect.size;
 
     final double fullHeight = _textPainter.getFullHeightForCaret(caretPosition, caretPrototype);
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        // Center the caret vertically along the text.
-        final double heightDiff = fullHeight - caretRect.height;
-        caretRect = Rect.fromLTWH(
-          caretRect.left,
-          caretRect.top + heightDiff / 2,
-          caretRect.width,
-          caretRect.height,
-        );
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        // Override the height to take the full height of the glyph at the TextPosition
-        // when not on iOS. iOS has special handling that creates a taller caret.
-        // TODO(garyq): see https://github.com/flutter/flutter/issues/120836.
-        final double caretHeight = cursorHeight;
-        // Center the caret vertically along the text.
-        final double heightDiff = fullHeight - caretHeight;
-        caretRect = Rect.fromLTWH(
-          caretRect.left,
-          caretRect.top - _kCaretHeightOffset + heightDiff / 2,
-          caretRect.width,
-          caretHeight,
-        );
+    if (defaultIsDarwin) {
+      // Center the caret vertically along the text.
+      final double heightDiff = fullHeight - caretRect.height;
+      caretRect = Rect.fromLTWH(
+        caretRect.left,
+        caretRect.top + heightDiff / 2,
+        caretRect.width,
+        caretRect.height,
+      );
+    } else {
+      // Override the height to take the full height of the glyph at the TextPosition
+      // when not on iOS. iOS has special handling that creates a taller caret.
+      // TODO(garyq): see https://github.com/flutter/flutter/issues/120836.
+      final double caretHeight = cursorHeight;
+      // Center the caret vertically along the text.
+      final double heightDiff = fullHeight - caretHeight;
+      caretRect = Rect.fromLTWH(
+        caretRect.left,
+        caretRect.top - _kCaretHeightOffset + heightDiff / 2,
+        caretRect.width,
+        caretHeight,
+      );
     }
 
     caretRect = caretRect.shift(_paintOffset);
@@ -2319,20 +2314,15 @@ class RenderEditable extends RenderBox
   /// of the cursor for iOS is approximate and obtained through an eyeball
   /// comparison.
   void _computeCaretPrototype() {
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        _caretPrototype = Rect.fromLTWH(0.0, 0.0, cursorWidth, cursorHeight + 2);
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        _caretPrototype = Rect.fromLTWH(
-          0.0,
-          _kCaretHeightOffset,
-          cursorWidth,
-          cursorHeight - 2.0 * _kCaretHeightOffset,
-        );
+    if (defaultIsDarwin) {
+      _caretPrototype = Rect.fromLTWH(0.0, 0.0, cursorWidth, cursorHeight + 2);
+    } else {
+      _caretPrototype = Rect.fromLTWH(
+        0.0,
+        _kCaretHeightOffset,
+        cursorWidth,
+        cursorHeight - 2.0 * _kCaretHeightOffset,
+      );
     }
   }
 
