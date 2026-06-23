@@ -583,6 +583,7 @@ abstract class BindingBase {
     }
 
     assert(() {
+      // TODO(loic-sharma): Add isMobile / isDesktop / isDarwin overrides here too.
       registerServiceExtension(
         name: FoundationServiceExtensions.platformOverride.name,
         callback: (Map<String, String> parameters) async {

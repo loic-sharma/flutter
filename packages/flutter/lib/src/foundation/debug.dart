@@ -40,6 +40,9 @@ bool debugAssertAllFoundationVarsUnset(
   assert(() {
     if (debugPrint != debugPrintOverride ||
         debugDefaultTargetPlatformOverride != null ||
+        debugDefaultIsDesktopOverride != null ||
+        debugDefaultIsMobileOverride != null ||
+        debugDefaultIsDarwinOverride != null ||
         debugDoublePrecision != null ||
         debugBrightnessOverride != null) {
       throw FlutterError(reason);
