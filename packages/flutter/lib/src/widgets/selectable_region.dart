@@ -295,47 +295,19 @@ class SelectableRegion extends StatefulWidget {
   ///   [AdaptiveTextSelectionToolbar.buttonItems].
   /// * [AdaptiveTextSelectionToolbar.getAdaptiveButtons], which builds the button
   ///   Widgets for the current platform given [ContextMenuButtonItem]s.
+  @deprecated // TODO(loic-sharma)
   static List<ContextMenuButtonItem> getSelectableButtonItems({
     required SelectionGeometry selectionGeometry,
     required VoidCallback onCopy,
     required VoidCallback onSelectAll,
     required VoidCallback? onShare,
   }) {
-    final canCopy = selectionGeometry.status == SelectionStatus.uncollapsed;
-    final bool canSelectAll = selectionGeometry.hasContent;
-    // The share button is not supported on the web.
-    final bool platformCanShare =
-        !kIsWeb &&
-        // TODO: ???
-        switch (defaultTargetPlatform) {
-          TargetPlatform.android => selectionGeometry.status == SelectionStatus.uncollapsed,
-          TargetPlatform.macOS ||
-          TargetPlatform.fuchsia ||
-          TargetPlatform.linux ||
-          TargetPlatform.windows => false,
-          // TODO(bleroux): the share button should be shown on iOS but the share
-          // functionality requires some changes on the engine side because, on iPad,
-          // it needs an anchor for the popup.
-          // See: https://github.com/flutter/flutter/issues/141775.
-          TargetPlatform.iOS => false,
-        };
-    final bool canShare = onShare != null && platformCanShare;
-
-    // On Android, the share button is before the select all button.
-    final showShareBeforeSelectAll = defaultTargetPlatform == TargetPlatform.android;
-
-    // Determine which buttons will appear so that the order and total number is
-    // known. A button's position in the menu can slightly affect its
-    // appearance.
-    return <ContextMenuButtonItem>[
-      if (canCopy) ContextMenuButtonItem(onPressed: onCopy, type: ContextMenuButtonType.copy),
-      if (canShare && showShareBeforeSelectAll)
-        ContextMenuButtonItem(onPressed: onShare, type: ContextMenuButtonType.share),
-      if (canSelectAll)
-        ContextMenuButtonItem(onPressed: onSelectAll, type: ContextMenuButtonType.selectAll),
-      if (canShare && !showShareBeforeSelectAll)
-        ContextMenuButtonItem(onPressed: onShare, type: ContextMenuButtonType.share),
-    ];
+    return SelectionBehavior._getSelectableButtonItems(
+      selectionGeometry: selectionGeometry,
+      onCopy: onCopy,
+      onSelectAll: onSelectAll,
+      onShare: onShare,
+    );
   }
 
   @override
@@ -475,19 +447,7 @@ class SelectableRegionState extends State<SelectableRegion>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // TODO: ????
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.iOS:
-        break;
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        return;
-    }
 
-    // Hide the text selection toolbar on mobile when orientation changes.
     final Orientation orientation = MediaQuery.orientationOf(context);
     if (_lastOrientation == null) {
       _lastOrientation = orientation;
@@ -495,7 +455,14 @@ class SelectableRegionState extends State<SelectableRegion>
     }
     if (orientation != _lastOrientation) {
       _lastOrientation = orientation;
-      hideToolbar(defaultTargetPlatform == TargetPlatform.android);
+      switch (SelectionConfiguration.of(context).orientationChangedBehavior(context)) {
+        case SelectionOrientationChangedBehavior.none:
+          break;
+        case SelectionOrientationChangedBehavior.hideToolbarAndHandles:
+          hideToolbar();
+        case SelectionOrientationChangedBehavior.hideToolbar:
+          hideToolbar(false);
+      }
     }
   }
 
@@ -604,8 +571,22 @@ class SelectableRegionState extends State<SelectableRegion>
   // This method should be used in all instances when details.consecutiveTapCount
   // would be used.
   int _getEffectiveConsecutiveTapCount(int rawCount) {
+    // TODO(loic-sharma): Maybe do something like:
+    //
+    // SelectableRegionConfiguration.of(context).getConsecutiveTapBehavior(context);
+    // enum ConsecutiveTapBehavior {
+    //   resetToZeroWhenExceedMaxConsecutiveTap,
+    //   holdAtMaxConsecutiveTapWhenExceedMaxConsecutiveTap,
+    // }
+    //
+    // Android, Fuchsia, and Linux reset their tap count to 0 when the number of consecutive taps exceeds the max consecutive tap supported.
+    // Android sets max consecutive tap to 2 when the pointer device kind is not precise like a mouse, and 3 otherwise.
+    // iOS, macOS, Linux and Windows hold their tap count at the max consecutive taps.
+    //
+    // Alternative:
+    //
+    // SelectableRegionConfiguration.of(context).getEffectiveConsecutiveTapCount(context, rawCount);
     var maxConsecutiveTap = 3;
-    // TODO: ???
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.fuchsia:
@@ -708,6 +689,7 @@ class SelectableRegionState extends State<SelectableRegion>
               // iOS the [TapAndHorizontalDragGestureRecognizer]
               // will wait for all other gestures to lose before
               // declaring victory.
+              // TODO(loic-sharma)
               ..eagerVictoryOnDrag = defaultTargetPlatform != TargetPlatform.iOS
               ..onTapDown = _startNewMouseSelectionGesture
               ..onTapUp = _handleMouseTapUp
@@ -1005,6 +987,7 @@ class SelectableRegionState extends State<SelectableRegion>
     _lastSecondaryTapDownPosition = details.globalPosition;
     _focusNode.requestFocus();
     // TODO: ???
+    // SelectionConfiguration
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.fuchsia:
@@ -1657,25 +1640,21 @@ class SelectableRegionState extends State<SelectableRegion>
   /// * [AdaptiveTextSelectionToolbar.getAdaptiveButtons], which builds the
   ///   button Widgets for the current platform given [ContextMenuButtonItem]s.
   List<ContextMenuButtonItem> get contextMenuButtonItems {
-    return SelectableRegion.getSelectableButtonItems(
+    return SelectionConfiguration.of(context).getSelectableButtonItems(
+      context,
       selectionGeometry: _selectionDelegate.value,
       onCopy: () {
         _copy();
 
-        // On Android copy should clear the selection.
-        // TODO: ???
-        switch (defaultTargetPlatform) {
-          case TargetPlatform.android:
-          case TargetPlatform.fuchsia:
+        switch (SelectionConfiguration.of(context).toolbarCopyBehavior(context)) {
+          case SelectionToolbarCopyBehavior.clearSelection:
             clearSelection();
             _selectionStatusNotifier.value = SelectableRegionSelectionStatus.changing;
             _finalizeSelectableRegionStatus();
-          case TargetPlatform.iOS:
-            hideToolbar(false);
-          case TargetPlatform.linux:
-          case TargetPlatform.macOS:
-          case TargetPlatform.windows:
+          case SelectionToolbarCopyBehavior.hideToolbarAndHandles:
             hideToolbar();
+          case SelectionToolbarCopyBehavior.hideToolbar:
+            hideToolbar(false);
         }
       },
       onSelectAll: () {
@@ -1689,20 +1668,15 @@ class SelectableRegionState extends State<SelectableRegion>
       onShare: () {
         _share();
 
-        // On Android, share should clear the selection.
-        // TODO: ???
-        switch (defaultTargetPlatform) {
-          case TargetPlatform.android:
-          case TargetPlatform.fuchsia:
+        switch (SelectionConfiguration.of(context).toolbarShareBehavior(context)) {
+          case SelectionToolbarShareBehavior.clearSelection:
             clearSelection();
             _selectionStatusNotifier.value = SelectableRegionSelectionStatus.changing;
             _finalizeSelectableRegionStatus();
-          case TargetPlatform.iOS:
-            hideToolbar(false);
-          case TargetPlatform.linux:
-          case TargetPlatform.macOS:
-          case TargetPlatform.windows:
+          case SelectionToolbarShareBehavior.hideToolbarAndHandles:
             hideToolbar();
+          case SelectionToolbarShareBehavior.hideToolbar:
+            hideToolbar(false);
         }
       },
     )..addAll(_textProcessingActionButtonItems);
@@ -3671,3 +3645,113 @@ final class SelectionListenerNotifier extends ChangeNotifier {
     super.addListener(listener);
   }
 }
+
+@immutable
+class SelectionBehavior {
+  const SelectionBehavior();
+
+  SelectionOrientationChangedBehavior orientationChangedBehavior(BuildContext context) {
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android => SelectionOrientationChangedBehavior.hideToolbarAndHandles,
+      TargetPlatform.iOS => SelectionOrientationChangedBehavior.hideToolbar,
+      TargetPlatform.fuchsia || TargetPlatform.linux => SelectionOrientationChangedBehavior.none,
+      TargetPlatform.macOS || TargetPlatform.windows => SelectionOrientationChangedBehavior.none,
+    };
+  }
+
+  SelectionToolbarCopyBehavior toolbarCopyBehavior(BuildContext context) {
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android || TargetPlatform.fuchsia => SelectionToolbarCopyBehavior.clearSelection,
+      TargetPlatform.iOS => SelectionToolbarCopyBehavior.hideToolbar,
+      TargetPlatform.linux || TargetPlatform.macOS || TargetPlatform.windows => SelectionToolbarCopyBehavior.hideToolbarAndHandles,
+    };
+  }
+
+  SelectionToolbarShareBehavior toolbarShareBehavior(BuildContext context) {
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android || TargetPlatform.fuchsia => SelectionToolbarShareBehavior.clearSelection,
+      TargetPlatform.iOS => SelectionToolbarShareBehavior.hideToolbar,
+      TargetPlatform.linux || TargetPlatform.macOS || TargetPlatform.windows => SelectionToolbarShareBehavior.hideToolbarAndHandles,
+    };
+  }
+
+  List<ContextMenuButtonItem> getSelectableButtonItems(BuildContext context, {
+    required SelectionGeometry selectionGeometry,
+    required VoidCallback onCopy,
+    required VoidCallback onSelectAll,
+    required VoidCallback? onShare,
+  }) {
+    return _getSelectableButtonItems(
+      selectionGeometry: selectionGeometry,
+      onCopy: onCopy,
+      onSelectAll: onSelectAll,
+      onShare: onShare,
+    );
+  }
+
+  static List<ContextMenuButtonItem> _getSelectableButtonItems({
+    required SelectionGeometry selectionGeometry,
+    required VoidCallback onCopy,
+    required VoidCallback onSelectAll,
+    required VoidCallback? onShare,
+  }) {
+    final canCopy = selectionGeometry.status == SelectionStatus.uncollapsed;
+    final bool canSelectAll = selectionGeometry.hasContent;
+    // The share button is not supported on the web.
+    final bool platformCanShare =
+        !kIsWeb &&
+        switch (defaultTargetPlatform) {
+          TargetPlatform.android => selectionGeometry.status == SelectionStatus.uncollapsed,
+          TargetPlatform.macOS ||
+          TargetPlatform.fuchsia ||
+          TargetPlatform.linux ||
+          TargetPlatform.windows => false,
+          // TODO(bleroux): the share button should be shown on iOS but the share
+          // functionality requires some changes on the engine side because, on iPad,
+          // it needs an anchor for the popup.
+          // See: https://github.com/flutter/flutter/issues/141775.
+          TargetPlatform.iOS => false,
+        };
+    final bool canShare = onShare != null && platformCanShare;
+
+    final showShareBeforeSelectAll = defaultTargetPlatform == TargetPlatform.android;
+
+    // Determine which buttons will appear so that the order and total number is
+    // known. A button's position in the menu can slightly affect its
+    // appearance.
+    return <ContextMenuButtonItem>[
+      if (canCopy) ContextMenuButtonItem(onPressed: onCopy, type: ContextMenuButtonType.copy),
+      if (canShare && showShareBeforeSelectAll)
+        ContextMenuButtonItem(onPressed: onShare, type: ContextMenuButtonType.share),
+      if (canSelectAll)
+        ContextMenuButtonItem(onPressed: onSelectAll, type: ContextMenuButtonType.selectAll),
+      if (canShare && !showShareBeforeSelectAll)
+        ContextMenuButtonItem(onPressed: onShare, type: ContextMenuButtonType.share),
+    ];
+  }
+
+
+  bool shouldNotify(covariant SelectionBehavior oldDelegate) => false;
+}
+
+class SelectionConfiguration extends InheritedWidget {
+  const SelectionConfiguration({super.key, required this.behavior, required super.child});
+
+  final SelectionBehavior behavior;
+
+  static SelectionBehavior of(BuildContext context) {
+    final SelectionConfiguration? configuration = context
+        .dependOnInheritedWidgetOfExactType<SelectionConfiguration>();
+    return configuration?.behavior ?? const SelectionBehavior();
+  }
+
+  @override
+  bool updateShouldNotify(SelectionConfiguration oldWidget) {
+    return behavior.runtimeType != oldWidget.behavior.runtimeType ||
+        (behavior != oldWidget.behavior && behavior.shouldNotify(oldWidget.behavior));
+  }
+}
+
+enum SelectionOrientationChangedBehavior { none, hideToolbarAndHandles, hideToolbar }
+enum SelectionToolbarCopyBehavior { clearSelection, hideToolbarAndHandles, hideToolbar }
+enum SelectionToolbarShareBehavior { clearSelection, hideToolbarAndHandles, hideToolbar }

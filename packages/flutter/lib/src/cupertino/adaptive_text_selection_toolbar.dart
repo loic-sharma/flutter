@@ -151,6 +151,7 @@ class CupertinoAdaptiveTextSelectionToolbar extends StatelessWidget {
     required SelectionGeometry selectionGeometry,
     required this.anchors,
   }) : children = null,
+       // TODO(loic-sharma): Remove this and use SelectionConfiguration.of(context).getSelectableButtonItems(...) instead.
        buttonItems = SelectableRegion.getSelectableButtonItems(
          selectionGeometry: selectionGeometry,
          onCopy: onCopy,
