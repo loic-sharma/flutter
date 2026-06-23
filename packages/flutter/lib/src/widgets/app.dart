@@ -1815,6 +1815,8 @@ class _WidgetsAppState extends State<WidgetsApp> with WidgetsBindingObserver {
             shortcuts: widget.shortcuts ?? WidgetsApp.defaultShortcuts,
             // DefaultTextEditingShortcuts is nested inside Shortcuts so that it can
             // fall through to the defaultShortcuts.
+            // TODO(loic-sharma): Should we allow the platform to override the default text editing shortcuts
+            // with its own widget?
             child: DefaultTextEditingShortcuts(
               child: Actions(
                 actions:

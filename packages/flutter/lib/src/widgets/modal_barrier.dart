@@ -208,7 +208,9 @@ class ModalBarrier extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     assert(!dismissible || semanticsLabel == null || debugCheckHasDirectionality(context));
-    final bool platformSupportsDismissingBarrier = WidgetsBinding.instance.platformConfiguration.allowsModalDissmissal;
+
+    final ModalBarrierBehavior behavior = ModalBarrierConfiguration.of(context);
+    final bool platformSupportsDismissingBarrier = behavior.allowsModalDissmissal(context);
     final bool semanticsDismissible = dismissible && platformSupportsDismissingBarrier;
     final bool modalBarrierSemanticsDismissible =
         barrierSemanticsDismissible ?? semanticsDismissible;
@@ -430,5 +432,37 @@ class _ModalBarrierGestureDetector extends StatelessWidget {
     };
 
     return RawGestureDetector(gestures: gestures, behavior: HitTestBehavior.opaque, child: child);
+  }
+}
+
+@immutable
+class ModalBarrierBehavior {
+  const ModalBarrierBehavior();
+
+  bool allowsModalDissmissal(BuildContext context) {
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.fuchsia || TargetPlatform.linux || TargetPlatform.windows => true,
+      TargetPlatform.android || TargetPlatform.iOS || TargetPlatform.macOS => false,
+    };
+  }
+
+  bool shouldNotify(covariant ModalBarrierBehavior oldDelegate) => false;
+}
+
+class ModalBarrierConfiguration extends InheritedWidget {
+  const ModalBarrierConfiguration({super.key, required this.behavior, required super.child});
+
+  final ModalBarrierBehavior behavior;
+
+  static ModalBarrierBehavior of(BuildContext context) {
+    final ModalBarrierConfiguration? configuration = context
+        .dependOnInheritedWidgetOfExactType<ModalBarrierConfiguration>();
+    return configuration?.behavior ?? const ModalBarrierBehavior();
+  }
+
+  @override
+  bool updateShouldNotify(ModalBarrierConfiguration oldWidget) {
+    return behavior.runtimeType != oldWidget.behavior.runtimeType ||
+        (behavior != oldWidget.behavior && behavior.shouldNotify(oldWidget.behavior));
   }
 }

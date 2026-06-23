@@ -2160,16 +2160,11 @@ class WidgetsFlutterBinding extends BindingBase
 }
 
 class PlatformConfiguration {
+  // TODO(loic-sharma): Maybe instead of this, we should just update WidgetsApp / MaterialApp
+  // to let you wap out which widget it uses to create default text shortcuts?
   // If null, the default text editing shortcuts will be used.
   Map<ShortcutActivator, Intent>? get textEditingShortcuts => null;
 
-  // If null, the default text editing disabling shortcuts will be used.
+  // TODO(loic-sharma): If null, the default text editing disabling shortcuts will be used.
   Map<ShortcutActivator, Intent>? get textEditingDisablingShortcuts => null;
-
-  bool get allowsModalDissmissal {
-    return switch (defaultTargetPlatform) {
-      TargetPlatform.fuchsia || TargetPlatform.linux || TargetPlatform.windows => true,
-      TargetPlatform.android || TargetPlatform.iOS || TargetPlatform.macOS => false,
-    };
-  }
 }
