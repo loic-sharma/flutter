@@ -43,9 +43,10 @@ class _KeyExampleState extends State<KeyExample> {
 
   @override
   Widget build(BuildContext context) {
-    // This creates a row with two RandomColor widgets.
-    // When the user taps the "Press me" text, the two boxes swap places.
-    // The state (color) swaps only if the boxes have keys.
+    // This creates a row with two randomly colored boxes. When the user taps
+    // the "Press me" text, the two boxes swap places. With keys, the state
+    // (color) swaps with the boxes. Without keys, Flutter matches widgets by
+    // position, so the colors do not swap.
     final boxA = RandomColor(key: widget.useKeys ? ValueKey('A') : null);
     final boxB = RandomColor(key: widget.useKeys ? ValueKey('B') : null);
     final children = _swap ? [boxB, boxA] : [boxA, boxB];

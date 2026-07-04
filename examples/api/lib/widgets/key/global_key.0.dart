@@ -44,6 +44,10 @@ class _GlobalKeyExampleState extends State<GlobalKeyExample> {
 
   @override
   Widget build(BuildContext context) {
+    // This creates a row with two Slot widgets, one of which has a RandomColor
+    // child. When the user taps the "Press me" text, the RandomColor widget is
+    // moved to the other slot. The state (color) is preserved only if RandomColor
+    // has a [GlobalKey].
     final RandomColor randomColor = RandomColor(
       key: widget.useGlobalKey ? _globalKey : null,
     );
