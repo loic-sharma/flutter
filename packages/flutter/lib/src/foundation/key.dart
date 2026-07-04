@@ -19,7 +19,7 @@ import 'diagnostics.dart';
 /// losing their state. For example, you can use keys to preserve state when
 /// you change a collection of stateful widgets (e.g., add, remove, or reorder
 /// widgets in a [Row]). Or, you can use [GlobalKey]s to preserve state when
-/// you move a widget in the tree from one parent to another parent.
+/// you move a widget from one parent to another parent.
 ///
 /// A new widget will only be used to update an existing element if its
 /// [Widget.runtimeType] and [Widget.key] are the same as the element's
