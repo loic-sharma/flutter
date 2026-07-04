@@ -327,9 +327,10 @@ abstract class Widget extends DiagnosticableTree {
   /// {@macro flutter.foundation.Key}
   ///
   /// {@tool dartpad}
-  /// This sample shows two randomly colored boxes. When the user taps the button,
-  /// the two boxes swap places. The state (color) swaps only if the boxes have
-  /// keys.
+  /// This sample shows two randomly colored boxes. When the user taps the
+  /// "Press me" text, the two boxes swap places. With keys, the state (color)
+  /// swaps with the boxes. Without keys, Flutter matches widgets by position,
+  /// so the colors do not swap.
   ///
   /// ** See code in examples/api/lib/widgets/key/key.0.dart **
   /// {@end-tool}
