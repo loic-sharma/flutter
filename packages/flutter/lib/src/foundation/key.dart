@@ -12,25 +12,34 @@ import 'diagnostics.dart';
 
 /// A [Key] is an identifier for [Widget]s, [Element]s and [SemanticsNode]s.
 ///
-/// A new widget will only be used to update an existing element if its key is
-/// the same as the key of the current widget associated with the element.
-///
-/// Typically, if no key is provided, the default value is null, meaning the
-/// widget is considered unkeyed. In this case, Flutter matches widgets based
-/// on their [Widget.runtimeType] and position in the tree during rebuilds.
-///
 /// {@youtube 560 315 https://www.youtube.com/watch?v=kn0EOS-ZiIc}
 ///
+/// {@template flutter.foundation.Key}
+/// Keys let you move [StatefulWidget]s around in the widget tree without
+/// losing their state. For example, you can use keys to preserve state when
+/// you change a collection of stateful widgets (e.g., add, remove, or reorder
+/// widgets in a [Row]). Or, you can use [GlobalKey]s to preserve state when
+/// you move a widget in the tree from one parent to another parent.
+///
+/// A new widget will only be used to update an existing element if its
+/// [Widget.runtimeType] and [Widget.key] are the same as the element's
+/// current widget. Otherwise, the old element is removed from the tree, the
+/// new widget is inflated into an element, and the new element is inserted
+/// into the tree.
+/// {@endtemplate}
+///
 /// Keys must be unique amongst the [Element]s with the same parent.
+/// [GlobalKey]s must be unique across the entire app.
 ///
 /// Subclasses of [Key] should either subclass [LocalKey] or [GlobalKey].
 ///
-/// A common mistake is to rebuild the widget tree in such a way that Flutter
-/// attaches the incorrect State object to an unkeyed StatefulWidget. This can
-/// often be solved by using an appropriate [Key] on the [StatefulWidget].
+/// {@tool dartpad}
+/// This sample shows two randomly colored boxes. When the user taps the button,
+/// the two boxes swap places. The state (color) swaps only if the boxes have
+/// keys.
 ///
-/// See [ValueKey], which explains how that class can be used as a solution to a
-/// common case of this problem.
+/// ** See code in examples/api/lib/widgets/key/key.0.dart **
+/// {@end-tool}
 ///
 /// See also:
 ///
@@ -93,40 +102,12 @@ class UniqueKey extends LocalKey {
 /// other sources. This is useful when keys are used as fallbacks in the same
 /// scope as keys supplied from another widget.
 ///
-/// When building widgets from a collection of data, especially when that
-/// collection can change over time (e.g., items being inserted, removed, or
-/// reordered), keys are used to preserve the association between a widget and
-/// the underlying data.
-///
-/// Without keys, the framework may have no way to distinguish between a change
-/// in the data of an existing widget and a structural change in the list. As a
-/// result, widgets may be incorrectly updated, and state held by
-/// [StatefulWidget]s can be reused for a different piece of data.
-///
-/// Assigning a key ties the widget subtree to a specific piece of data,
-/// allowing the framework to correctly match old and new widgets and preserve
-/// state as expected.
-///
-/// In such cases, a [ValueKey] is typically appropriate, using a value that is
-/// stable and unique for each item, such as an identifier from the data model.
-///
 /// {@tool dartpad}
-/// The following example demonstrates the importance of using [ValueKey]s when reordering
-/// a list of [StatefulWidget]s.
+/// This sample shows two randomly colored boxes. When the user taps the button,
+/// the two boxes swap places. The state (color) swaps only if the boxes have
+/// keys.
 ///
-/// ### The Key Difference
-/// * **Without Keys**: When the list is reversed, Flutter matches widgets by
-/// position. The [State] (the counter) stays in its original spot while the
-/// widget's configuration (the color) is swapped. This results in the counter
-/// appearing to stay "stationary" while the colors move behind it.
-/// * **With Keys**: By providing a [ValueKey], Flutter matches the [State]
-/// to the [Widget] via the key rather than the index. When the list is
-/// reversed, the [State] moves with the color.
-///
-/// To see the difference, find the `ColoredWidgetsList` widget inside the `map`
-/// function and comment/uncomment the `key: ValueKey(color)` line.
-///
-/// ** See code in examples/api/lib/foundation/key/value_key.0.dart **
+/// ** See code in examples/api/lib/widgets/key/key.0.dart **
 /// {@end-tool}
 ///
 /// See also:

@@ -136,6 +136,13 @@ class ObjectKey extends LocalKey {
 /// You cannot simultaneously include two widgets in the tree with the same
 /// global key. Attempting to do so will assert at runtime.
 ///
+/// {@tool dartpad}
+/// This sample moves a randomly colored box between two parent containers.
+/// The state (color) is preserved only if the box has a [GlobalKey].
+///
+/// ** See code in examples/api/lib/widgets/key/global_key.0.dart **
+/// {@end-tool}
+///
 /// ## Pitfalls
 ///
 /// GlobalKeys should not be re-created on every build. They should usually be
@@ -317,37 +324,25 @@ abstract class Widget extends DiagnosticableTree {
   ///
   /// {@youtube 560 315 https://www.youtube.com/watch?v=kn0EOS-ZiIc}
   ///
-  /// Keys can be used to move [StatefulWidget]s around in the widget tree without
-  /// losing their state. For example, use keys to preserve state when you modify
-  /// a collection of stateful widgets (like add, remove, or reorder widgets in a
-  /// list).
-  ///
-  /// If the [runtimeType] and [key] properties of the two widgets are
-  /// [operator==], respectively, then the new widget replaces the old widget by
-  /// updating the underlying element (i.e., by calling [Element.update] with the
-  /// new widget). Otherwise, the old element is removed from the tree, the new
-  /// widget is inflated into an element, and the new element is inserted into the
-  /// tree.
+  /// {@macro flutter.foundation.Key}
   ///
   /// {@tool dartpad}
-  /// This sample shows two boxes with random colors. When the user taps the button,
-  /// the two boxes swap places. The state (color) swaps only if the boxes have keys.
+  /// This sample shows two randomly colored boxes. When the user taps the button,
+  /// the two boxes swap places. The state (color) swaps only if the boxes have
+  /// keys.
   ///
   /// ** See code in examples/api/lib/widgets/key/key.0.dart **
   /// {@end-tool}
   ///
   /// ### [GlobalKey]s
   ///
-  /// [GlobalKey]s let you a change a widget's parent without losing state, or
-  /// allow you to access the state of a completely different widget.
-  /// A [GlobalKey] must be unique across the entire app.
+  /// [GlobalKey]s let you reparent a widget without losing state, and also let
+  /// you access a widget's state. A [GlobalKey] must be unique across the
+  /// entire app.
   ///
   /// {@tool dartpad}
   /// This sample moves a randomly colored box between two parent containers.
-  /// When `useGlobalKey` is true, the [GlobalKey] causes the same [State] to
-  /// follow the widget to its new parent, so the color is preserved. When false,
-  /// Flutter sees a new widget at the new location and calls [State.initState]
-  /// again, picking a fresh random color.
+  /// The state (color) is preserved only if the box has a [GlobalKey].
   ///
   /// ** See code in examples/api/lib/widgets/key/global_key.0.dart **
   /// {@end-tool}
