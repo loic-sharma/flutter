@@ -2321,10 +2321,14 @@ static BOOL IsSelectionRectBoundaryCloserToPoint(CGPoint point,
 
   NSMutableArray<FlutterTextSelectionRect*>* copiedRects =
       [[NSMutableArray alloc] initWithCapacity:[_selectionRects count]];
-  NSAssert([_selectedTextRange.start isKindOfClass:[FlutterTextPosition class]],
+  UITextRange* rangeToReplace = self.markedTextRange != nil ? self.markedTextRange : _selectedTextRange;
+  NSAssert([rangeToReplace.start isKindOfClass:[FlutterTextPosition class]],
            @"Expected a FlutterTextPosition for position (got %@).",
-           [_selectedTextRange.start class]);
-  NSUInteger insertPosition = ((FlutterTextPosition*)_selectedTextRange.start).index;
+           [rangeToReplace.start class]);
+  NSUInteger insertPosition = ((FlutterTextPosition*)rangeToReplace.start).index;
+  NSUInteger endPosition = ((FlutterTextPosition*)rangeToReplace.end).index;
+  NSInteger lengthDelta = text.length - (endPosition - insertPosition);
+
   for (NSUInteger i = 0; i < [_selectionRects count]; i++) {
     NSUInteger rectPosition = _selectionRects[i].position;
     if (rectPosition == insertPosition) {
@@ -2334,9 +2338,11 @@ static BOOL IsSelectionRectBoundaryCloserToPoint(CGPoint point,
                                                 position:rectPosition + j
                                         writingDirection:_selectionRects[i].writingDirection]];
       }
+    } else if (rectPosition > insertPosition && rectPosition < endPosition) {
+      // Do not copy rects that are inside the replaced range.
     } else {
-      if (rectPosition > insertPosition) {
-        rectPosition = rectPosition + text.length;
+      if (rectPosition >= endPosition) {
+        rectPosition = rectPosition + lengthDelta;
       }
       [copiedRects addObject:[FlutterTextSelectionRect
                                  selectionRectWithRect:_selectionRects[i].rect
@@ -2349,7 +2355,7 @@ static BOOL IsSelectionRectBoundaryCloserToPoint(CGPoint point,
   [self resetScribbleInteractionStatusIfEnding];
   self.selectionRects = copiedRects;
   _selectionAffinity = kTextAffinityDownstream;
-  [self replaceRange:_selectedTextRange withText:text];
+  [self replaceRange:rangeToReplace withText:text];
 }
 
 - (UITextPlaceholder*)insertTextPlaceholderWithSize:(CGSize)size API_AVAILABLE(ios(13.0)) {
