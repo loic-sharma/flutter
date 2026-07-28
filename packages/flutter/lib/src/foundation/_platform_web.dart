@@ -46,6 +46,10 @@ final platform.TargetPlatform _browserPlatform = _operatingSystemToTargetPlatfor
   ui_web.browser.operatingSystem,
 );
 
+final platform.RuntimePlatform _browserRuntimePlatform = _operatingSystemToRuntimePlatform(
+  ui_web.browser.operatingSystem,
+);
+
 // Converts an ui_web.OperatingSystem enum into a platform.TargetPlatform.
 platform.TargetPlatform _operatingSystemToTargetPlatform(ui_web.OperatingSystem os) {
   return switch (os) {
@@ -56,6 +60,19 @@ platform.TargetPlatform _operatingSystemToTargetPlatform(ui_web.OperatingSystem 
     ui_web.OperatingSystem.windows => platform.TargetPlatform.windows,
     // Resolve 'unknown' OS values to `android`.
     ui_web.OperatingSystem.unknown => platform.TargetPlatform.android,
+  };
+}
+
+platform.RuntimePlatform _operatingSystemToRuntimePlatform(ui_web.OperatingSystem os) {
+  return switch (os) {
+    ui_web.OperatingSystem.android => platform.RuntimePlatform.android,
+    ui_web.OperatingSystem.iOs => platform.RuntimePlatform.iOS,
+    ui_web.OperatingSystem.linux => platform.RuntimePlatform.linux,
+    ui_web.OperatingSystem.macOs => platform.RuntimePlatform.macOS,
+    ui_web.OperatingSystem.windows => platform.RuntimePlatform.windows,
+    // TODO(loic-sharma): Should this support OOT platforms?
+    // Resolve 'unknown' OS values to `android`.
+    ui_web.OperatingSystem.unknown => platform.RuntimePlatform.android,
   };
 }
 
@@ -97,4 +114,32 @@ bool get defaultIsDarwin {
   }
   final platform.TargetPlatform tp = defaultTargetPlatform;
   return tp == platform.TargetPlatform.iOS || tp == platform.TargetPlatform.macOS;
+}
+
+/// The web implementation of [platform.defaultRuntimePlatform].
+platform.RuntimePlatform get defaultRuntimePlatform {
+  // To get a better guess at the targetPlatform we need to be able to reference
+  // the window, but that won't be available until we fix the platforms
+  // configuration for Flutter.
+  return platform.debugDefaultRuntimePlatformOverride ?? _testRuntimePlatform ?? _browserRuntimePlatform;
+}
+
+// The TargetPlatform used on Web tests, unless overridden.
+//
+// Respects the `ui_web.browser.debugOperatingSystemOverride` value (when set).
+platform.RuntimePlatform? get _testRuntimePlatform {
+  platform.RuntimePlatform? testPlatform;
+  assert(() {
+    if (ui_web.TestEnvironment.instance == const ui_web.TestEnvironment.flutterTester()) {
+      // Return the overridden operatingSystem in tests, if any...
+      if (ui_web.browser.debugOperatingSystemOverride != null) {
+        testPlatform = _operatingSystemToRuntimePlatform(ui_web.browser.operatingSystem);
+      } else {
+        // Fall back to `android` for tests.
+        testPlatform = platform.RuntimePlatform.android;
+      }
+    }
+    return true;
+  }());
+  return testPlatform;
 }
