@@ -6,6 +6,8 @@
 /// @docImport 'package:flutter_test/flutter_test.dart';
 library;
 
+import 'package:meta/meta.dart';
+
 import '_platform_io.dart' if (dart.library.js_interop) '_platform_web.dart' as platform;
 import 'assertions.dart';
 import 'constants.dart';
@@ -47,6 +49,7 @@ import 'constants.dart';
 // that would mean we'd be stuck with that platform forever emulating the other,
 // and we'd never be able to introduce dedicated behavior for that platform
 // (since doing so would be a big breaking change).
+// TODO(loic-sharma): Deprecate this in favor or runtime platform.
 @pragma('vm:platform-const-if', !kDebugMode)
 TargetPlatform get defaultTargetPlatform => platform.defaultTargetPlatform;
 
@@ -168,3 +171,60 @@ set debugDefaultIsDarwinOverride(bool? value) {
 }
 
 bool? _debugDefaultIsDarwinOverride;
+
+@immutable
+final class RuntimePlatform {
+  const RuntimePlatform._(this.name);
+
+ factory RuntimePlatform.fromString(String name) => switch (name) {
+    'android' => RuntimePlatform.android,
+    'fuchsia' => RuntimePlatform.fuchsia,
+    'ios' => RuntimePlatform.iOS,
+    'linux' => RuntimePlatform.linux,
+    'macos' => RuntimePlatform.macOS,
+    'windows' => RuntimePlatform.windows,
+    _ => RuntimePlatform._(name),
+  };
+
+  final String name;
+
+  /// Android: <https://www.android.com/>
+  static const RuntimePlatform android = RuntimePlatform._('android');
+
+  /// Fuchsia: <https://fuchsia.dev/fuchsia-src/concepts>
+  static const RuntimePlatform fuchsia = RuntimePlatform._('fuchsia');
+
+  /// iOS: <https://www.apple.com/ios/>
+  static const RuntimePlatform iOS = RuntimePlatform._('ios');
+
+  /// Linux: <https://www.linux.org>
+  static const RuntimePlatform linux = RuntimePlatform._('linux');
+
+  /// macOS: <https://www.apple.com/macos>
+  static const RuntimePlatform macOS = RuntimePlatform._('macos');
+
+  /// Windows: <https://www.windows.com>
+  static const RuntimePlatform windows = RuntimePlatform._('windows');
+
+  @override
+  bool operator ==(Object other)
+    => other is RuntimePlatform && other.name == name;
+
+  @override
+  int get hashCode => name.hashCode;
+}
+
+// extension OhosRuntimePlatform on RuntimePlatform {
+//   static final ohos = RuntimePlatform.fromString('ohos');
+// }
+
+RuntimePlatform? get debugDefaultRuntimePlatformOverride => _debugDefaultRuntimePlatformOverride;
+
+set debugDefaultRuntimePlatformOverride(RuntimePlatform? value) {
+  if (!kDebugMode) {
+    throw FlutterError('Cannot modify debugDefaultRuntimePlatformOverride in non-debug builds.');
+  }
+  _debugDefaultRuntimePlatformOverride = value;
+}
+
+RuntimePlatform? _debugDefaultRuntimePlatformOverride;

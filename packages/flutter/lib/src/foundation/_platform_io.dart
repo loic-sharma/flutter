@@ -114,3 +114,38 @@ bool get defaultIsDarwin {
   }());
   return result;
 }
+
+@pragma('vm:platform-const-if', !kDebugMode)
+platform.RuntimePlatform get defaultRuntimePlatform {
+  platform.RuntimePlatform? result;
+  if (Platform.isAndroid) {
+    result = platform.RuntimePlatform.android;
+  } else if (Platform.isIOS) {
+    result = platform.RuntimePlatform.iOS;
+  } else if (Platform.isFuchsia) {
+    result = platform.RuntimePlatform.fuchsia;
+  } else if (Platform.isLinux) {
+    result = platform.RuntimePlatform.linux;
+  } else if (Platform.isMacOS) {
+    result = platform.RuntimePlatform.macOS;
+  } else if (Platform.isWindows) {
+    result = platform.RuntimePlatform.windows;
+  }
+  assert(() {
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      result = platform.RuntimePlatform.android;
+    }
+    return true;
+  }());
+  if (kDebugMode && platform.debugDefaultRuntimePlatformOverride != null) {
+    result = platform.debugDefaultRuntimePlatformOverride;
+  }
+  if (result == null) {
+    throw FlutterError(
+      'Unknown platform.\n'
+      '${Platform.operatingSystem} was not recognized as a runtime platform. '
+      'Consider updating the list of Runtimelatforms to include this platform.',
+    );
+  }
+  return result!;
+}
