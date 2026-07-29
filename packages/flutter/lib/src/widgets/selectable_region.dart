@@ -393,9 +393,7 @@ class SelectableRegionState extends State<SelectableRegion>
   bool get _webContextMenuEnabled =>
       kIsWeb &&
       BrowserContextMenu.enabled &&
-      // TODO: ????
-      defaultTargetPlatform != TargetPlatform.android &&
-      defaultTargetPlatform != TargetPlatform.iOS;
+      SelectionConfiguration.of(context).webContextMenuEnabled(context);
 
   /// The [SelectionOverlay] that is currently visible on the screen.
   ///
@@ -571,63 +569,9 @@ class SelectableRegionState extends State<SelectableRegion>
   // This method should be used in all instances when details.consecutiveTapCount
   // would be used.
   int _getEffectiveConsecutiveTapCount(int rawCount) {
-    // TODO(loic-sharma): Maybe do something like:
-    //
-    // SelectableRegionConfiguration.of(context).getConsecutiveTapBehavior(context);
-    // enum ConsecutiveTapBehavior {
-    //   resetToZeroWhenExceedMaxConsecutiveTap,
-    //   holdAtMaxConsecutiveTapWhenExceedMaxConsecutiveTap,
-    // }
-    //
-    // Android, Fuchsia, and Linux reset their tap count to 0 when the number of consecutive taps exceeds the max consecutive tap supported.
-    // Android sets max consecutive tap to 2 when the pointer device kind is not precise like a mouse, and 3 otherwise.
-    // iOS, macOS, Linux and Windows hold their tap count at the max consecutive taps.
-    //
-    // Alternative:
-    //
-    // SelectableRegionConfiguration.of(context).getEffectiveConsecutiveTapCount(context, rawCount);
-    var maxConsecutiveTap = 3;
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-        if (_lastPointerDeviceKind != null && _lastPointerDeviceKind != PointerDeviceKind.mouse) {
-          // When the pointer device kind is not precise like a mouse, native
-          // Android resets the tap count at 2. For example, this is so the
-          // selection can collapse on the third tap.
-          maxConsecutiveTap = 2;
-        }
-        // From observation, these platforms reset their tap count to 0 when
-        // the number of consecutive taps exceeds the max consecutive tap supported.
-        // For example on native Android, when going past a triple click,
-        // on the fourth click the selection is moved to the precise click
-        // position, on the fifth click the word at the position is selected, and
-        // on the sixth click the paragraph at the position is selected.
-        return rawCount <= maxConsecutiveTap
-            ? rawCount
-            : (rawCount % maxConsecutiveTap == 0
-                  ? maxConsecutiveTap
-                  : rawCount % maxConsecutiveTap);
-      case TargetPlatform.linux:
-        // From observation, these platforms reset their tap count to 0 when
-        // the number of consecutive taps exceeds the max consecutive tap supported.
-        // For example on Debian Linux with GTK, when going past a triple click,
-        // on the fourth click the selection is moved to the precise click
-        // position, on the fifth click the word at the position is selected, and
-        // on the sixth click the paragraph at the position is selected.
-        return rawCount <= maxConsecutiveTap
-            ? rawCount
-            : (rawCount % maxConsecutiveTap == 0
-                  ? maxConsecutiveTap
-                  : rawCount % maxConsecutiveTap);
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-        // From observation, these platforms hold their tap count at the max
-        // consecutive tap supported. For example on macOS, when going past a triple
-        // click, the selection should be retained at the paragraph that was first
-        // selected on triple click.
-        return min(rawCount, maxConsecutiveTap);
-    }
+    return SelectionConfiguration.of(
+      context,
+    ).getEffectiveConsecutiveTapCount(context, rawCount: rawCount, kind: _lastPointerDeviceKind);
   }
 
   void _initMouseGestureRecognizer() {
@@ -676,21 +620,7 @@ class SelectableRegionState extends State<SelectableRegion>
           ),
           (TapAndHorizontalDragGestureRecognizer instance) {
             instance
-              // iOS does not provide a device specific touch slop
-              // unlike Android (~8.0), so the touch slop for a [Scrollable]
-              // always default to kTouchSlop which is 18.0. When
-              // [SelectableRegion] is the child of a horizontal
-              // scrollable that means the [SelectableRegion] will
-              // always win the gesture arena when competing with
-              // the ancestor scrollable because they both have
-              // the same touch slop threshold and the child receives
-              // the [PointerEvent] first. To avoid this conflict
-              // and ensure a smooth scrolling experience, on
-              // iOS the [TapAndHorizontalDragGestureRecognizer]
-              // will wait for all other gestures to lose before
-              // declaring victory.
-              // TODO(loic-sharma)
-              ..eagerVictoryOnDrag = defaultTargetPlatform != TargetPlatform.iOS
+              ..eagerVictoryOnDrag = SelectionConfiguration.of(context).eagerVictoryOnDrag(context)
               ..onTapDown = _startNewMouseSelectionGesture
               ..onTapUp = _handleMouseTapUp
               ..onDragStart = _handleMouseDragStart
@@ -741,26 +671,20 @@ class SelectableRegionState extends State<SelectableRegion>
           _selectionStatusNotifier.value = SelectableRegionSelectionStatus.changing;
         }
       case 2:
-        // TODO: ???
-        switch (defaultTargetPlatform) {
-          case TargetPlatform.iOS:
-            if (kIsWeb && details.kind != null && !_isPrecisePointerDevice(details.kind!)) {
-              // Double tap on iOS web triggers when a drag begins after the double tap.
-              _doubleTapOffset = details.globalPosition;
-              break;
-            }
-            _selectWordAt(offset: details.globalPosition);
-            _selectionStatusNotifier.value = SelectableRegionSelectionStatus.changing;
-            if (details.kind != null && !_isPrecisePointerDevice(details.kind!)) {
-              _showHandles();
-            }
-          case TargetPlatform.android:
-          case TargetPlatform.fuchsia:
-          case TargetPlatform.macOS:
-          case TargetPlatform.linux:
-          case TargetPlatform.windows:
-            _selectWordAt(offset: details.globalPosition);
-            _selectionStatusNotifier.value = SelectableRegionSelectionStatus.changing;
+        if (SelectionConfiguration.of(context).delayDoubleTapSelectionOnWeb(context) &&
+            kIsWeb &&
+            details.kind != null &&
+            !_isPrecisePointerDevice(details.kind!)) {
+          // Double tap on iOS web triggers when a drag begins after the double tap.
+          _doubleTapOffset = details.globalPosition;
+          break;
+        }
+        _selectWordAt(offset: details.globalPosition);
+        _selectionStatusNotifier.value = SelectableRegionSelectionStatus.changing;
+        if (SelectionConfiguration.of(context).showHandlesOnDoubleTapDown(context) &&
+            details.kind != null &&
+            !_isPrecisePointerDevice(details.kind!)) {
+          _showHandles();
         }
       case 3:
         if (defaultIsMobile) {
@@ -801,48 +725,31 @@ class SelectableRegionState extends State<SelectableRegion>
         _selectEndTo(offset: details.globalPosition, continuous: true);
         _selectionStatusNotifier.value = SelectableRegionSelectionStatus.changing;
       case 2:
-        // TODO: ???
-        switch (defaultTargetPlatform) {
-          case TargetPlatform.android:
-          case TargetPlatform.fuchsia:
-            // Double tap + drag is only supported on Android when using a precise
-            // pointer device or when not on the web.
-            if (!kIsWeb || details.kind != null && _isPrecisePointerDevice(details.kind!)) {
-              _selectEndTo(
-                offset: details.globalPosition,
-                continuous: true,
-                textGranularity: TextGranularity.word,
-              );
-              _selectionStatusNotifier.value = SelectableRegionSelectionStatus.changing;
-            }
-          case TargetPlatform.iOS:
-            if (kIsWeb &&
-                details.kind != null &&
-                !_isPrecisePointerDevice(details.kind!) &&
-                _doubleTapOffset != null) {
-              // On iOS web a double tap does not select the word at the position,
-              // until the drag has begun.
-              _selectWordAt(offset: _doubleTapOffset!);
-              _doubleTapOffset = null;
-            }
-            _selectEndTo(
-              offset: details.globalPosition,
-              continuous: true,
-              textGranularity: TextGranularity.word,
-            );
-            _selectionStatusNotifier.value = SelectableRegionSelectionStatus.changing;
-            if (details.kind != null && !_isPrecisePointerDevice(details.kind!)) {
-              _showHandles();
-            }
-          case TargetPlatform.macOS:
-          case TargetPlatform.linux:
-          case TargetPlatform.windows:
-            _selectEndTo(
-              offset: details.globalPosition,
-              continuous: true,
-              textGranularity: TextGranularity.word,
-            );
-            _selectionStatusNotifier.value = SelectableRegionSelectionStatus.changing;
+        if (SelectionConfiguration.of(
+              context,
+            ).enableDoubleTapDragOnWeb(context, kind: details.kind) ||
+            !kIsWeb) {
+          if (SelectionConfiguration.of(context).delayDoubleTapSelectionOnWeb(context) &&
+              kIsWeb &&
+              details.kind != null &&
+              !_isPrecisePointerDevice(details.kind!) &&
+              _doubleTapOffset != null) {
+            // On iOS web a double tap does not select the word at the position,
+            // until the drag has begun.
+            _selectWordAt(offset: _doubleTapOffset!);
+            _doubleTapOffset = null;
+          }
+          _selectEndTo(
+            offset: details.globalPosition,
+            continuous: true,
+            textGranularity: TextGranularity.word,
+          );
+          _selectionStatusNotifier.value = SelectableRegionSelectionStatus.changing;
+          if (SelectionConfiguration.of(context).showHandlesOnDoubleTapDown(context) &&
+              details.kind != null &&
+              !_isPrecisePointerDevice(details.kind!)) {
+            _showHandles();
+          }
         }
       case 3:
         if (defaultIsMobile) {
@@ -877,7 +784,7 @@ class SelectableRegionState extends State<SelectableRegion>
     // device kind is not precise, for example at the end of a double tap + drag
     // to select on native iOS.
     if (defaultIsMobile && !isPointerPrecise) {
-      if (defaultTargetPlatform != .iOS) {
+      if (SelectionConfiguration.of(context).showHandlesAfterDragEnd(context)) {
         _showHandles();
       }
       _showToolbar();
@@ -888,7 +795,7 @@ class SelectableRegionState extends State<SelectableRegion>
   }
 
   void _handleMouseTapUp(TapDragUpDetails details) {
-    if (defaultTargetPlatform == TargetPlatform.iOS &&
+    if (SelectionConfiguration.of(context).toggleToolbarOnTapOnActiveSelection(context) &&
         _positionIsOnActiveSelection(globalPosition: details.globalPosition)) {
       // On iOS when the tap occurs on the previous selection, instead of
       // moving the selection, the context menu will be toggled.
@@ -914,12 +821,11 @@ class SelectableRegionState extends State<SelectableRegion>
         // On desktop platforms, the selection overlay is not shown on a double click.
         final bool isPointerPrecise = _isPrecisePointerDevice(details.kind);
         if (defaultIsMobile && !isPointerPrecise) {
-          if (defaultTargetPlatform == .iOS) {
-            if (kIsWeb) {
-              // Double tap on iOS web only triggers when a drag begins after the double tap.
-              break;
-            }
-          } else {
+          if (SelectionConfiguration.of(context).delayDoubleTapSelectionOnWeb(context) && kIsWeb) {
+            // Double tap on iOS web only triggers when a drag begins after the double tap.
+            break;
+          }
+          if (SelectionConfiguration.of(context).showHandlesOnDoubleTapUp(context)) {
             _showHandles();
           }
           _showToolbar();
@@ -948,7 +854,7 @@ class SelectableRegionState extends State<SelectableRegion>
     // Platforms besides Android will show the text selection handles when
     // the long press is initiated. Android shows the text selection handles when
     // the long press has ended, usually after a pointer up event is received.
-    if (defaultTargetPlatform != TargetPlatform.android) {
+    if (SelectionConfiguration.of(context).showHandlesOnLongPressStart(context)) {
       _showHandles();
     }
     _updateSelectedContentIfNeeded();
@@ -964,7 +870,7 @@ class SelectableRegionState extends State<SelectableRegion>
     _finalizeSelection();
     _updateSelectedContentIfNeeded();
     _finalizeSelectableRegionStatus();
-    if (defaultTargetPlatform == TargetPlatform.android) {
+    if (SelectionConfiguration.of(context).showHandlesOnLongPressEnd(context)) {
       _showHandles();
     }
     _showToolbar();
@@ -986,12 +892,8 @@ class SelectableRegionState extends State<SelectableRegion>
     final bool toolbarIsVisible = _selectionOverlay?.toolbarIsVisible ?? false;
     _lastSecondaryTapDownPosition = details.globalPosition;
     _focusNode.requestFocus();
-    // TODO: ???
-    // SelectionConfiguration
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.windows:
+    switch (SelectionConfiguration.of(context).rightClickBehavior(context)) {
+      case SelectionRightClickBehavior.keepSelectionIfActive:
         // If _lastSecondaryTapDownPosition is within the current selection then
         // keep the current selection, if not then collapse it.
         final bool lastSecondaryTapDownPositionWasOnActiveSelection = _positionIsOnActiveSelection(
@@ -1007,15 +909,15 @@ class SelectableRegionState extends State<SelectableRegion>
           return;
         }
         _collapseSelectionAt(offset: _lastSecondaryTapDownPosition!);
-      case TargetPlatform.iOS:
+      case SelectionRightClickBehavior.selectWord:
         _selectWordAt(offset: _lastSecondaryTapDownPosition!);
-      case TargetPlatform.macOS:
+      case SelectionRightClickBehavior.hideToolbarIfSamePosition:
         if (previousSecondaryTapDownPosition == _lastSecondaryTapDownPosition && toolbarIsVisible) {
           hideToolbar();
           return;
         }
         _selectWordAt(offset: _lastSecondaryTapDownPosition!);
-      case TargetPlatform.linux:
+      case SelectionRightClickBehavior.hideToolbarOrCollapseIfNotActive:
         if (toolbarIsVisible) {
           hideToolbar();
           return;
@@ -3646,10 +3548,134 @@ final class SelectionListenerNotifier extends ChangeNotifier {
   }
 }
 
+/// Defines platform-specific interaction and toolbar behaviors for [SelectableRegion].
+///
+/// This class can be extended and provided via [SelectionConfiguration] to customize
+/// text selection behaviors for out-of-tree platforms or specialized user experiences.
 @immutable
+/// The behavior of text selection.
 class SelectionBehavior {
+  /// Creates a constant [SelectionBehavior].
+  /// Creates a [SelectionBehavior].
   const SelectionBehavior();
 
+  /// Whether the native web browser context menu should be enabled.
+  bool webContextMenuEnabled(BuildContext context) {
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android || TargetPlatform.iOS => false,
+      _ => true,
+    };
+  }
+
+  /// Returns the effective consecutive tap count.
+  int getEffectiveConsecutiveTapCount(
+    BuildContext context, {
+    required int rawCount,
+    required PointerDeviceKind? kind,
+  }) {
+    var maxConsecutiveTap = 3;
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.fuchsia:
+        if (kind != null && kind != PointerDeviceKind.mouse) {
+          maxConsecutiveTap = 2;
+        }
+        return rawCount <= maxConsecutiveTap
+            ? rawCount
+            : (rawCount % maxConsecutiveTap == 0
+                  ? maxConsecutiveTap
+                  : rawCount % maxConsecutiveTap);
+      case TargetPlatform.linux:
+        return rawCount <= maxConsecutiveTap
+            ? rawCount
+            : (rawCount % maxConsecutiveTap == 0
+                  ? maxConsecutiveTap
+                  : rawCount % maxConsecutiveTap);
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return min(rawCount, maxConsecutiveTap);
+    }
+  }
+
+  /// Whether to eagerly claim victory on drag.
+  bool eagerVictoryOnDrag(BuildContext context) {
+    // iOS does not provide a device specific touch slop
+    // unlike Android (~8.0), so the touch slop for a [Scrollable]
+    // always default to kTouchSlop which is 18.0. When
+    // [SelectableRegion] is the child of a horizontal
+    // scrollable that means the [SelectableRegion] will
+    // always win the gesture arena when competing with
+    // the ancestor scrollable because they both have
+    // the same touch slop threshold and the child receives
+    // the [PointerEvent] first. To avoid this conflict
+    // and ensure a smooth scrolling experience, on
+    // iOS the [TapAndHorizontalDragGestureRecognizer]
+    // will wait for all other gestures to lose before
+    // declaring victory.
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.iOS => false,
+      _ => true,
+    };
+  }
+
+  /// Whether to delay double tap selection on the web.
+  bool delayDoubleTapSelectionOnWeb(BuildContext context) {
+    return defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
+  /// Whether to show handles on double tap down.
+  bool showHandlesOnDoubleTapDown(BuildContext context) {
+    return defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
+  /// Whether to show handles on double tap up.
+  bool showHandlesOnDoubleTapUp(BuildContext context) {
+    return defaultTargetPlatform != TargetPlatform.iOS;
+  }
+
+  /// Whether to toggle the toolbar when tapping on an active selection.
+  bool toggleToolbarOnTapOnActiveSelection(BuildContext context) {
+    return defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
+  /// Whether to enable double tap and drag on the web.
+  bool enableDoubleTapDragOnWeb(BuildContext context, {required PointerDeviceKind? kind}) {
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android ||
+      TargetPlatform.fuchsia => kind != null && kind == PointerDeviceKind.mouse,
+      _ => true,
+    };
+  }
+
+  /// Whether to show handles after a drag ends.
+  bool showHandlesAfterDragEnd(BuildContext context) {
+    return defaultTargetPlatform != TargetPlatform.iOS;
+  }
+
+  /// Whether to show handles when a long press starts.
+  bool showHandlesOnLongPressStart(BuildContext context) {
+    return defaultTargetPlatform != TargetPlatform.android;
+  }
+
+  /// Whether to show handles when a long press ends.
+  bool showHandlesOnLongPressEnd(BuildContext context) {
+    return defaultTargetPlatform == TargetPlatform.android;
+  }
+
+  /// The behavior of a right click.
+  SelectionRightClickBehavior rightClickBehavior(BuildContext context) {
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android ||
+      TargetPlatform.fuchsia ||
+      TargetPlatform.windows => SelectionRightClickBehavior.keepSelectionIfActive,
+      TargetPlatform.iOS => SelectionRightClickBehavior.selectWord,
+      TargetPlatform.macOS => SelectionRightClickBehavior.hideToolbarIfSamePosition,
+      TargetPlatform.linux => SelectionRightClickBehavior.hideToolbarOrCollapseIfNotActive,
+    };
+  }
+
+  /// The behavior when the orientation changes.
   SelectionOrientationChangedBehavior orientationChangedBehavior(BuildContext context) {
     return switch (defaultTargetPlatform) {
       TargetPlatform.android => SelectionOrientationChangedBehavior.hideToolbarAndHandles,
@@ -3659,23 +3685,33 @@ class SelectionBehavior {
     };
   }
 
+  /// The behavior for the copy toolbar button.
   SelectionToolbarCopyBehavior toolbarCopyBehavior(BuildContext context) {
     return switch (defaultTargetPlatform) {
-      TargetPlatform.android || TargetPlatform.fuchsia => SelectionToolbarCopyBehavior.clearSelection,
+      TargetPlatform.android ||
+      TargetPlatform.fuchsia => SelectionToolbarCopyBehavior.clearSelection,
       TargetPlatform.iOS => SelectionToolbarCopyBehavior.hideToolbar,
-      TargetPlatform.linux || TargetPlatform.macOS || TargetPlatform.windows => SelectionToolbarCopyBehavior.hideToolbarAndHandles,
+      TargetPlatform.linux ||
+      TargetPlatform.macOS ||
+      TargetPlatform.windows => SelectionToolbarCopyBehavior.hideToolbarAndHandles,
     };
   }
 
+  /// The behavior for the share toolbar button.
   SelectionToolbarShareBehavior toolbarShareBehavior(BuildContext context) {
     return switch (defaultTargetPlatform) {
-      TargetPlatform.android || TargetPlatform.fuchsia => SelectionToolbarShareBehavior.clearSelection,
+      TargetPlatform.android ||
+      TargetPlatform.fuchsia => SelectionToolbarShareBehavior.clearSelection,
       TargetPlatform.iOS => SelectionToolbarShareBehavior.hideToolbar,
-      TargetPlatform.linux || TargetPlatform.macOS || TargetPlatform.windows => SelectionToolbarShareBehavior.hideToolbarAndHandles,
+      TargetPlatform.linux ||
+      TargetPlatform.macOS ||
+      TargetPlatform.windows => SelectionToolbarShareBehavior.hideToolbarAndHandles,
     };
   }
 
-  List<ContextMenuButtonItem> getSelectableButtonItems(BuildContext context, {
+  /// Returns the selectable button items.
+  List<ContextMenuButtonItem> getSelectableButtonItems(
+    BuildContext context, {
     required SelectionGeometry selectionGeometry,
     required VoidCallback onCopy,
     required VoidCallback onSelectAll,
@@ -3730,15 +3766,19 @@ class SelectionBehavior {
     ];
   }
 
-
+  /// Whether this behavior should notify listeners of changes.
   bool shouldNotify(covariant SelectionBehavior oldDelegate) => false;
 }
 
+/// An inherited widget that provides a [SelectionBehavior].
 class SelectionConfiguration extends InheritedWidget {
+  /// Creates a [SelectionConfiguration].
   const SelectionConfiguration({super.key, required this.behavior, required super.child});
 
+  /// The selection behavior.
   final SelectionBehavior behavior;
 
+  /// Returns the [SelectionBehavior] from the closest [SelectionConfiguration] ancestor.
   static SelectionBehavior of(BuildContext context) {
     final SelectionConfiguration? configuration = context
         .dependOnInheritedWidgetOfExactType<SelectionConfiguration>();
@@ -3752,6 +3792,53 @@ class SelectionConfiguration extends InheritedWidget {
   }
 }
 
-enum SelectionOrientationChangedBehavior { none, hideToolbarAndHandles, hideToolbar }
-enum SelectionToolbarCopyBehavior { clearSelection, hideToolbarAndHandles, hideToolbar }
-enum SelectionToolbarShareBehavior { clearSelection, hideToolbarAndHandles, hideToolbar }
+/// The behavior when the orientation changes.
+enum SelectionOrientationChangedBehavior {
+  /// Do nothing.
+  none,
+
+  /// Hide the toolbar and handles.
+  hideToolbarAndHandles,
+
+  /// Hide the toolbar.
+  hideToolbar,
+}
+
+/// The behavior for the copy toolbar button.
+enum SelectionToolbarCopyBehavior {
+  /// Clear the selection.
+  clearSelection,
+
+  /// Hide the toolbar and handles.
+  hideToolbarAndHandles,
+
+  /// Hide the toolbar.
+  hideToolbar,
+}
+
+/// The behavior for the share toolbar button.
+enum SelectionToolbarShareBehavior {
+  /// Clear the selection.
+  clearSelection,
+
+  /// Hide the toolbar and handles.
+  hideToolbarAndHandles,
+
+  /// Hide the toolbar.
+  hideToolbar,
+}
+
+/// The behavior of right clicks on a selection.
+enum SelectionRightClickBehavior {
+  /// Keep the selection if it is active.
+  keepSelectionIfActive,
+
+  /// Select the word at the clicked position.
+  selectWord,
+
+  /// Hide the toolbar if clicking at the same position.
+  hideToolbarIfSamePosition,
+
+  /// Hide the toolbar, or collapse the selection if not active.
+  hideToolbarOrCollapseIfNotActive,
+}
