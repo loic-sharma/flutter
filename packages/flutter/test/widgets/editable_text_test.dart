@@ -18794,6 +18794,24 @@ void main() {
     // [intended] only applies to platforms where we supply the context menu.
     skip: kIsWeb,
   );
+
+  testWidgets('EditableTextConfiguration allows overriding behavior', (WidgetTester tester) async {
+    late EditableTextBehavior actualBehavior;
+    await tester.pumpWidget(
+      EditableTextConfiguration(
+        behavior: const _CustomEditableTextBehavior(),
+        child: Builder(
+          builder: (BuildContext context) {
+            actualBehavior = EditableTextConfiguration.of(context);
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+    expect(actualBehavior, isA<_CustomEditableTextBehavior>());
+    expect(actualBehavior.showShareBeforeSelectAll(tester.element(find.byType(SizedBox))), true);
+    expect(actualBehavior.fadeOnScroll(tester.element(find.byType(SizedBox))), true);
+  });
 }
 
 class UnsettableController extends TextEditingController {
@@ -19274,4 +19292,14 @@ class _EditableTextStatefulMenuState extends State<_EditableTextStatefulMenu> {
       textDirection: TextDirection.ltr,
     );
   }
+}
+
+class _CustomEditableTextBehavior extends EditableTextBehavior {
+  const _CustomEditableTextBehavior();
+
+  @override
+  bool showShareBeforeSelectAll(BuildContext? context) => true;
+
+  @override
+  bool fadeOnScroll(BuildContext? context) => true;
 }

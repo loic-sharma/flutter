@@ -833,7 +833,7 @@ class EditableText extends StatefulWidget {
     this.readOnly = false,
     this.obscuringCharacter = '•',
     this.obscureText = false,
-    bool? autocorrect,
+    this.autocorrect,
     SmartDashesType? smartDashesType,
     SmartQuotesType? smartQuotesType,
     this.enableSuggestions = true,
@@ -883,8 +883,8 @@ class EditableText extends StatefulWidget {
     this.cursorOpacityAnimates = false,
     this.cursorOffset,
     this.paintCursorAboveText = false,
-    ui.BoxHeightStyle? selectionHeightStyle,
-    ui.BoxWidthStyle? selectionWidthStyle,
+    this.selectionHeightStyle,
+    this.selectionWidthStyle,
     this.scrollPadding = const EdgeInsets.all(20.0),
     this.keyboardAppearance = Brightness.light,
     this.dragStartBehavior = DragStartBehavior.start,
@@ -918,7 +918,6 @@ class EditableText extends StatefulWidget {
     this.hintLocales,
     this.enableInlinePrediction,
   }) : assert(obscuringCharacter.length == 1),
-       autocorrect = autocorrect ?? _inferAutocorrect(autofillHints: autofillHints),
        smartDashesType =
            smartDashesType ?? (obscureText ? SmartDashesType.disabled : SmartDashesType.enabled),
        smartQuotesType =
@@ -970,9 +969,7 @@ class EditableText extends StatefulWidget {
                ...inputFormatters ?? const Iterable<TextInputFormatter>.empty(),
              ]
            : inputFormatters,
-       showCursor = showCursor ?? !readOnly,
-       selectionHeightStyle = selectionHeightStyle ?? defaultSelectionHeightStyle,
-       selectionWidthStyle = selectionWidthStyle ?? defaultSelectionWidthStyle;
+       showCursor = showCursor ?? !readOnly;
 
   /// Controls the text being edited.
   final TextEditingController controller;
@@ -1062,9 +1059,12 @@ class EditableText extends StatefulWidget {
   /// {@template flutter.widgets.editableText.autocorrect}
   /// Whether to enable autocorrection.
   ///
+  // TODO(loic-sharma): This comment is no longer correct. This is now null on iOS
+  // if autofill hints are password-related hints. That logic is delayed until build
+  // when a context is available to determine the platform.
   /// False on iOS if [autofillHints] contains password-related hints, otherwise true.
   /// {@endtemplate}
-  final bool autocorrect;
+  final bool? autocorrect;
 
   /// {@macro flutter.services.TextInputConfiguration.smartDashesType}
   final SmartDashesType smartDashesType;
@@ -1699,12 +1699,12 @@ class EditableText extends StatefulWidget {
   /// Controls how tall the selection highlight boxes are computed to be.
   ///
   /// See [ui.BoxHeightStyle] for details on available styles.
-  final ui.BoxHeightStyle selectionHeightStyle;
+  final ui.BoxHeightStyle? selectionHeightStyle;
 
   /// Controls how wide the selection highlight boxes are computed to be.
   ///
   /// See [ui.BoxWidthStyle] for details on available styles.
-  final ui.BoxWidthStyle selectionWidthStyle;
+  final ui.BoxWidthStyle? selectionWidthStyle;
 
   /// The appearance of the keyboard.
   ///
@@ -2082,11 +2082,12 @@ class EditableText extends StatefulWidget {
   ///
   /// On native platforms, this defaults to [ui.BoxHeightStyle.includeLineSpacingMiddle] for all
   /// platforms.
+  @Deprecated(
+    'Use EditableTextConfiguration.of(context).getSelectionHeightStyle(context) instead. '
+    'This feature was deprecated after v3.24.0-0.0.pre.'
+  )
   static ui.BoxHeightStyle get defaultSelectionHeightStyle {
-    if (kIsWeb) {
-      return ui.BoxHeightStyle.max;
-    }
-    return ui.BoxHeightStyle.includeLineSpacingMiddle;
+    return const EditableTextBehavior().getSelectionHeightStyle(null);
   }
 
   /// The default value for [selectionWidthStyle].
@@ -2095,16 +2096,12 @@ class EditableText extends StatefulWidget {
   /// Safari (webkit) based browsers and [ui.BoxWidthStyle.tight] for all others.
   ///
   /// On non-web platforms, this defaults to [ui.BoxWidthStyle.max].
+  @Deprecated(
+    'Use EditableTextConfiguration.of(context).getSelectionWidthStyle(context) instead. '
+    'This feature was deprecated after v3.24.0-0.0.pre.'
+  )
   static ui.BoxWidthStyle get defaultSelectionWidthStyle {
-    if (kIsWeb) {
-      if (defaultTargetPlatform == TargetPlatform.iOS || WebBrowserDetection.isSafari) {
-        // On macOS web, the selection width behavior differs when running on
-        // Chrom(e|ium) (blink) or Safari (webkit).
-        return ui.BoxWidthStyle.max;
-      }
-      return ui.BoxWidthStyle.tight;
-    }
-    return ui.BoxWidthStyle.max;
+    return const EditableTextBehavior().getSelectionWidthStyle(null);
   }
 
   /// The default value for [stylusHandwritingEnabled].
@@ -2148,6 +2145,7 @@ class EditableText extends StatefulWidget {
     required VoidCallback? onSearchWeb,
     required VoidCallback? onShare,
     required VoidCallback? onLiveTextInput,
+    BuildContext? context,
   }) {
     final resultButtonItem = <ContextMenuButtonItem>[];
 
@@ -2158,7 +2156,9 @@ class EditableText extends StatefulWidget {
       // shown.
 
       // On Android, the share button is before the select all button.
-      final showShareBeforeSelectAll = defaultTargetPlatform == TargetPlatform.android;
+      final bool showShareBeforeSelectAll = context != null
+          ? EditableTextConfiguration.of(context).showShareBeforeSelectAll(context)
+          : defaultTargetPlatform == TargetPlatform.android;
 
       resultButtonItem.addAll(<ContextMenuButtonItem>[
         if (onCut != null) ContextMenuButtonItem(onPressed: onCut, type: ContextMenuButtonType.cut),
@@ -2193,34 +2193,25 @@ class EditableText extends StatefulWidget {
   }
 
   // Infer the value of autocorrect from autofillHints.
-  static bool _inferAutocorrect({required Iterable<String>? autofillHints}) {
+  static bool _inferAutocorrect({
+    required Iterable<String>? autofillHints,
+    BuildContext? context,
+  }) {
     if (autofillHints == null || autofillHints.isEmpty || kIsWeb) {
       return true;
     }
-
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.iOS:
-        // username, password and newPassword are password related hint.
-        // newUsername is not supported on iOS.
-        final bool passwordRelatedHint = autofillHints.any(
-          (String hint) =>
-              hint == AutofillHints.username ||
-              hint == AutofillHints.password ||
-              hint == AutofillHints.newPassword,
-        );
-        if (passwordRelatedHint) {
-          // https://github.com/flutter/flutter/issues/134723
-          // Set autocorrect to false to prevent password bar from flashing.
-          return false;
-        }
-      case TargetPlatform.macOS:
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        break;
+    final bool passwordRelatedHint = autofillHints.any(
+      (String hint) =>
+          hint == AutofillHints.username ||
+          hint == AutofillHints.password ||
+          hint == AutofillHints.newPassword,
+    );
+    final EditableTextBehavior behavior = context != null
+        ? EditableTextConfiguration.of(context)
+        : const EditableTextBehavior();
+    if (passwordRelatedHint && behavior.disableAutocorrectForPassword(context)) {
+      return false;
     }
-
     return true;
   }
 
@@ -2234,6 +2225,8 @@ class EditableText extends StatefulWidget {
     }
 
     final String effectiveHint = autofillHints.first;
+
+    // TODO(loicsharma): Do we want to move this to EditableTextBehavior?
 
     // On iOS oftentimes specifying a text content type is not enough to qualify
     // the input field for autofill. The keyboard type also needs to be compatible
@@ -2597,7 +2590,8 @@ class EditableTextState extends State<EditableText>
   /// - cmd/ctrl+a to select all.
   /// - Changing the selection using a physical keyboard.
   bool get _shouldCreateInputConnection =>
-      kIsWeb || defaultTargetPlatform == TargetPlatform.macOS || !widget.readOnly;
+      !widget.readOnly ||
+      EditableTextConfiguration.of(context).requiresInputConnectionForReadOnly(context);
 
   // The time it takes for the floating cursor to snap to the text aligned
   // cursor position after the user has finished placing it.
@@ -2666,24 +2660,19 @@ class EditableTextState extends State<EditableText>
       return false;
     }
 
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.macOS:
-        return false;
-      case TargetPlatform.iOS:
-        return textEditingValue.text.isNotEmpty && textEditingValue.selection.isCollapsed;
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        return textEditingValue.text.isNotEmpty &&
-            !(textEditingValue.selection.start == 0 &&
-                textEditingValue.selection.end == textEditingValue.text.length);
-    }
+    return EditableTextConfiguration.of(context).selectAllEnabled(
+      context,
+      isNotEmpty: textEditingValue.text.isNotEmpty,
+      isCollapsed: textEditingValue.selection.isCollapsed,
+      isFullySelected:
+          textEditingValue.selection.start == 0 &&
+          textEditingValue.selection.end == textEditingValue.text.length,
+    );
   }
 
   @override
   bool get lookUpEnabled {
-    if (defaultTargetPlatform != TargetPlatform.iOS) {
+    if (!EditableTextConfiguration.of(context).lookUpEnabled(context)) {
       return false;
     }
     return !widget.obscureText &&
@@ -2693,7 +2682,7 @@ class EditableTextState extends State<EditableText>
 
   @override
   bool get searchWebEnabled {
-    if (defaultTargetPlatform != TargetPlatform.iOS) {
+    if (!EditableTextConfiguration.of(context).searchWebEnabled(context)) {
       return false;
     }
 
@@ -2704,7 +2693,7 @@ class EditableTextState extends State<EditableText>
 
   @override
   bool get shareEnabled {
-    if (!defaultIsMobile || defaultTargetPlatform == .fuchsia) {
+    if (!EditableTextConfiguration.of(context).shareEnabled(context)) {
       return false;
     }
 
@@ -2756,23 +2745,15 @@ class EditableTextState extends State<EditableText>
       bringIntoView(textEditingValue.selection.extent);
       hideToolbar(false);
 
-      // TODO: ????
-      switch (defaultTargetPlatform) {
-        case TargetPlatform.iOS:
-        case TargetPlatform.macOS:
-        case TargetPlatform.linux:
-        case TargetPlatform.windows:
-          break;
-        case TargetPlatform.android:
-        case TargetPlatform.fuchsia:
-          // Collapse the selection and hide the toolbar and handles.
-          userUpdateTextEditingValue(
-            TextEditingValue(
-              text: textEditingValue.text,
-              selection: TextSelection.collapsed(offset: textEditingValue.selection.end),
-            ),
-            SelectionChangedCause.toolbar,
-          );
+      if (EditableTextConfiguration.of(context).collapseSelectionAfterCopy(context)) {
+        // Collapse the selection and hide the toolbar and handles.
+        userUpdateTextEditingValue(
+          TextEditingValue(
+            text: textEditingValue.text,
+            selection: TextSelection.collapsed(offset: textEditingValue.selection.end),
+          ),
+          SelectionChangedCause.toolbar,
+        );
       }
     }
     clipboardStatus.update();
@@ -2893,10 +2874,10 @@ class EditableTextState extends State<EditableText>
     );
 
     if (cause == SelectionChangedCause.toolbar) {
-      if (defaultIsDesktop) {
+      if (EditableTextConfiguration.of(context).hideToolbarOnSelectAll(context)) {
         hideToolbar();
       }
-      if (!defaultIsDarwin) {
+      if (EditableTextConfiguration.of(context).bringIntoViewOnSelectAll(context)) {
         bringIntoView(textEditingValue.selection.extent);
       }
     }
@@ -3214,6 +3195,7 @@ class EditableTextState extends State<EditableText>
   List<ContextMenuButtonItem> get contextMenuButtonItems {
     return buttonItemsForToolbarOptions() ??
           EditableText.getEditableButtonItems(
+            context: context,
             clipboardStatus: clipboardStatus.value,
             onCopy: copyEnabled ? () => copySelection(SelectionChangedCause.toolbar) : null,
             onCut: cutEnabled ? () => cutSelection(SelectionChangedCause.toolbar) : null,
@@ -3365,29 +3347,17 @@ class EditableTextState extends State<EditableText>
       }, debugLabel: 'EditableText.updateStyle');
     }
 
-    if (defaultIsMobile && defaultTargetPlatform != .fuchsia) {
-      return;
-    }
-
-    // Hide the text selection toolbar on mobile when orientation changes.
-    final Orientation orientation = MediaQuery.orientationOf(context);
-    if (_lastOrientation == null) {
-      _lastOrientation = orientation;
-      return;
-    }
-    if (orientation != _lastOrientation) {
-      _lastOrientation = orientation;
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
-        hideToolbar(false);
-      }
-      if (defaultTargetPlatform == TargetPlatform.android) {
-        hideToolbar();
+    if (EditableTextConfiguration.of(context).hideToolbarOnOrientationChange(context)) {
+      // Hide the text selection toolbar on mobile when orientation changes.
+      final Orientation orientation = MediaQuery.orientationOf(context);
+      if (_lastOrientation == null) {
+        _lastOrientation = orientation;
+      } else if (orientation != _lastOrientation) {
+        _lastOrientation = orientation;
+        hideToolbar(EditableTextConfiguration.of(context).hideHandlesOnOrientationChange(context));
       }
     }
 
-    // TODO: THis seems like a bug. We should do this on desktop too?
-    // Actually, this seems OK. Only iOS and Android support fade on scroll and
-    // use the scroll notification observer.
     if (_listeningToScrollNotificationObserver) {
       // Only update subscription when we have previously subscribed to the
       // scroll notification observer. We only subscribe to the scroll
@@ -4233,8 +4203,8 @@ class EditableTextState extends State<EditableText>
     }
   }
 
-  // TODO: ????
-  final bool _platformSupportsFadeOnScroll = defaultIsMobile && defaultTargetPlatform != .fuchsia;
+  bool get _platformSupportsFadeOnScroll =>
+      EditableTextConfiguration.of(context).fadeOnScroll(context);
 
   bool _isInternalScrollableNotification(BuildContext? notificationContext) {
     final ScrollableState? scrollableState = notificationContext
@@ -4747,10 +4717,10 @@ class EditableTextState extends State<EditableText>
     TextSelection newSelection,
     SelectionChangedCause? cause,
   ) {
-    if (defaultIsDarwin) {
-        if (cause == SelectionChangedCause.longPress || cause == SelectionChangedCause.drag) {
-          bringIntoView(newSelection.extent);
-        }
+    if (EditableTextConfiguration.of(context).bringExtentIntoViewOnSelectionChange(context)) {
+      if (cause == SelectionChangedCause.longPress || cause == SelectionChangedCause.drag) {
+        bringIntoView(newSelection.extent);
+      }
     } else {
       if (cause == SelectionChangedCause.drag) {
         if (oldSelection.baseOffset != newSelection.baseOffset) {
@@ -4975,7 +4945,8 @@ class EditableTextState extends State<EditableText>
   _ScribbleCacheKey? _scribbleCacheKey;
 
   void _updateSelectionRects({bool force = false}) {
-    if (!_stylusHandwritingEnabled || defaultTargetPlatform != TargetPlatform.iOS) {
+    if (!_stylusHandwritingEnabled ||
+        !EditableTextConfiguration.of(context).stylusHandwritingEnabled(context)) {
       return;
     }
 
@@ -5301,6 +5272,16 @@ class EditableTextState extends State<EditableText>
 
   int? _viewId;
 
+  bool get _autocorrect {
+    if (widget.autocorrect != null) {
+      return widget.autocorrect!;
+    }
+    return EditableText._inferAutocorrect(
+      autofillHints: widget.autofillHints,
+      context: context,
+    );
+  }
+
   @override
   TextInputConfiguration get textInputConfiguration {
     final List<String>? autofillHints = widget.autofillHints?.toList(growable: false);
@@ -5318,7 +5299,7 @@ class EditableTextState extends State<EditableText>
       inputType: widget.keyboardType,
       readOnly: widget.readOnly,
       obscureText: widget.obscureText,
-      autocorrect: widget.autocorrect,
+      autocorrect: _autocorrect,
       smartDashesType: widget.smartDashesType,
       smartQuotesType: widget.smartQuotesType,
       enableSuggestions: widget.enableSuggestions,
@@ -5828,22 +5809,11 @@ class EditableTextState extends State<EditableText>
                       return true;
                     }
 
-                    // TODO: ????
-                    switch (defaultTargetPlatform) {
-                      case TargetPlatform.iOS:
-                      case TargetPlatform.macOS:
-                      case TargetPlatform.fuchsia:
-                      case TargetPlatform.linux:
-                      case TargetPlatform.windows:
-                        // Composing text is not counted in history coalescing.
-                        if (!widget.controller.value.composing.isCollapsed) {
-                          return false;
-                        }
-                      case TargetPlatform.android:
-                        // Gboard on Android puts non-CJK words in composing regions. Coalesce
-                        // composing text in order to allow the saving of partial words in that
-                        // case.
-                        break;
+                    if (!EditableTextConfiguration.of(
+                          context,
+                        ).coalesceComposingTextInUndoHistory(context) &&
+                        !widget.controller.value.composing.isCollapsed) {
+                      return false;
                     }
 
                     return oldValue.text != newValue.text ||
@@ -5854,7 +5824,9 @@ class EditableTextState extends State<EditableText>
                     // a new entry to the undo stack. This prevents the TextInputPlugin
                     // from restarting the input on every undo/redo when the composing
                     // region is changed by the framework.
-                    return defaultTargetPlatform == TargetPlatform.android
+                    return EditableTextConfiguration.of(
+                          context,
+                        ).discardComposingRegionOnUndo(context)
                         ? value.copyWith(composing: TextRange.empty)
                         : value;
                   },
@@ -5878,7 +5850,10 @@ class EditableTextState extends State<EditableText>
                         // On iOS a single-line TextField should not scroll.
                         physics:
                             widget.scrollPhysics ??
-                            (!_isMultiline && defaultTargetPlatform == TargetPlatform.iOS
+                            (!_isMultiline &&
+                                    !EditableTextConfiguration.of(
+                                      context,
+                                    ).allowSingleLineScrolling(context)
                                 ? const _NeverUserScrollableScrollPhysics()
                                 : null),
                         dragStartBehavior: widget.dragStartBehavior,
@@ -5991,7 +5966,7 @@ class EditableTextState extends State<EditableText>
       // Reveal the latest character in an obscured field only on mobile.
       final bool brieflyShowPassword =
           WidgetsBinding.instance.platformDispatcher.brieflyShowPassword &&
-          defaultIsMobile;
+          EditableTextConfiguration.of(context).allowBrieflyShowPassword(context);
       if (brieflyShowPassword) {
         final int? o = _obscureShowCharTicksPending > 0 ? _obscureLatestCharIndex : null;
         if (o != null && o >= 0 && o < text.length) {
@@ -6086,17 +6061,15 @@ class _Editable extends MultiChildRenderObjectWidget {
     this.cursorRadius,
     required this.cursorOffset,
     required this.paintCursorAboveText,
-    ui.BoxHeightStyle? selectionHeightStyle,
-    ui.BoxWidthStyle? selectionWidthStyle,
+    this.selectionHeightStyle,
+    this.selectionWidthStyle,
     this.enableInteractiveSelection = true,
     required this.textSelectionDelegate,
     required this.devicePixelRatio,
     this.promptRectRange,
     this.promptRectColor,
     required this.clipBehavior,
-  }) : selectionHeightStyle = selectionHeightStyle ?? EditableText.defaultSelectionHeightStyle,
-       selectionWidthStyle = selectionWidthStyle ?? EditableText.defaultSelectionWidthStyle,
-       super(children: WidgetSpan.extractFromInlineSpan(inlineSpan, textScaler));
+  }) : super(children: WidgetSpan.extractFromInlineSpan(inlineSpan, textScaler));
 
   final InlineSpan inlineSpan;
   final TextEditingValue value;
@@ -6128,8 +6101,8 @@ class _Editable extends MultiChildRenderObjectWidget {
   final Radius? cursorRadius;
   final Offset cursorOffset;
   final bool paintCursorAboveText;
-  final ui.BoxHeightStyle selectionHeightStyle;
-  final ui.BoxWidthStyle selectionWidthStyle;
+  final ui.BoxHeightStyle? selectionHeightStyle;
+  final ui.BoxWidthStyle? selectionWidthStyle;
   final bool enableInteractiveSelection;
   final TextSelectionDelegate textSelectionDelegate;
   final double devicePixelRatio;
@@ -6170,8 +6143,12 @@ class _Editable extends MultiChildRenderObjectWidget {
       cursorRadius: cursorRadius,
       cursorOffset: cursorOffset,
       paintCursorAboveText: paintCursorAboveText,
-      selectionHeightStyle: selectionHeightStyle,
-      selectionWidthStyle: selectionWidthStyle,
+      selectionHeightStyle:
+          selectionHeightStyle ??
+          EditableTextConfiguration.of(context).getSelectionHeightStyle(context),
+      selectionWidthStyle:
+          selectionWidthStyle ??
+          EditableTextConfiguration.of(context).getSelectionWidthStyle(context),
       enableInteractiveSelection: enableInteractiveSelection,
       textSelectionDelegate: textSelectionDelegate,
       devicePixelRatio: devicePixelRatio,
@@ -6213,8 +6190,12 @@ class _Editable extends MultiChildRenderObjectWidget {
       ..cursorHeight = cursorHeight
       ..cursorRadius = cursorRadius
       ..cursorOffset = cursorOffset
-      ..selectionHeightStyle = selectionHeightStyle
-      ..selectionWidthStyle = selectionWidthStyle
+      ..selectionHeightStyle =
+          selectionHeightStyle ??
+          EditableTextConfiguration.of(context).getSelectionHeightStyle(context)
+      ..selectionWidthStyle =
+          selectionWidthStyle ??
+          EditableTextConfiguration.of(context).getSelectionWidthStyle(context)
       ..enableInteractiveSelection = enableInteractiveSelection
       ..textSelectionDelegate = textSelectionDelegate
       ..devicePixelRatio = devicePixelRatio
@@ -6833,25 +6814,11 @@ class _EditableTextTapOutsideAction extends ContextAction<EditableTextTapOutside
 
   @override
   void invoke(EditableTextTapOutsideIntent intent, [BuildContext? context]) {
-    // The focus dropping behavior is only present on desktop platforms.
-    if (defaultIsDesktop) {
+    final EditableTextBehavior behavior = context != null
+        ? EditableTextConfiguration.of(context)
+        : const EditableTextBehavior();
+    if (behavior.unfocusOnTapOutside(context, eventKind: intent.pointerDownEvent.kind)) {
       intent.focusNode.unfocus();
-    } else if (defaultIsMobile) {
-      // On mobile platforms, we don't unfocus on touch events unless they're
-      // in the web browser, but we do unfocus for all other kinds of events.
-      switch (intent.pointerDownEvent.kind) {
-        case ui.PointerDeviceKind.touch:
-          if (kIsWeb) {
-            intent.focusNode.unfocus();
-          }
-        case ui.PointerDeviceKind.mouse:
-        case ui.PointerDeviceKind.stylus:
-        case ui.PointerDeviceKind.invertedStylus:
-        case ui.PointerDeviceKind.unknown:
-          intent.focusNode.unfocus();
-        case ui.PointerDeviceKind.trackpad:
-          throw UnimplementedError('Unexpected pointer down event for trackpad');
-      }
     }
   }
 }
@@ -6909,5 +6876,255 @@ class _OverridingTextStyleTextSpanUtils {
       locale: textSpan.locale,
       spellOut: textSpan.spellOut,
     );
+  }
+}
+
+/// Describes how [EditableText] widgets should behave.
+///
+/// {@template flutter.widgets.editableTextBehavior}
+/// Used by [EditableTextConfiguration] to configure the [EditableText] widgets
+/// in a subtree.
+/// {@endtemplate}
+@immutable
+class EditableTextBehavior {
+  /// Creates a description of how [EditableText] widgets should behave.
+  const EditableTextBehavior();
+
+  // TODO(loicsharma): Move getPlatform, isMobile, isDesktop, isDarwin
+  // to a separate class?
+  // Maybe EditableTextBehavior accepts a PlatformData object?
+
+
+  /// The platform whose behavior should be modeled.
+  TargetPlatform getPlatform(BuildContext? context) => defaultTargetPlatform;
+
+  bool _isMobile(BuildContext? context) {
+    switch (getPlatform(context)) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+      case TargetPlatform.fuchsia:
+        return true;
+      case TargetPlatform.macOS:
+      case TargetPlatform.linux:
+      case TargetPlatform.windows:
+        return false;
+    }
+  }
+
+  bool _isDesktop(BuildContext? context) {
+    switch (getPlatform(context)) {
+      case TargetPlatform.macOS:
+      case TargetPlatform.linux:
+      case TargetPlatform.windows:
+        return true;
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+      case TargetPlatform.fuchsia:
+        return false;
+    }
+  }
+
+  bool _isDarwin(BuildContext? context) {
+    switch (getPlatform(context)) {
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+        return true;
+      case TargetPlatform.android:
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.windows:
+        return false;
+    }
+  }
+
+  /// The width style to use for selection.
+  ui.BoxWidthStyle getSelectionWidthStyle(BuildContext? context) {
+    if (kIsWeb) {
+      if (getPlatform(context) == TargetPlatform.iOS || WebBrowserDetection.isSafari) {
+        return ui.BoxWidthStyle.max;
+      }
+      return ui.BoxWidthStyle.tight;
+    }
+    return ui.BoxWidthStyle.max;
+  }
+
+  /// The height style to use for selection.
+  ui.BoxHeightStyle getSelectionHeightStyle(BuildContext? context) {
+    if (kIsWeb) {
+      return ui.BoxHeightStyle.max;
+    }
+    return ui.BoxHeightStyle.includeLineSpacingMiddle;
+  }
+
+  /// Whether the "Share" button should be shown before the "Select All" button in the context menu.
+  bool showShareBeforeSelectAll(BuildContext? context) {
+    return getPlatform(context) == TargetPlatform.android;
+  }
+
+  /// Whether an input connection should be created even for read-only fields (for shortcuts and browser functionality).
+  bool requiresInputConnectionForReadOnly(BuildContext? context) {
+    return kIsWeb || getPlatform(context) == TargetPlatform.macOS;
+  }
+
+  /// Whether the "Select All" button should be enabled.
+  bool selectAllEnabled(
+    BuildContext? context, {
+    required bool isNotEmpty,
+    required bool isCollapsed,
+    required bool isFullySelected,
+  }) {
+    switch (getPlatform(context)) {
+      case TargetPlatform.macOS:
+        return false;
+      case TargetPlatform.iOS:
+        return isNotEmpty && isCollapsed;
+      case TargetPlatform.android:
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.windows:
+        return isNotEmpty && !isFullySelected;
+    }
+  }
+
+  /// Whether the "Look Up" button should be enabled.
+  bool lookUpEnabled(BuildContext? context) {
+    return getPlatform(context) == TargetPlatform.iOS;
+  }
+
+  /// Whether the "Search Web" button should be enabled.
+  bool searchWebEnabled(BuildContext? context) {
+    return getPlatform(context) == TargetPlatform.iOS;
+  }
+
+  /// Whether the "Share" button should be enabled.
+  bool shareEnabled(BuildContext? context) {
+    return _isMobile(context) && getPlatform(context) != TargetPlatform.fuchsia;
+  }
+
+  /// Whether the toolbar should be hidden and the selection collapsed after a copy action.
+  bool collapseSelectionAfterCopy(BuildContext? context) {
+    switch (getPlatform(context)) {
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+      case TargetPlatform.linux:
+      case TargetPlatform.windows:
+        return false;
+      case TargetPlatform.android:
+      case TargetPlatform.fuchsia:
+        return true;
+    }
+  }
+
+  /// Whether the platform supports visual text fading at the scroll boundaries.
+  bool fadeOnScroll(BuildContext? context) {
+    return _isMobile(context) && getPlatform(context) != TargetPlatform.fuchsia;
+  }
+
+  /// Whether the stylus handwriting features are enabled.
+  bool stylusHandwritingEnabled(BuildContext? context) {
+    return getPlatform(context) == TargetPlatform.iOS;
+  }
+
+  /// Whether composing text should be coalesced in the undo history.
+  ///
+  /// On Android, Gboard puts non-CJK words in composing regions, so coalescing is enabled
+  /// to allow saving partial words.
+  bool coalesceComposingTextInUndoHistory(BuildContext? context) {
+    switch (getPlatform(context)) {
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.windows:
+        return false;
+      case TargetPlatform.android:
+        return true;
+    }
+  }
+
+  /// Whether the composing region should be discarded when pushing a new entry to the undo stack.
+  bool discardComposingRegionOnUndo(BuildContext? context) {
+    return getPlatform(context) == TargetPlatform.android;
+  }
+
+  /// Whether a single-line text field is allowed to scroll vertically.
+  bool allowSingleLineScrolling(BuildContext? context) {
+    return getPlatform(context) != TargetPlatform.iOS;
+  }
+
+  /// Whether autocorrect should be disabled to prevent password bar flashing.
+  bool disableAutocorrectForPassword(BuildContext? context) {
+    return getPlatform(context) == TargetPlatform.iOS;
+  }
+
+  /// Whether the selection toolbar should be hidden on device orientation changes.
+  bool hideToolbarOnOrientationChange(BuildContext? context) {
+    return _isMobile(context) && getPlatform(context) != TargetPlatform.fuchsia;
+  }
+
+  /// Whether hiding the toolbar on orientation change should also hide selection handles.
+  bool hideHandlesOnOrientationChange(BuildContext? context) {
+    return getPlatform(context) != TargetPlatform.iOS;
+  }
+
+  /// Whether selecting all text from the toolbar should hide the toolbar.
+  bool hideToolbarOnSelectAll(BuildContext? context) {
+    return _isDesktop(context);
+  }
+
+  /// Whether selecting all text from the toolbar should bring the selection extent into view.
+  bool bringIntoViewOnSelectAll(BuildContext? context) {
+    return !_isDarwin(context);
+  }
+
+  /// Whether dragging or long-pressing on selection should bring the selection extent into view on Darwin platforms.
+  bool bringExtentIntoViewOnSelectionChange(BuildContext? context) {
+    return _isDarwin(context);
+  }
+
+  /// Whether the latest character in an obscured field should be briefly revealed.
+  bool allowBrieflyShowPassword(BuildContext? context) {
+    return _isMobile(context);
+  }
+
+  /// Whether tapping outside the field should cause it to unfocus for the given event kind.
+  bool unfocusOnTapOutside(BuildContext? context, {required ui.PointerDeviceKind eventKind}) {
+    if (_isDesktop(context)) {
+      return true;
+    } else if (_isMobile(context)) {
+      switch (eventKind) {
+        case ui.PointerDeviceKind.touch:
+          return kIsWeb;
+        case ui.PointerDeviceKind.mouse:
+        case ui.PointerDeviceKind.stylus:
+        case ui.PointerDeviceKind.invertedStylus:
+        case ui.PointerDeviceKind.unknown:
+          return true;
+        case ui.PointerDeviceKind.trackpad:
+          throw UnimplementedError('Unexpected pointer down event for trackpad');
+      }
+    }
+    return false;
+  }
+}
+
+/// Controls how [EditableText] widgets behave in a subtree.
+class EditableTextConfiguration extends InheritedWidget {
+  /// Creates a widget that controls how [EditableText] widgets behave in a subtree.
+  const EditableTextConfiguration({super.key, required this.behavior, required super.child});
+
+  /// How [EditableText] widgets that are descendants of [child] should behave.
+  final EditableTextBehavior behavior;
+
+  /// The [EditableTextBehavior] for [EditableText] widgets in the given [BuildContext].
+  static EditableTextBehavior of(BuildContext context) {
+    final EditableTextConfiguration? configuration = context
+        .dependOnInheritedWidgetOfExactType<EditableTextConfiguration>();
+    return configuration?.behavior ?? const EditableTextBehavior();
+  }
+
+  @override
+  bool updateShouldNotify(EditableTextConfiguration oldWidget) {
+    return behavior != oldWidget.behavior;
   }
 }
