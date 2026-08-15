@@ -304,13 +304,44 @@ class TargetPlatformVariant extends TestVariant<TargetPlatform> {
   @override
   Future<TargetPlatform?> setUp(TargetPlatform value) async {
     final TargetPlatform? previousTargetPlatform = debugDefaultTargetPlatformOverride;
-    debugDefaultTargetPlatformOverride = value;
+    _updateDebugOverrides(value);
     return previousTargetPlatform;
   }
 
   @override
   Future<void> tearDown(TargetPlatform value, TargetPlatform? memento) async {
-    debugDefaultTargetPlatformOverride = memento;
+    _updateDebugOverrides(memento);
+  }
+
+  void _updateDebugOverrides(TargetPlatform? value) {
+    debugDefaultTargetPlatformOverride = value;
+    debugDefaultRuntimePlatformOverride = switch (value) {
+      TargetPlatform.android => RuntimePlatform.android,
+      TargetPlatform.fuchsia => RuntimePlatform.fuchsia,
+      TargetPlatform.iOS => RuntimePlatform.iOS,
+      TargetPlatform.linux => RuntimePlatform.linux,
+      TargetPlatform.macOS => RuntimePlatform.macOS,
+      TargetPlatform.windows => RuntimePlatform.windows,
+      null => null,
+    };
+    debugDefaultIsDesktopOverride = switch (value) {
+      TargetPlatform.linux || TargetPlatform.macOS || TargetPlatform.windows => true,
+      TargetPlatform.android || TargetPlatform.fuchsia || TargetPlatform.iOS => false,
+      null => null,
+    };
+    debugDefaultIsMobileOverride = switch (value) {
+      TargetPlatform.android || TargetPlatform.fuchsia || TargetPlatform.iOS => true,
+      TargetPlatform.linux || TargetPlatform.macOS || TargetPlatform.windows => false,
+      null => null,
+    };
+    debugDefaultIsDarwinOverride = switch (value) {
+      TargetPlatform.macOS || TargetPlatform.iOS => true,
+      TargetPlatform.android ||
+      TargetPlatform.fuchsia ||
+      TargetPlatform.linux ||
+      TargetPlatform.windows => false,
+      null => null,
+    };
   }
 }
 

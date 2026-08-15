@@ -176,7 +176,7 @@ bool? _debugDefaultIsDarwinOverride;
 final class RuntimePlatform {
   const RuntimePlatform._(this.name);
 
- factory RuntimePlatform.fromString(String name) => switch (name) {
+  factory RuntimePlatform.fromString(String name) => switch (name) {
     'android' => RuntimePlatform.android,
     'fuchsia' => RuntimePlatform.fuchsia,
     'ios' => RuntimePlatform.iOS,
