@@ -172,46 +172,30 @@ set debugDefaultIsDarwinOverride(bool? value) {
 
 bool? _debugDefaultIsDarwinOverride;
 
-@immutable
-final class RuntimePlatform {
-  const RuntimePlatform._(this.name);
-
-  factory RuntimePlatform.fromString(String name) => switch (name) {
-    'android' => RuntimePlatform.android,
-    'fuchsia' => RuntimePlatform.fuchsia,
-    'ios' => RuntimePlatform.iOS,
-    'linux' => RuntimePlatform.linux,
-    'macos' => RuntimePlatform.macOS,
-    'windows' => RuntimePlatform.windows,
-    _ => RuntimePlatform._(name),
-  };
-
-  final String name;
-
+enum RuntimePlatform {
   /// Android: <https://www.android.com/>
-  static const RuntimePlatform android = RuntimePlatform._('android');
+  android,
 
   /// Fuchsia: <https://fuchsia.dev/fuchsia-src/concepts>
-  static const RuntimePlatform fuchsia = RuntimePlatform._('fuchsia');
+  fuchsia,
 
   /// iOS: <https://www.apple.com/ios/>
-  static const RuntimePlatform iOS = RuntimePlatform._('ios');
+  iOS,
 
   /// Linux: <https://www.linux.org>
-  static const RuntimePlatform linux = RuntimePlatform._('linux');
+  linux,
 
   /// macOS: <https://www.apple.com/macos>
-  static const RuntimePlatform macOS = RuntimePlatform._('macos');
+  macOS,
 
   /// Windows: <https://www.windows.com>
-  static const RuntimePlatform windows = RuntimePlatform._('windows');
+  windows,
 
-  @override
-  bool operator ==(Object other)
-    => other is RuntimePlatform && other.name == name;
+  /// Web: <https://web.dev/>
+  web,
 
-  @override
-  int get hashCode => name.hashCode;
+  /// Out-of-tree platform.
+  other,
 }
 
 RuntimePlatform? get debugDefaultRuntimePlatformOverride => _debugDefaultRuntimePlatformOverride;

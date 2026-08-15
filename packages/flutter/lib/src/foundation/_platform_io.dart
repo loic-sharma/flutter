@@ -131,6 +131,8 @@ platform.RuntimePlatform get defaultRuntimePlatform {
     result = platform.RuntimePlatform.macOS;
   } else if (Platform.isWindows) {
     result = platform.RuntimePlatform.windows;
+  } else {
+    result = platform.RuntimePlatform.other;
   }
   assert(() {
     if (Platform.environment.containsKey('FLUTTER_TEST')) {
@@ -141,13 +143,6 @@ platform.RuntimePlatform get defaultRuntimePlatform {
   if (kDebugMode && platform.debugDefaultRuntimePlatformOverride != null) {
     result = platform.debugDefaultRuntimePlatformOverride;
   }
-  // TODO(loic-sharma): Add support for out-of-tree platforms???
-  if (result == null) {
-    throw FlutterError(
-      'Unknown platform.\n'
-      '${Platform.operatingSystem} was not recognized as a runtime platform. '
-      'Consider updating the list of Runtimelatforms to include this platform.',
-    );
-  }
+  assert(result != null, 'Unknown platform: ${Platform.operatingSystem}');
   return result!;
 }
