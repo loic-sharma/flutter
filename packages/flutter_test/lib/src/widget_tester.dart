@@ -271,6 +271,7 @@ class DefaultTestVariant extends TestVariant<void> {
 
 /// A [TestVariant] that runs tests with [debugDefaultTargetPlatformOverride]
 /// set to different values of [TargetPlatform].
+// TODO(loic-sharma): Add support for out-of-tree platforms.
 class TargetPlatformVariant extends TestVariant<TargetPlatform> {
   /// Creates a [TargetPlatformVariant] that tests the given [values].
   const TargetPlatformVariant(this.values);

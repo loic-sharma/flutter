@@ -57,6 +57,7 @@ bool get defaultIsDesktop {
         tp == platform.TargetPlatform.macOS ||
         tp == platform.TargetPlatform.windows;
   }
+  // TODO: Instead of environments, can we use PlatformDispatcher?
   bool result = const bool.hasEnvironment('flutter.is_desktop')
       ? const bool.fromEnvironment('flutter.is_desktop')
       : (Platform.isLinux || Platform.isMacOS || Platform.isWindows);
@@ -140,6 +141,7 @@ platform.RuntimePlatform get defaultRuntimePlatform {
   if (kDebugMode && platform.debugDefaultRuntimePlatformOverride != null) {
     result = platform.debugDefaultRuntimePlatformOverride;
   }
+  // TODO(loic-sharma): Add support for out-of-tree platforms???
   if (result == null) {
     throw FlutterError(
       'Unknown platform.\n'

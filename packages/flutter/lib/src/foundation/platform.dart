@@ -214,10 +214,6 @@ final class RuntimePlatform {
   int get hashCode => name.hashCode;
 }
 
-// extension OhosRuntimePlatform on RuntimePlatform {
-//   static final ohos = RuntimePlatform.fromString('ohos');
-// }
-
 RuntimePlatform? get debugDefaultRuntimePlatformOverride => _debugDefaultRuntimePlatformOverride;
 
 set debugDefaultRuntimePlatformOverride(RuntimePlatform? value) {
