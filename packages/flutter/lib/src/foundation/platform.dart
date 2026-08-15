@@ -50,6 +50,7 @@ import 'constants.dart';
 // and we'd never be able to introduce dedicated behavior for that platform
 // (since doing so would be a big breaking change).
 // TODO(loic-sharma): Deprecate this in favor or runtime platform.
+@deprecated
 @pragma('vm:platform-const-if', !kDebugMode)
 TargetPlatform get defaultTargetPlatform => platform.defaultTargetPlatform;
 
@@ -80,6 +81,7 @@ bool get defaultIsDarwin => platform.defaultIsDarwin;
 // When you add values here, make sure to also add them to
 // nextPlatform() in flutter_tools/lib/src/resident_runner.dart so that
 // the tool can support the new platform for its "o" option.
+@deprecated
 enum TargetPlatform {
   /// Android: <https://www.android.com/>
   android,
@@ -119,8 +121,10 @@ enum TargetPlatform {
 /// button, which will make those widgets unusable since iOS has no such button.
 ///
 /// Attempting to override this property in non-debug builds causes an error.
+@deprecated
 TargetPlatform? get debugDefaultTargetPlatformOverride => _debugDefaultTargetPlatformOverride;
 
+@deprecated
 set debugDefaultTargetPlatformOverride(TargetPlatform? value) {
   if (!kDebugMode) {
     throw FlutterError('Cannot modify debugDefaultTargetPlatformOverride in non-debug builds.');
