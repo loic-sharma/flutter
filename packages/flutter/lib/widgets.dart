@@ -181,7 +181,8 @@ export 'src/widgets/two_dimensional_viewport.dart';
 export 'src/widgets/undo_history.dart';
 export 'src/widgets/unique_widget.dart';
 export 'src/widgets/value_listenable_builder.dart';
-export 'src/widgets/view.dart';
+export 'src/widgets/view.dart'
+    hide ViewAnchorLayoutBuilder, ViewAnchorLayoutInfo, ViewAnchorLayoutWidgetBuilder;
 export 'src/widgets/viewport.dart';
 export 'src/widgets/widget_inspector.dart';
 export 'src/widgets/widget_span.dart';

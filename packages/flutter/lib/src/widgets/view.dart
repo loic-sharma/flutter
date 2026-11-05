@@ -13,6 +13,7 @@ import 'dart:ui'
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'binding.dart';
 import 'focus_manager.dart';
@@ -765,6 +766,475 @@ class ViewAnchor extends StatelessWidget {
       child: child,
     );
   }
+}
+
+/// The signature of [ViewAnchorLayoutBuilder.viewBuilder].
+///
+/// Returns null if there is currently no anchored view.
+@internal
+typedef ViewAnchorLayoutWidgetBuilder = Widget? Function(
+  BuildContext context,
+  ViewAnchorLayoutInfo info,
+);
+
+/// The layout information of [ViewAnchorLayoutBuilder.child] that is passed to
+/// [ViewAnchorLayoutBuilder.viewBuilder].
+@internal
+extension type ViewAnchorLayoutInfo._((Size childSize, Matrix4 childPaintTransform) _info) {
+  /// The size of [ViewAnchorLayoutBuilder.child], in its own coordinates.
+  Size get childSize => _info.$1;
+
+  /// The paint transform of [ViewAnchorLayoutBuilder.child], in the logical
+  /// coordinates of the [View] that contains it.
+  Matrix4 get childPaintTransform => _info.$2;
+
+  /// The bounding box of [ViewAnchorLayoutBuilder.child], in the logical
+  /// coordinates of the [View] that contains it.
+  Rect get childRect => MatrixUtils.transformRect(childPaintTransform, Offset.zero & childSize);
+}
+
+/// Decorates a [child] widget with side views that are built using the
+/// [child]'s layout.
+///
+/// This is similar to [ViewAnchor], except the side views are built by
+/// [viewBuilder] during layout, using the [child]'s size and paint transform in
+/// the coordinates of the surrounding [View].
+///
+/// The [viewBuilder] runs in a layout callback after the surrounding [View]
+/// has completely finished its layout, and before the side views it returns
+/// are laid out. This lets [viewBuilder] create and position a window relative
+/// to the [child] (for example, a tooltip window) in the same frame, without
+/// using a placeholder position.
+///
+/// The widget returned by [viewBuilder] has the same restrictions as the
+/// [ViewAnchor.view] slot: it must be a [View] or a [ViewCollection], which
+/// may be wrapped in other non-[RenderObjectWidget]s.
+///
+/// The [viewBuilder] is called again when the layout information changes,
+/// including when the [child] is moved by a paint-only change (for example, a
+/// [Transform] ancestor). The layout information is checked in every frame.
+///
+/// While the [child] has no layout information (for example, before its first
+/// layout), [viewBuilder] is not called and no side views are built.
+///
+/// The [viewBuilder] may return null if there is currently no anchored view.
+///
+/// The paint transform cannot be computed if a [RenderFollowerLayer] (for
+/// example, a `CompositedTransformFollower`) is between the [child] and the
+/// root of the [View], as its paint transform is only established after the
+/// layout phase.
+@internal
+class ViewAnchorLayoutBuilder extends StatefulWidget {
+  /// Creates a [ViewAnchorLayoutBuilder] widget.
+  const ViewAnchorLayoutBuilder({super.key, required this.viewBuilder, required this.child});
+
+  /// Builds the side views using the [child]'s layout.
+  ///
+  /// Returns null if there is currently no anchored view.
+  final ViewAnchorLayoutWidgetBuilder viewBuilder;
+
+  /// The widget below this widget in the tree.
+  ///
+  /// It is rendered into the surrounding view, not into the views built by
+  /// [viewBuilder].
+  final Widget child;
+
+  @override
+  State<ViewAnchorLayoutBuilder> createState() => _ViewAnchorLayoutBuilderState();
+}
+
+class _ViewAnchorLayoutBuilderState extends State<ViewAnchorLayoutBuilder> {
+  final _ViewAnchorLink _link = _ViewAnchorLink();
+
+  @override
+  Widget build(BuildContext context) {
+    return ViewAnchor(
+      view: _DeferredViewBuilder(link: _link, builder: widget.viewBuilder),
+      child: _ViewAnchorTarget(link: _link, child: widget.child),
+    );
+  }
+}
+
+// Connects the anchor's render object in the surrounding view to the
+// deferred view builder in the view slot.
+class _ViewAnchorLink {
+  _RenderViewAnchorTarget? _target;
+
+  // Must only be called once the surrounding view has finished its layout.
+  ViewAnchorLayoutInfo? computeLayoutInfo() {
+    final _RenderViewAnchorTarget? target = _target;
+    if (target == null || !target.attached || !target.hasSize) {
+      return null;
+    }
+
+    // Compute the paint transform relative to the RenderView's child instead
+    // of the RenderView, as the RenderView's transform converts logical pixels
+    // to physical pixels.
+    RenderObject root = target;
+    for (
+      RenderObject? node = target.parent;
+      node != null && node is! RenderView;
+      node = node.parent
+    ) {
+      assert(() {
+        if (node is RenderFollowerLayer) {
+          throw FlutterError.fromParts(<DiagnosticsNode>[
+            ErrorSummary(
+              'The paint transform cannot be reliably computed because of RenderFollowerLayer(s)',
+            ),
+            node.describeForError('The RenderFollowerLayer was'),
+            ErrorDescription(
+              'RenderFollowerLayer establishes its paint transform only after the layout phase.',
+            ),
+          ]);
+        }
+        return true;
+      }());
+      root = node;
+    }
+    return ViewAnchorLayoutInfo._((target.size, target.getTransformTo(root)));
+  }
+}
+
+class _ViewAnchorTarget extends SingleChildRenderObjectWidget {
+  const _ViewAnchorTarget({required this.link, required super.child});
+
+  final _ViewAnchorLink link;
+
+  @override
+  _RenderViewAnchorTarget createRenderObject(BuildContext context) {
+    return _RenderViewAnchorTarget(link);
+  }
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderViewAnchorTarget renderObject) {
+    renderObject.link = link;
+  }
+}
+
+class _RenderViewAnchorTarget extends RenderProxyBox {
+  _RenderViewAnchorTarget(this._link);
+
+  _ViewAnchorLink get link => _link;
+  _ViewAnchorLink _link;
+  set link(_ViewAnchorLink value) {
+    if (value == _link) {
+      return;
+    }
+    if (_link._target == this) {
+      _link._target = null;
+    }
+    _link = value;
+    if (attached) {
+      _link._target = this;
+    }
+  }
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    _link._target = this;
+  }
+
+  @override
+  void detach() {
+    if (_link._target == this) {
+      _link._target = null;
+    }
+    super.detach();
+  }
+}
+
+// Occupies the view slot of a ViewAnchor and builds the side views in a layout
+// callback, after the surrounding view has finished its layout.
+class _DeferredViewBuilder extends RenderObjectWidget {
+  const _DeferredViewBuilder({required this.link, required this.builder});
+
+  final _ViewAnchorLink link;
+  final ViewAnchorLayoutWidgetBuilder builder;
+
+  @override
+  RenderObjectElement createElement() => _DeferredViewBuilderElement(this);
+
+  @override
+  _RenderDeferredViewRoot createRenderObject(BuildContext context) => _RenderDeferredViewRoot();
+}
+
+// The element that bootstraps a render tree with a single
+// _RenderDeferredViewRoot, managed by a PipelineOwner that is a child of the
+// surrounding view's PipelineOwner.
+//
+// A parent PipelineOwner lays out all of its own render objects before
+// flushing its children. As a result:
+//
+//  1. The _RenderDeferredViewRoot is laid out after the surrounding view has
+//     finished its layout, so the anchor's paint transform can be computed.
+//
+//  2. The views built in the layout callback are attached to this element's
+//     PipelineOwner, so they are laid out after the layout callback, in the
+//     same frame.
+class _DeferredViewBuilderElement extends RenderTreeRootElement {
+  _DeferredViewBuilderElement(_DeferredViewBuilder super.widget);
+
+  late final PipelineOwner _pipelineOwner = PipelineOwner(
+    onSemanticsUpdate: _handleSemanticsUpdate,
+  );
+
+  // The _RenderDeferredViewRoot does not contribute any semantics.
+  static void _handleSemanticsUpdate(SemanticsUpdate update) {}
+
+  @override
+  _RenderDeferredViewRoot get renderObject => super.renderObject as _RenderDeferredViewRoot;
+
+  Element? _child;
+
+  @override
+  BuildScope get buildScope => _buildScope;
+
+  late final BuildScope _buildScope = BuildScope(scheduleRebuild: _scheduleRebuild);
+
+  // See _LayoutBuilderElement._scheduleRebuild.
+  bool _deferredCallbackScheduled = false;
+  void _scheduleRebuild() {
+    if (_deferredCallbackScheduled) {
+      return;
+    }
+
+    final bool deferMarkNeedsLayout = switch (SchedulerBinding.instance.schedulerPhase) {
+      SchedulerPhase.idle || SchedulerPhase.postFrameCallbacks => true,
+      SchedulerPhase.transientCallbacks ||
+      SchedulerPhase.midFrameMicrotasks ||
+      SchedulerPhase.persistentCallbacks => false,
+    };
+    if (!deferMarkNeedsLayout) {
+      renderObject.scheduleLayoutCallback();
+      return;
+    }
+    _deferredCallbackScheduled = true;
+    SchedulerBinding.instance.scheduleFrameCallback(_frameCallback);
+  }
+
+  void _frameCallback(Duration timestamp) {
+    _deferredCallbackScheduled = false;
+    if (mounted) {
+      renderObject.scheduleLayoutCallback();
+    }
+  }
+
+  PipelineOwner? _parentPipelineOwner; // Is null if not attached.
+
+  void _attachPipelineOwner([PipelineOwner? parentPipelineOwner]) {
+    assert(_parentPipelineOwner == null);
+    parentPipelineOwner ??= View.pipelineOwnerOf(this);
+    parentPipelineOwner.adoptChild(_pipelineOwner);
+    _parentPipelineOwner = parentPipelineOwner;
+  }
+
+  void _detachPipelineOwner() {
+    final PipelineOwner? parentPipelineOwner = _parentPipelineOwner;
+    if (parentPipelineOwner != null) {
+      parentPipelineOwner.dropChild(_pipelineOwner);
+      _parentPipelineOwner = null;
+    }
+  }
+
+  @override
+  void mount(Element? parent, Object? newSlot) {
+    super.mount(parent, newSlot);
+    assert(_pipelineOwner.rootNode == null);
+    _pipelineOwner.rootNode = renderObject;
+    _attachPipelineOwner();
+    renderObject._callback = _rebuild;
+    renderObject.scheduleInitialLayout();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_parentPipelineOwner == null) {
+      return;
+    }
+    final PipelineOwner newParentPipelineOwner = View.pipelineOwnerOf(this);
+    if (newParentPipelineOwner != _parentPipelineOwner) {
+      _detachPipelineOwner();
+      _attachPipelineOwner(newParentPipelineOwner);
+    }
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    assert(_pipelineOwner.rootNode == null);
+    _pipelineOwner.rootNode = renderObject;
+    _attachPipelineOwner();
+  }
+
+  @override
+  void deactivate() {
+    _detachPipelineOwner();
+    assert(_pipelineOwner.rootNode == renderObject);
+    _pipelineOwner.rootNode = null; // To satisfy the assert in the super class.
+    super.deactivate();
+  }
+
+  @override
+  void update(_DeferredViewBuilder newWidget) {
+    super.update(newWidget);
+    _needsBuild = true;
+    renderObject.scheduleLayoutCallback();
+  }
+
+  @override
+  void markNeedsBuild() {
+    // See _LayoutBuilderElement.markNeedsBuild.
+    renderObject.scheduleLayoutCallback();
+    _needsBuild = true;
+  }
+
+  @override
+  void performRebuild() {
+    // This gets called if markNeedsBuild() is called on us, for example if the
+    // builder depends on an inherited widget.
+    renderObject.scheduleLayoutCallback();
+    _needsBuild = true;
+    super.performRebuild();
+  }
+
+  @override
+  void unmount() {
+    renderObject._callback = null;
+    _pipelineOwner.dispose();
+    super.unmount();
+  }
+
+  @override
+  void visitChildren(ElementVisitor visitor) {
+    if (_child != null) {
+      visitor(_child!);
+    }
+  }
+
+  @override
+  void forgetChild(Element child) {
+    assert(child == _child);
+    _child = null;
+    super.forgetChild(child);
+  }
+
+  // The children of this element must be in a non-rendering zone.
+  @override
+  bool debugExpectsRenderObjectForSlot(Object? slot) => false;
+
+  ViewAnchorLayoutInfo? _previousLayoutInfo;
+  bool _needsBuild = true;
+
+  void _rebuild() {
+    final typedWidget = widget as _DeferredViewBuilder;
+    final ViewAnchorLayoutInfo? layoutInfo = typedWidget.link.computeLayoutInfo();
+
+    @pragma('vm:notify-debugger-on-exception')
+    void updateChildCallback() {
+      Widget? built;
+      if (layoutInfo != null) {
+        try {
+          built = typedWidget.builder(this, layoutInfo);
+        } catch (e, stack) {
+          // An ErrorWidget cannot be shown in a non-rendering zone.
+          FlutterError.reportError(
+            FlutterErrorDetails(
+              exception: e,
+              stack: stack,
+              library: 'widgets library',
+              context: ErrorDescription('building $widget'),
+            ),
+          );
+        }
+      }
+      try {
+        _child = updateChild(
+          _child,
+          built == null ? null : _PipelineOwnerScope(pipelineOwner: _pipelineOwner, child: built),
+          null,
+        );
+      } finally {
+        _needsBuild = false;
+        _previousLayoutInfo = layoutInfo;
+      }
+    }
+
+    final VoidCallback? callback = _needsBuild || layoutInfo != _previousLayoutInfo
+        ? updateChildCallback
+        : null;
+    owner!.buildScope(this, callback);
+  }
+
+  @override
+  void insertRenderObjectChild(RenderObject child, Object? slot) {
+    assert(false);
+  }
+
+  @override
+  void moveRenderObjectChild(RenderObject child, Object? oldSlot, Object? newSlot) {
+    assert(false);
+  }
+
+  @override
+  void removeRenderObjectChild(RenderObject child, Object? slot) {
+    assert(false);
+  }
+}
+
+// The root of the render tree bootstrapped by _DeferredViewBuilderElement. It
+// does not paint anything. It only runs the layout callback.
+class _RenderDeferredViewRoot extends RenderObject with RenderObjectWithLayoutCallbackMixin {
+  VoidCallback? _callback;
+
+  @override
+  void layoutCallback() => _callback?.call();
+
+  // This render object is the root of its render tree, so it has no parent to
+  // provide constraints. The layout callback does not depend on them.
+  @override
+  Constraints get constraints => const BoxConstraints();
+
+  int? _frameCallbackId;
+
+  @override
+  void performLayout() {
+    runLayoutCallback();
+    // Paint-only changes, like a Transform ancestor of the anchor changing,
+    // do not mark this render object as needing layout. Re-check the anchor's
+    // layout in the next frame, if a frame is produced.
+    _frameCallbackId ??= SchedulerBinding.instance.scheduleFrameCallback(
+      _handleFrame,
+      scheduleNewFrame: false,
+    );
+  }
+
+  void _handleFrame(Duration timestamp) {
+    _frameCallbackId = null;
+    markNeedsLayout();
+  }
+
+  @override
+  void dispose() {
+    if (_frameCallbackId case final int frameCallbackId) {
+      SchedulerBinding.instance.cancelFrameCallbackWithId(frameCallbackId);
+    }
+    super.dispose();
+  }
+
+  @override
+  void debugAssertDoesMeetConstraints() {}
+
+  @override
+  void performResize() {}
+
+  @override
+  Rect get paintBounds => Rect.zero;
+
+  @override
+  Rect get semanticBounds => Rect.zero;
 }
 
 class _MultiChildComponentElement extends Element {

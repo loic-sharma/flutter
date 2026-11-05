@@ -6,9 +6,9 @@
 // ignore_for_file: implementation_imports
 
 import 'package:flutter/src/widgets/_window.dart';
+import 'package:flutter/src/widgets/view.dart';
 import 'package:material_ui/material_ui.dart';
 
-import 'element_position_tracker.dart';
 import 'models.dart';
 import 'popup_window_content.dart';
 
@@ -22,75 +22,103 @@ class PopupButton extends StatefulWidget {
 }
 
 class _PopupButtonState extends State<PopupButton> {
-  WindowEntry? _popupWindowEntry;
-  ElementPositionTracker? _popupTracker;
-  final GlobalKey _popupButtonKey = GlobalKey();
+  bool showPopup = false;
 
   @override
-  void dispose() {
-    _popupTracker?.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      onPressed: () => setState(() => showPopup = !showPopup),
+      child: ViewAnchorLayoutBuilder(
+        viewBuilder: (BuildContext context, ViewAnchorLayoutInfo info) {
+          if (!showPopup) {
+            return null;
+          }
+
+          return _PopupWindow(
+            parent: widget.parentController,
+            windowSettings: WindowSettingsAccessor.of(context),
+            anchorRect: info.childRect,
+            onDestroyed: () {
+              if (mounted) {
+                setState(() => showPopup = false);
+              }
+            },
+          );
+        },
+        child: Text(showPopup ? 'Hide Popup' : 'Show Popup'),
+      ),
+    );
+  }
+}
+
+class _PopupWindow extends StatefulWidget {
+  const _PopupWindow({
+    required this.parent,
+    required this.windowSettings,
+    required this.anchorRect,
+    required this.onDestroyed,
+  });
+
+  final BaseWindowController parent;
+  final WindowSettings windowSettings;
+  final Rect anchorRect;
+
+  /// Called when the popup window is destroyed by the platform, for example
+  /// when another window receives input focus.
+  final VoidCallback onDestroyed;
+
+  @override
+  State<_PopupWindow> createState() => _PopupWindowState();
+}
+
+class _PopupWindowState extends State<_PopupWindow> {
+  late final PopupWindowController controller;
+  bool _destroyed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = PopupWindowController(
+      parent: widget.parent,
+      anchorRect: widget.anchorRect,
+      positioner: widget.windowSettings.positioner,
+      delegate: _PopupWindowControllerDelegate(
+        onDestroyed: () {
+          // Ignore destruction initiated by this widget's dispose.
+          if (_destroyed) {
+            return;
+          }
+          _destroyed = true;
+          widget.onDestroyed();
+        },
+      ),
+    );
   }
 
-  void _onPressed(WindowSettings windowSettings) {
-    // Toggle popup visibility.
-    if (_popupWindowEntry != null) {
-      _popupWindowEntry!.controller.destroy();
-      _popupTracker?.dispose();
-      setState(() {
-        _popupWindowEntry = null;
-        _popupTracker = null;
-      });
-    } else {
-      // Popup is not shown, show it.
-      final tracker = ElementPositionTracker(element: _popupButtonKey.currentContext!);
-      late final WindowEntry entry;
-      final controller = PopupWindowController(
-        anchorRect: tracker.getGlobalRect()!,
-        positioner: windowSettings.positioner,
-        delegate: _PopupWindowControllerDelegate(
-          onDestroyed: () {
-            tracker.dispose();
-            if (mounted) {
-              setState(() {
-                _popupWindowEntry = null;
-                _popupTracker = null;
-              });
-            }
-          },
-        ),
-        parent: widget.parentController,
-      );
-      entry = WindowEntry(
-        controller: controller,
-        builder: (BuildContext context) => PopupWindowContent(controller: controller),
-      );
-      tracker.onGlobalRectChange = (rect) {
-        controller.updatePosition(anchorRect: rect);
-      };
-      setState(() {
-        _popupWindowEntry = entry;
-        _popupTracker = tracker;
-      });
+  @override
+  void didUpdateWidget(covariant _PopupWindow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    assert(oldWidget.parent == widget.parent);
+    if (oldWidget.anchorRect != widget.anchorRect && !_destroyed) {
+      controller.updatePosition(anchorRect: widget.anchorRect);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final WindowSettings windowSettings = WindowSettingsAccessor.of(context);
+  void dispose() {
+    // TODO(loic-sharma): BaseWindowController.dispose should destroy the window.
+    if (!_destroyed) {
+      _destroyed = true;
+      controller.destroy();
+    }
+    super.dispose();
+  }
 
-    return OutlinedButton(
-      key: _popupButtonKey,
-      onPressed: () => _onPressed(windowSettings),
-      child: ViewAnchor(
-        view: _popupWindowEntry != null
-            ? View(
-                view: _popupWindowEntry!.controller.rootView,
-                child: Builder(builder: _popupWindowEntry!.builder),
-              )
-            : null,
-        child: Text(_popupWindowEntry != null ? 'Hide Popup' : 'Show Popup'),
-      ),
+  @override
+  Widget build(BuildContext context) {
+    return PopupWindow(
+      controller: controller,
+      child: PopupWindowContent(controller: controller),
     );
   }
 }
